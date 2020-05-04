@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="上篇文章Android-Jetpack笔记-Navigation之Fragment使用提到，每次切换目的地，fragment是反复销毁重建的，按照谷歌推荐的1个APP只需1个activity的思路开发，这样是没问题的，但是这里的fragment是作为首页的3个常驻页面，我们是希望能够保存起来的，毕竟，销毁重建需要重新请求网络数据，重新初始化view，严重影响用户体验，那么接下来继续上篇文章的分析，">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android-Jetpack笔记-Navigation之Fragment支持复用">
+<meta property="og:url" content="https://github.com/holidayei/2020/05/04/Android-Jetpack%E7%AC%94%E8%AE%B0-Navigation%E4%B9%8BFragment%E6%94%AF%E6%8C%81%E5%A4%8D%E7%94%A8/index.html">
+<meta property="og:site_name" content="Holiday">
+<meta property="og:description" content="上篇文章Android-Jetpack笔记-Navigation之Fragment使用提到，每次切换目的地，fragment是反复销毁重建的，按照谷歌推荐的1个APP只需1个activity的思路开发，这样是没问题的，但是这里的fragment是作为首页的3个常驻页面，我们是希望能够保存起来的，毕竟，销毁重建需要重新请求网络数据，重新初始化view，严重影响用户体验，那么接下来继续上篇文章的分析，">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1gegid97vfkj30ke0daju6.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gefkvd6w0jj31bi0hc44f.jpg">
+<meta property="article:published_time" content="2020-05-04T13:46:32.000Z">
+<meta property="article:modified_time" content="2020-05-04T13:46:47.157Z">
+<meta property="article:author" content="哈利迪">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1gegid97vfkj30ke0daju6.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://github.com/holidayei/2020/05/04/Android-Jetpack笔记-Navigation之Fragment支持复用/"/>
+
+
+
+
+
+  <title>Android-Jetpack笔记-Navigation之Fragment支持复用 | Holiday</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Holiday</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://github.com/holidayei/2020/05/04/Android-Jetpack%E7%AC%94%E8%AE%B0-Navigation%E4%B9%8BFragment%E6%94%AF%E6%8C%81%E5%A4%8D%E7%94%A8/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="哈利迪">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Holiday">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Android-Jetpack笔记-Navigation之Fragment支持复用</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-05-04T21:46:32+08:00">
+                2020-05-04
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>上篇文章<code>Android-Jetpack笔记-Navigation之Fragment使用</code>提到，每次切换目的地，fragment是反复销毁重建的，按照谷歌推荐的<code>1个APP只需1个activity</code>的思路开发，这样是没问题的，但是这里的fragment是作为首页的3个常驻页面，我们是希望能够保存起来的，毕竟，销毁重建需要重新请求网络数据，重新初始化view，严重影响用户体验，那么接下来继续上篇文章的分析，支持Fragment的复用。</p>
+<p><a href="https://github.com/holidayei/JetpackStudy">Jetpack笔记代码</a></p>
+<p>本文源码基于<code>SDK 29</code>，IDE是Android studio 3.5.3</p>
+<h2 id="解决"><a href="#解决" class="headerlink" title="解决"></a>解决</h2><p>给上篇文章的项目加些日志，从面板页切到通知页，再从通知页切回面板页，查看日志，</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gegid97vfkj30ke0daju6.jpg" alt=""></p>
+<p>可见面板页发生了销毁重建，接着创建一个<code>FixFragmentNavigator</code>继承<code>FragmentNavigator</code>并重写<code>navigate</code>方法，直接把父类的实现copy过来，第1步，在调用fragment初始化的地方，改成复用：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//FixFragmentNavigator.java</span></span><br><span class="line"><span class="function">NavDestination <span class="title">navigate</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="comment">//fix 1: 把类名作为tag，寻找已存在的Fragment</span></span><br><span class="line">    <span class="comment">//（如果想只针对个别fragment进行保活复用，可以在tag上做些标记比如加个前缀，这里不再展开）</span></span><br><span class="line">    Fragment frag = mFragmentManager.findFragmentByTag(className);</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">null</span> == frag) &#123;</span><br><span class="line">        <span class="comment">//不存在，则创建</span></span><br><span class="line">        frag = instantiateFragment(mContext, mFragmentManager, className, args);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>第2步，将<code>ft.replace</code>换成<code>show和hide</code>，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//FixFragmentNavigator.java</span></span><br><span class="line"><span class="function">NavDestination <span class="title">navigate</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="comment">//        ft.replace(mContainerId, frag);</span></span><br><span class="line">    <span class="comment">//fix 2: replace换成show和hide</span></span><br><span class="line">    List&lt;Fragment&gt; fragments = mFragmentManager.getFragments();</span><br><span class="line">    <span class="keyword">for</span> (Fragment fragment : fragments) &#123;</span><br><span class="line">        ft.hide(fragment);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (!frag.isAdded()) &#123;</span><br><span class="line">        ft.add(mContainerId, frag, className);</span><br><span class="line">    &#125;</span><br><span class="line">    ft.show(frag);</span><br><span class="line">    ft.setPrimaryNavigationFragment(frag);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>第3步，反射获取父类的<code>mBackStack</code>，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//FixFragmentNavigator.java</span></span><br><span class="line"><span class="function">NavDestination <span class="title">navigate</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="comment">//fix 3: mBackStack是私有的，而且没有暴露出来，只能反射获取</span></span><br><span class="line">    ArrayDeque&lt;Integer&gt; mBackStack;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        Field field = FragmentNavigator.class.getDeclaredField("mBackStack");</span><br><span class="line">        field.setAccessible(<span class="keyword">true</span>);</span><br><span class="line">        mBackStack = (ArrayDeque&lt;Integer&gt;) field.get(<span class="keyword">this</span>);</span><br><span class="line">    &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">        e.printStackTrace();</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>第4步，把父类的私有方法<code>generateBackStackName</code>也copy过来，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//FixFragmentNavigator.java</span></span><br><span class="line"><span class="comment">//fix 4: 从父类那边copy过来即可</span></span><br><span class="line"><span class="function"><span class="keyword">private</span> String <span class="title">generateBackStackName</span><span class="params">(<span class="keyword">int</span> backStackIndex, <span class="keyword">int</span> destId)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> backStackIndex + <span class="string">"-"</span> + destId;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>第5步，给<code>FixFragmentNavigator</code>加上注解给他取个名字，原因放后面说，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Navigator</span>.Name(<span class="string">"fixFragment"</span>)</span><br><span class="line"><span class="comment">//fix 5: 需要指定1个名字，源码里自带的名字有navigation、activity、fragment、dialog</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">FixFragmentNavigator</span> <span class="keyword">extends</span> <span class="title">FragmentNavigator</span> </span>&#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>至此<code>FixFragmentNavigator</code>就写好了，完整代码可以查看<a href="https://github.com/holidayei/JetpackStudy">Jetpack笔记代码</a>，接下来要如何把他使用进去呢？</p>
+<p>先在布局文件中去掉<code>app:navGraph=&quot;@navigation/mobile_navigation&quot;</code>，然后来到activity，编写如下代码，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//NavigationActivity.java</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">onCreate</span><span class="params">(Bundle savedInstanceState)</span> </span>&#123;</span><br><span class="line">    setContentView(R.layout.activity_navigation);</span><br><span class="line">    BottomNavigationView navView = findViewById(R.id.nav_view);</span><br><span class="line"></span><br><span class="line">    <span class="comment">//获取页面容器NavHostFragment</span></span><br><span class="line">    Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);</span><br><span class="line">    <span class="comment">//获取导航控制器</span></span><br><span class="line">    NavController navController = NavHostFragment.findNavController(fragment);</span><br><span class="line">    <span class="comment">//创建自定义的Fragment导航器</span></span><br><span class="line">    FixFragmentNavigator fragmentNavigator =</span><br><span class="line">        <span class="keyword">new</span> FixFragmentNavigator(<span class="keyword">this</span>, fragment.getChildFragmentManager(), fragment.getId());</span><br><span class="line">    <span class="comment">//获取导航器提供者</span></span><br><span class="line">    NavigatorProvider provider = navController.getNavigatorProvider();</span><br><span class="line">    <span class="comment">//把自定义的Fragment导航器添加进去</span></span><br><span class="line">    provider.addNavigator(fragmentNavigator);</span><br><span class="line">    <span class="comment">//手动创建导航图</span></span><br><span class="line">    NavGraph navGraph = initNavGraph(provider, fragmentNavigator);</span><br><span class="line">    <span class="comment">//设置导航图</span></span><br><span class="line">    navController.setGraph(navGraph);</span><br><span class="line">    <span class="comment">//底部导航设置点击事件</span></span><br><span class="line">    navView.setOnNavigationItemSelectedListener(item -&gt; &#123;</span><br><span class="line">        navController.navigate(item.getItemId());</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//手动创建导航图，把3个目的地添加进来</span></span><br><span class="line"><span class="function"><span class="keyword">private</span> NavGraph <span class="title">initNavGraph</span><span class="params">(NavigatorProvider provider, FixFragmentNavigator fragmentNavigator)</span> </span>&#123;</span><br><span class="line">    NavGraph navGraph = <span class="keyword">new</span> NavGraph(<span class="keyword">new</span> NavGraphNavigator(provider));</span><br><span class="line"></span><br><span class="line">    <span class="comment">//用自定义的导航器来创建目的地</span></span><br><span class="line">    FragmentNavigator.Destination destination1 = fragmentNavigator.createDestination();</span><br><span class="line">    destination1.setId(R.id.navigation_home);</span><br><span class="line">    destination1.setClassName(HomeFragment<span class="class">.<span class="keyword">class</span>.<span class="title">getCanonicalName</span>())</span>;</span><br><span class="line">    destination1.setLabel(getResources().getString(R.string.title_home));</span><br><span class="line">    navGraph.addDestination(destination1);</span><br><span class="line"></span><br><span class="line">    <span class="comment">//省略</span></span><br><span class="line">    navGraph.addDestination(destination2);</span><br><span class="line">    <span class="comment">//省略</span></span><br><span class="line">    navGraph.addDestination(destination3);</span><br><span class="line"></span><br><span class="line">    navGraph.setStartDestination(R.id.navigation_home);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> navGraph;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>具体流程都写在代码注释里了，至此就实现了对fragment的复用。</p>
+<p>前边提到的自定义导航器需要指定名字<code>@Navigator.Name(&quot;fixFragment&quot;)</code>，是因为不同类型的目的地（页面）需要使用不同的导航器，在<code>NavigatorProvider</code>里有个map存储了多个导航器，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//NavigatorProvider.java</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> HashMap&lt;String, Navigator&lt;? extends NavDestination&gt;&gt; mNavigators =</span><br><span class="line">            <span class="keyword">new</span> HashMap&lt;&gt;();</span><br><span class="line"></span><br><span class="line"><span class="comment">// "navigation" ActivityNavigator</span></span><br><span class="line"><span class="comment">// "activity" NavGraphNavigator</span></span><br><span class="line"><span class="comment">// "fragment" FragmentNavigator</span></span><br><span class="line"><span class="comment">// "dialog" DialogFragmentNavigator</span></span><br><span class="line"><span class="comment">// "fixFragment" FixFragmentNavigator 这个就是我们自定义的导航器</span></span><br></pre></td></tr></table></figure>
+
+<p>然后，使用自定义导航器<code>FixFragmentNavigator</code>来<code>createDestination</code>创建目的地，这样就把导航器和目的地绑定在一起了。可以看出，<code>Navigation</code>的思想是，把各种类型的页面都抽象成目的地<code>Destination</code>，进行统一跳转，不同的导航器则封装了不同类型页面跳转的实现，由<code>NavController</code>统一调度，而许许多多的目的地则编织成了一个导航图<code>NavGraph</code>。</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ul>
+<li><a href="https://coding.imooc.com/class/402.html" target="_blank" rel="noopener">imooc-Jetpack开发短视频应用实战</a></li>
+</ul>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gefkvd6w0jj31bi0hc44f.jpg" alt=""></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/05/04/Android-Jetpack%E7%AC%94%E8%AE%B0-Navigation%E4%B9%8BFragment%E4%BD%BF%E7%94%A8/" rel="next" title="Android-Jetpack笔记-Navigation之Fragment使用">
+                <i class="fa fa-chevron-left"></i> Android-Jetpack笔记-Navigation之Fragment使用
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">哈利迪</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/%7C%7C%20archive">
+              
+                  <span class="site-state-item-count">8</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">1</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#解决"><span class="nav-number">1.</span> <span class="nav-text">解决</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考"><span class="nav-number">2.</span> <span class="nav-text">参考</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">哈利迪</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
