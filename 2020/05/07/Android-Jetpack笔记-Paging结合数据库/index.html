@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="在平时使用RecyclerView时，下拉刷新时先更新数据然后调用Adapter.notifyDataSetChanged全量更新，修改条目时则先更新数据，然后调用Adapter.notifyItemXXX进行局部更新。Paging出现后，则只需要对数据进行变更，无需手动刷新UI，其内部会对数据源进行diff操作（基于Myers 差分算法），然后选择合适的方式刷新UI，同时他还处理了数据的分页加载">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android-Jetpack笔记-Paging结合数据库">
+<meta property="og:url" content="https://github.com/holidayei/2020/05/07/Android-Jetpack%E7%AC%94%E8%AE%B0-Paging%E7%BB%93%E5%90%88%E6%95%B0%E6%8D%AE%E5%BA%93/index.html">
+<meta property="og:site_name" content="Holiday">
+<meta property="og:description" content="在平时使用RecyclerView时，下拉刷新时先更新数据然后调用Adapter.notifyDataSetChanged全量更新，修改条目时则先更新数据，然后调用Adapter.notifyItemXXX进行局部更新。Paging出现后，则只需要对数据进行变更，无需手动刷新UI，其内部会对数据源进行diff操作（基于Myers 差分算法），然后选择合适的方式刷新UI，同时他还处理了数据的分页加载">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gefkvd6w0jj31bi0hc44f.jpg">
+<meta property="article:published_time" content="2020-05-07T14:10:34.000Z">
+<meta property="article:modified_time" content="2020-05-07T14:11:07.597Z">
+<meta property="article:author" content="哈利迪">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gefkvd6w0jj31bi0hc44f.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://github.com/holidayei/2020/05/07/Android-Jetpack笔记-Paging结合数据库/"/>
+
+
+
+
+
+  <title>Android-Jetpack笔记-Paging结合数据库 | Holiday</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Holiday</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://github.com/holidayei/2020/05/07/Android-Jetpack%E7%AC%94%E8%AE%B0-Paging%E7%BB%93%E5%90%88%E6%95%B0%E6%8D%AE%E5%BA%93/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="哈利迪">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Holiday">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Android-Jetpack笔记-Paging结合数据库</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-05-07T22:10:34+08:00">
+                2020-05-07
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>在平时使用<code>RecyclerView</code>时，下拉刷新时先更新数据然后调用<code>Adapter.notifyDataSetChanged</code>全量更新，修改条目时则先更新数据，然后调用<code>Adapter.notifyItemXXX</code>进行局部更新。<code>Paging</code>出现后，则只需要对数据进行变更，无需手动刷新UI，其内部会对数据源进行<code>diff</code>操作（基于Myers 差分算法），然后选择合适的方式刷新UI，同时他还处理了数据的分页加载。本文主要结合<code>Room</code>数据库进行使用和分析。</p>
+<p><a href="https://github.com/holidayei/JetpackStudy">Jetpack笔记代码</a></p>
+<p>本文源码基于<code>SDK 29</code></p>
+<h2 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h2><p>引入依赖：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">def paging_version = <span class="string">"2.1.1"</span></span><br><span class="line">implementation <span class="string">"androidx.paging:paging-runtime:$paging_version"</span></span><br></pre></td></tr></table></figure>
+
+<p>创建一个<code>ViewModel</code></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//PagingViewModel.java</span></span><br><span class="line"><span class="keyword">private</span> UserDao mUserDao;  <span class="comment">//dao对象用来从数据库中获取数据</span></span><br><span class="line"><span class="keyword">private</span> LiveData&lt;PagedList&lt;User&gt;&gt; mLiveData;  <span class="comment">//可观察的数据源</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> LiveData&lt;PagedList&lt;User&gt;&gt; getLiveData() &#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">null</span> == mLiveData &amp;&amp; <span class="keyword">null</span> != mUserDao) &#123;</span><br><span class="line">        <span class="comment">//room支持直接返回paging所需的数据源工厂类DataSource.Factory</span></span><br><span class="line">        DataSource.Factory&lt;Integer, User&gt; factory = mUserDao.queryUsersLive();</span><br><span class="line">        <span class="comment">//配置参数</span></span><br><span class="line">        PagedList.Config config = <span class="keyword">new</span> PagedList.Config.Builder()</span><br><span class="line">            .setPageSize(<span class="number">15</span>)              <span class="comment">// 分页加载的数量</span></span><br><span class="line">            .setInitialLoadSizeHint(<span class="number">30</span>)   <span class="comment">// 初次加载的数量</span></span><br><span class="line">            .setPrefetchDistance(<span class="number">10</span>)      <span class="comment">// 预取数据的距离</span></span><br><span class="line">            .setEnablePlaceholders(<span class="keyword">false</span>) <span class="comment">// 是否启用占位符（本地数据比较合适，因为远程数据是未知的）</span></span><br><span class="line">            .build();</span><br><span class="line">        <span class="comment">//用room返回的DataSource.Factory来构建数据列表</span></span><br><span class="line">        mLiveData = <span class="keyword">new</span> LivePagedListBuilder&lt;&gt;(factory, config).build();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> mLiveData;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>创建适配器<code>MyListAdapter</code>继承自<code>PagedListAdapter</code>，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//MyListAdapter.java</span></span><br><span class="line">MyListAdapter() &#123;</span><br><span class="line">    <span class="keyword">super</span>(<span class="keyword">new</span> DiffUtil.ItemCallback&lt;User&gt;() &#123;</span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">areItemsTheSame</span><span class="params">(@NonNull User oldItem, @NonNull User newItem)</span> </span>&#123;</span><br><span class="line">            <span class="comment">//是否是同一个item，一般用数据源的唯一标识</span></span><br><span class="line">            <span class="keyword">return</span> oldItem.getId() == newItem.getId();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">areContentsTheSame</span><span class="params">(@NonNull User oldItem, @NonNull User newItem)</span> </span>&#123;</span><br><span class="line">            <span class="comment">//内容是否发生变更，一般重写equals</span></span><br><span class="line">            <span class="keyword">return</span> oldItem.equals(newItem);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//创建ViewHolder，跟RecyclerView用法一样</span></span><br><span class="line"><span class="function">UserAdapterHolder <span class="title">onCreateViewHolder</span><span class="params">(@NonNull ViewGroup parent, <span class="keyword">int</span> viewType)</span> </span>&#123;</span><br><span class="line">    RvItemPagingBinding binding = DataBindingUtil.inflate(LayoutInflater.from(parent.getContext()), R.layout.rv_item_paging, parent, <span class="keyword">false</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> UserAdapterHolder(binding);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//ViewHolder绑定数据，跟RecyclerView用法一样</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onBindViewHolder</span><span class="params">(@NonNull UserAdapterHolder holder, <span class="keyword">int</span> position)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">final</span> User user = getItem(position);</span><br><span class="line">    holder.getBinding().setUser(user);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">UserAdapterHolder</span> <span class="keyword">extends</span> <span class="title">RecyclerView</span>.<span class="title">ViewHolder</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> RvItemPagingBinding mBinding;</span><br><span class="line"></span><br><span class="line">    UserAdapterHolder(RvItemPagingBinding binding) &#123;</span><br><span class="line">        <span class="keyword">super</span>(binding.getRoot());</span><br><span class="line">        mBinding = binding;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> RvItemPagingBinding <span class="title">getBinding</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> mBinding;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在activity中使用，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//PagingActivity.java</span></span><br><span class="line">onCreate(Bundle savedInstanceState) &#123;</span><br><span class="line">	mViewModel.setUserDao(mUserDao);</span><br><span class="line">    mViewModel.getLiveData().observe(<span class="keyword">this</span>, <span class="keyword">new</span> Observer&lt;PagedList&lt;User&gt;&gt;() &#123;</span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onChanged</span><span class="params">(PagedList&lt;User&gt; users)</span> </span>&#123;</span><br><span class="line">            <span class="comment">//提交数据</span></span><br><span class="line">            mListAdapter.submitList(users);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">    mBinding.rvUser.setAdapter(mListAdapter);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>运行即可。</p>
+<h2 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h2><p>下面将带着两个问题，逐步分析内部实现：</p>
+<ul>
+<li>submitList如何diff数据，刷新UI</li>
+<li>LivePagedListBuilder如何构建数据源</li>
+</ul>
+<h3 id="submitList如何diff数据，刷新UI"><a href="#submitList如何diff数据，刷新UI" class="headerlink" title="submitList如何diff数据，刷新UI"></a>submitList如何diff数据，刷新UI</h3><p><code>PagedListAdapter</code>是适配器，核心能力交给了<code>AsyncPagedListDiffer</code>处理，<code>AsyncPagedListDiffer</code>能对数据进行diff处理，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//AsyncPagedListDiffer.java</span></span><br><span class="line"><span class="comment">//构造方法</span></span><br><span class="line">AsyncPagedListDiffer(RecyclerView.Adapter adapter,DiffUtil.ItemCallback&lt;T&gt; diffCallback) &#123;</span><br><span class="line">    <span class="comment">//把适配器包装到UpdateCallback</span></span><br><span class="line">    mUpdateCallback = <span class="keyword">new</span> AdapterListUpdateCallback(adapter);</span><br><span class="line">    mConfig = <span class="keyword">new</span> AsyncDifferConfig.Builder&lt;&gt;(diffCallback).build();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>来到<code>AdapterListUpdateCallback</code>，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//AdapterListUpdateCallback.java</span></span><br><span class="line">AdapterListUpdateCallback(<span class="meta">@NonNull</span> RecyclerView.Adapter adapter) &#123;</span><br><span class="line">    mAdapter = adapter;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">onInserted</span><span class="params">(<span class="keyword">int</span> position, <span class="keyword">int</span> count)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//UpdateCallback在被触发时，将行为委托给适配器，这里就是熟悉的局部刷新代码了</span></span><br><span class="line">    mAdapter.notifyItemRangeInserted(position, count);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">onMoved</span><span class="params">(<span class="keyword">int</span> fromPosition, <span class="keyword">int</span> toPosition)</span> </span>&#123;</span><br><span class="line">    mAdapter.notifyItemMoved(fromPosition, toPosition);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>那<code>AdapterListUpdateCallback</code>又是什么时候被触发的呢，<code>PagedListAdapter</code>调用<code>submitList</code>时，委托给了<code>AsyncPagedListDiffer</code>，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//AsyncPagedListDiffer.java</span></span><br><span class="line">submitList(<span class="keyword">final</span> PagedList&lt;T&gt; pagedList,<span class="keyword">final</span> Runnable commitCallback) &#123;</span><br><span class="line">    <span class="keyword">if</span> (mPagedList == <span class="keyword">null</span> &amp;&amp; mSnapshot == <span class="keyword">null</span>) &#123;</span><br><span class="line">		<span class="comment">//初始化的时候，直接这里回调，不走后面的差异计算</span></span><br><span class="line">        mUpdateCallback.onInserted(<span class="number">0</span>, pagedList.size());</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//去子线程计算数据差异</span></span><br><span class="line">    <span class="keyword">final</span> DiffUtil.DiffResult result =</span><br><span class="line">        PagedStorageDiffHelper.computeDiff(</span><br><span class="line">            oldSnapshot.mStorage,  <span class="comment">//老数据快照</span></span><br><span class="line">            newSnapshot.mStorage,  <span class="comment">//新数据快照</span></span><br><span class="line">            mConfig.getDiffCallback());</span><br><span class="line">    <span class="comment">//回到主线程，把差异结果进行分发</span></span><br><span class="line">    latchPagedList(pagedList, newSnapshot, result,</span><br><span class="line">                   oldSnapshot.mLastLoad, commitCallback);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">latchPagedList(PagedList&lt;T&gt; newList,PagedList&lt;T&gt; diffSnapshot,DiffUtil.DiffResult diffResult,</span><br><span class="line">               <span class="keyword">int</span> lastAccessIndex,Runnable commitCallback) &#123;</span><br><span class="line">    <span class="comment">//继续分发，这里传入了UpdateCallback</span></span><br><span class="line">    PagedStorageDiffHelper.dispatchDiff(mUpdateCallback,</span><br><span class="line">                previousSnapshot.mStorage, newList.mStorage, diffResult);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>来到<code>PagedStorageDiffHelper</code>，这里就可以看见<code>AdapterListUpdateCallback</code>被回调了，具体的计算逻辑暂不深究，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//PagedStorageDiffHelper.java</span></span><br><span class="line">dispatchDiff(ListUpdateCallback callback,<span class="keyword">final</span> PagedStorage&lt;T&gt; oldList,</span><br><span class="line">            <span class="keyword">final</span> PagedStorage&lt;T&gt; newList,<span class="keyword">final</span> DiffUtil.DiffResult diffResult) &#123;</span><br><span class="line">    <span class="keyword">if</span> (trailingOld == <span class="number">0</span></span><br><span class="line">        &amp;&amp; trailingNew == <span class="number">0</span></span><br><span class="line">        &amp;&amp; leadingOld == <span class="number">0</span></span><br><span class="line">        &amp;&amp; leadingNew == <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="comment">// Simple case, dispatch &amp; return</span></span><br><span class="line">        diffResult.dispatchUpdatesTo(callback);  <span class="comment">//回调</span></span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// First, remove or insert trailing nulls</span></span><br><span class="line">    <span class="keyword">if</span> (trailingOld &gt; trailingNew) &#123;</span><br><span class="line">        <span class="keyword">int</span> count = trailingOld - trailingNew;</span><br><span class="line">        callback.onRemoved(oldList.size() - count, count);  <span class="comment">//回调</span></span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (trailingOld &lt; trailingNew) &#123;</span><br><span class="line">        callback.onInserted(oldList.size(), trailingNew - trailingOld);  <span class="comment">//回调</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// Second, remove or insert leading nulls</span></span><br><span class="line">    <span class="keyword">if</span> (leadingOld &gt; leadingNew) &#123;</span><br><span class="line">        callback.onRemoved(<span class="number">0</span>, leadingOld - leadingNew);  <span class="comment">//回调</span></span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (leadingOld &lt; leadingNew) &#123;</span><br><span class="line">        callback.onInserted(<span class="number">0</span>, leadingNew - leadingOld);  <span class="comment">//回调</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>总结一下，就是<code>PagedListAdapter</code>调用<code>submitList</code>，然后委托给<code>AsyncPagedListDiffer</code>，其内部进行数据的差异计算，然后回调<code>AdapterListUpdateCallback</code>使<code>PagedListAdapter</code>调用<code>notifyItemRangeXXX</code>进行局部刷新UI。</p>
+<h3 id="LivePagedListBuilder如何构建数据源"><a href="#LivePagedListBuilder如何构建数据源" class="headerlink" title="LivePagedListBuilder如何构建数据源"></a>LivePagedListBuilder如何构建数据源</h3><p>分析前需要先理解几个概念，<code>PagedList</code>是具体的数据列表，由<code>DataSource</code>数据源提供数据，<code>DataSource</code>又由<code>DataSource.Factory</code>工厂类创建。</p>
+<p>首先来到<code>LivePagedListBuilder.build()</code>，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//LivePagedListBuilder.java</span></span><br><span class="line">LiveData&lt;PagedList&lt;Value&gt;&gt; build() &#123;</span><br><span class="line">    <span class="keyword">return</span> create(mInitialLoadKey, mConfig, mBoundaryCallback, mDataSourceFactory,</span><br><span class="line">                  ArchTaskExecutor.getMainThreadExecutor(), mFetchExecutor);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&lt;Key, Value&gt; LiveData&lt;PagedList&lt;Value&gt;&gt; create(</span><br><span class="line">    <span class="meta">@Nullable</span> <span class="keyword">final</span> Key initialLoadKey,</span><br><span class="line">    <span class="meta">@NonNull</span> <span class="keyword">final</span> PagedList.Config config,</span><br><span class="line">    <span class="meta">@Nullable</span> <span class="keyword">final</span> PagedList.BoundaryCallback boundaryCallback,</span><br><span class="line">    <span class="meta">@NonNull</span> <span class="keyword">final</span> DataSource.Factory&lt;Key, Value&gt; dataSourceFactory,</span><br><span class="line">    <span class="meta">@NonNull</span> <span class="keyword">final</span> Executor notifyExecutor,</span><br><span class="line">    <span class="meta">@NonNull</span> <span class="keyword">final</span> Executor fetchExecutor) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> ComputableLiveData&lt;PagedList&lt;Value&gt;&gt;(fetchExecutor) &#123;</span><br><span class="line">        <span class="keyword">private</span> PagedList&lt;Value&gt; mList;</span><br><span class="line">        <span class="keyword">private</span> DataSource&lt;Key, Value&gt; mDataSource;</span><br><span class="line"></span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">protected</span> PagedList&lt;Value&gt; <span class="title">compute</span><span class="params">()</span> </span>&#123;  <span class="comment">//指定compute逻辑</span></span><br><span class="line">            <span class="meta">@Nullable</span> Key initializeKey = initialLoadKey;</span><br><span class="line">            <span class="keyword">if</span> (mList != <span class="keyword">null</span>) &#123;</span><br><span class="line">                initializeKey = (Key) mList.getLastKey();</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">do</span> &#123;</span><br><span class="line">                <span class="comment">//这里调了dataSourceFactory来创建dataSource</span></span><br><span class="line">                mDataSource = dataSourceFactory.create();</span><br><span class="line">                mList = <span class="keyword">new</span> PagedList.Builder&lt;&gt;(mDataSource, config)</span><br><span class="line">                    .setNotifyExecutor(notifyExecutor)</span><br><span class="line">                    .setFetchExecutor(fetchExecutor)</span><br><span class="line">                    .setBoundaryCallback(boundaryCallback)</span><br><span class="line">                    .setInitialKey(initializeKey)</span><br><span class="line">                    .build();</span><br><span class="line">            &#125; <span class="keyword">while</span> (mList.isDetached());</span><br><span class="line">            <span class="keyword">return</span> mList;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;.getLiveData();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>先看<code>mDataSource = dataSourceFactory.create()</code>这行，具体实现在生成类<code>UserDao_Impl</code>，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//UserDao_Impl.java</span></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="keyword">public</span> DataSource.<span class="function">Factory&lt;Integer, User&gt; <span class="title">queryUsersLive</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">final</span> String _sql = <span class="string">"SELECT * FROM t_user"</span>;</span><br><span class="line">    <span class="keyword">final</span> RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, <span class="number">0</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> DataSource.Factory&lt;Integer, User&gt;() &#123;</span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> LimitOffsetDataSource&lt;User&gt; <span class="title">create</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="comment">//DataSource有多种类型，这里返回了LimitOffsetDataSource</span></span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">new</span> LimitOffsetDataSource&lt;User&gt;(__db, _statement, <span class="keyword">false</span> , <span class="string">"t_user"</span>) &#123;</span><br><span class="line">                <span class="meta">@Override</span></span><br><span class="line">                <span class="function"><span class="keyword">protected</span> List&lt;User&gt; <span class="title">convertRows</span><span class="params">(Cursor cursor)</span> </span>&#123;</span><br><span class="line">                    <span class="comment">//查询数据库，得到List&lt;User&gt;</span></span><br><span class="line">                    <span class="keyword">final</span> <span class="keyword">int</span> _cursorIndexOfMId = CursorUtil.getColumnIndexOrThrow(cursor, <span class="string">"id"</span>);</span><br><span class="line">                    <span class="keyword">final</span> <span class="keyword">int</span> _cursorIndexOfMName = CursorUtil.getColumnIndexOrThrow(cursor, <span class="string">"name"</span>);</span><br><span class="line">                    <span class="keyword">final</span> List&lt;User&gt; _res = <span class="keyword">new</span> ArrayList&lt;User&gt;(cursor.getCount());</span><br><span class="line">                    <span class="keyword">while</span>(cursor.moveToNext()) &#123;</span><br><span class="line">                        <span class="keyword">final</span> User _item;</span><br><span class="line">                        _item = <span class="keyword">new</span> User();</span><br><span class="line">                        <span class="keyword">final</span> <span class="keyword">int</span> _tmpMId;</span><br><span class="line">                        _tmpMId = cursor.getInt(_cursorIndexOfMId);</span><br><span class="line">                        _item.setId(_tmpMId);</span><br><span class="line">                        <span class="keyword">final</span> String _tmpMName;</span><br><span class="line">                        _tmpMName = cursor.getString(_cursorIndexOfMName);</span><br><span class="line">                        _item.setName(_tmpMName);</span><br><span class="line">                        _res.add(_item);</span><br><span class="line">                    &#125;</span><br><span class="line">                    <span class="keyword">return</span> _res;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在<code>LimitOffsetDataSource</code>里，通过<code>convertRows</code>的实现从数据库拿到list，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//LimitOffsetDataSource.java</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">loadInitial</span><span class="params">(LoadInitialParams params,LoadInitialCallback&lt;T&gt; callback)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//计算查询范围</span></span><br><span class="line">    sqLiteQuery = getSQLiteQuery(firstLoadPosition, firstLoadSize);</span><br><span class="line">    <span class="comment">//得到游标</span></span><br><span class="line">    cursor = mDb.query(sqLiteQuery);</span><br><span class="line">    List&lt;T&gt; rows = convertRows(cursor);</span><br><span class="line">    <span class="comment">//拿到list后，就可以进行diff操作了</span></span><br><span class="line">    list = rows;</span><br><span class="line">    callback.onResult(list, firstLoadPosition, totalCount);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="优缺点"><a href="#优缺点" class="headerlink" title="优缺点"></a>优缺点</h2><ul>
+<li>TODO</li>
+</ul>
+<h2 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h2><ul>
+<li><a href="https://juejin.im/post/5c53ad9e6fb9a049eb3c5cfd" target="_blank" rel="noopener">掘金-Android官方架构组件Paging:分页库的设计美学</a></li>
+</ul>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gefkvd6w0jj31bi0hc44f.jpg" alt=""></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/05/05/Android-Jetpack%E7%AC%94%E8%AE%B0-Room/" rel="next" title="Android-Jetpack笔记-Room">
+                <i class="fa fa-chevron-left"></i> Android-Jetpack笔记-Room
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">哈利迪</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/%7C%7C%20archive">
+              
+                  <span class="site-state-item-count">10</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">1</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#使用"><span class="nav-number">1.</span> <span class="nav-text">使用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#原理"><span class="nav-number">2.</span> <span class="nav-text">原理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#submitList如何diff数据，刷新UI"><span class="nav-number">2.1.</span> <span class="nav-text">submitList如何diff数据，刷新UI</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#LivePagedListBuilder如何构建数据源"><span class="nav-number">2.2.</span> <span class="nav-text">LivePagedListBuilder如何构建数据源</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#优缺点"><span class="nav-number">3.</span> <span class="nav-text">优缺点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考文章"><span class="nav-number">4.</span> <span class="nav-text">参考文章</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">哈利迪</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
