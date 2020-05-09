@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="上篇文章介绍了paging+room的使用，这篇主要介绍paging+网络数据的使用和原理。 Jetpack笔记代码 本文源码基于SDK 29 使用网络数据来源于玩Android开放API，运行效果：  引入依赖： 12def paging_version &#x3D; &quot;2.1.1&quot;implementation &quot;androidx.paging:paging-runtime:$paging_version">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android-Jetpack笔记-Paging结合网络数据">
+<meta property="og:url" content="https://github.com/holidayei/2020/05/09/Android-Jetpack%E7%AC%94%E8%AE%B0-Paging%E7%BB%93%E5%90%88%E7%BD%91%E7%BB%9C%E6%95%B0%E6%8D%AE/index.html">
+<meta property="og:site_name" content="Holiday">
+<meta property="og:description" content="上篇文章介绍了paging+room的使用，这篇主要介绍paging+网络数据的使用和原理。 Jetpack笔记代码 本文源码基于SDK 29 使用网络数据来源于玩Android开放API，运行效果：  引入依赖： 12def paging_version &#x3D; &quot;2.1.1&quot;implementation &quot;androidx.paging:paging-runtime:$paging_version">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1gem31fg99qg30f40qo1l0.gif">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1gem2e6pymdj30uc06gq52.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1gem2iia44gj30uk07u418.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gefkvd6w0jj31bi0hc44f.jpg">
+<meta property="article:published_time" content="2020-05-09T11:39:09.000Z">
+<meta property="article:modified_time" content="2020-05-09T11:39:59.479Z">
+<meta property="article:author" content="哈利迪">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1gem31fg99qg30f40qo1l0.gif">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://github.com/holidayei/2020/05/09/Android-Jetpack笔记-Paging结合网络数据/"/>
+
+
+
+
+
+  <title>Android-Jetpack笔记-Paging结合网络数据 | Holiday</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Holiday</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://github.com/holidayei/2020/05/09/Android-Jetpack%E7%AC%94%E8%AE%B0-Paging%E7%BB%93%E5%90%88%E7%BD%91%E7%BB%9C%E6%95%B0%E6%8D%AE/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="哈利迪">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Holiday">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Android-Jetpack笔记-Paging结合网络数据</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-05-09T19:39:09+08:00">
+                2020-05-09
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>上篇文章介绍了<code>paging</code>+<code>room</code>的使用，这篇主要介绍<code>paging</code>+网络数据的使用和原理。</p>
+<p><a href="https://github.com/holidayei/JetpackStudy">Jetpack笔记代码</a></p>
+<p>本文源码基于<code>SDK 29</code></p>
+<h2 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h2><p>网络数据来源于<a href="https://www.wanandroid.com/blog/show/2" target="_blank" rel="noopener">玩Android开放API</a>，运行效果：</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gem31fg99qg30f40qo1l0.gif" alt=""></p>
+<p>引入依赖：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">def paging_version = <span class="string">"2.1.1"</span></span><br><span class="line">implementation <span class="string">"androidx.paging:paging-runtime:$paging_version"</span></span><br></pre></td></tr></table></figure>
+
+<p>创建一个<code>ViewModel</code>，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//PagingNetworkViewModel2.java</span></span><br><span class="line">LiveData&lt;PagedList&lt;ArticleBean.DataBean.Article&gt;&gt; mPageData;</span><br><span class="line">DataSource mDataSource;  <span class="comment">//数据源</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//数据源工厂</span></span><br><span class="line"><span class="keyword">private</span> DataSource.Factory mFactory = <span class="keyword">new</span> DataSource.Factory() &#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> DataSource <span class="title">create</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (mDataSource == <span class="keyword">null</span> || mDataSource.isInvalid()) &#123;</span><br><span class="line">            <span class="comment">//下拉刷新调用mDataSource.invalidate()，这时需要创建一个新的数据源</span></span><br><span class="line">            mDataSource = createDataSource();</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> mDataSource;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">//创建数据源</span></span><br><span class="line"><span class="function"><span class="keyword">private</span> DataSource <span class="title">createDataSource</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> ItemKeyedDataSource&lt;Integer, ArticleBean.DataBean.Article&gt;() &#123;</span><br><span class="line"></span><br><span class="line">        <span class="comment">//paging首次加载数据</span></span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">loadInitial</span><span class="params">(@NonNull LoadInitialParams&lt;Integer&gt; params, @NonNull LoadInitialCallback&lt;ArticleBean.DataBean.Article&gt; callback)</span> </span>&#123;</span><br><span class="line">            <span class="comment">//这3个load方法在子线程中执行，同步获取网络数据即可</span></span><br><span class="line">            callback.onResult(Api.getArticle(String.valueOf(mPage++)));</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">//paging加载更多数据，在滑动到配置好的位置时，自动触发</span></span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">loadAfter</span><span class="params">(@NonNull LoadParams&lt;Integer&gt; params, @NonNull LoadCallback&lt;ArticleBean.DataBean.Article&gt; callback)</span> </span>&#123;</span><br><span class="line">            callback.onResult(Api.getArticle(String.valueOf(mPage++)));</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">loadBefore</span><span class="params">(@NonNull LoadParams&lt;Integer&gt; params, @NonNull LoadCallback&lt;ArticleBean.DataBean.Article&gt; callback)</span> </span>&#123;</span><br><span class="line">            <span class="comment">//向前加载，忽略即可</span></span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> Integer <span class="title">getKey</span><span class="params">(@NonNull ArticleBean.DataBean.Article item)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> item.getId();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> LiveData&lt;PagedList&lt;ArticleBean.DataBean.Article&gt;&gt; getPageData() &#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">null</span> == mPageData) &#123;</span><br><span class="line">        PagedList.Config config = <span class="keyword">new</span> PagedList.Config.Builder()</span><br><span class="line">            .setPageSize(<span class="number">20</span>)  <span class="comment">//分页大小</span></span><br><span class="line">            .setInitialLoadSizeHint(<span class="number">20</span>)  <span class="comment">//首次加载大小</span></span><br><span class="line">            .setPrefetchDistance(<span class="number">10</span>)  <span class="comment">//预加载距离：还剩10个就要滑到底了，就进行预加载</span></span><br><span class="line">            .build();</span><br><span class="line">        mPageData = <span class="keyword">new</span> LivePagedListBuilder(mFactory, config).build();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> mPageData;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//下拉刷新</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">refresh</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    mPage = <span class="number">0</span>;</span><br><span class="line">    mDataSource.invalidate();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>创建适配器<code>NetworkListAdapter2</code>继承自<code>PagedListAdapter</code>，这里只需提供一个数据diff的规则<code>DiffUtil.ItemCallback</code>即可，<code>onCreateViewHolder</code>和<code>onBindViewHolder</code>的用法和老的<code>RecyclerView.Adapter</code>没区别已省略，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//NetworkListAdapter2.java</span></span><br><span class="line">NetworkListAdapter2() &#123;</span><br><span class="line">    <span class="keyword">super</span>(<span class="keyword">new</span> DiffUtil.ItemCallback&lt;ArticleBean.DataBean.Article&gt;() &#123;</span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">areItemsTheSame</span><span class="params">(@NonNull ArticleBean.DataBean.Article oldItem, @NonNull ArticleBean.DataBean.Article newItem)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> oldItem.getId() == newItem.getId();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">areContentsTheSame</span><span class="params">(@NonNull ArticleBean.DataBean.Article oldItem, @NonNull ArticleBean.DataBean.Article newItem)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> oldItem.equals(newItem);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在activity中使用，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//PagingNetworkActivity2.java</span></span><br><span class="line">onCreate(Bundle savedInstanceState) &#123;</span><br><span class="line">    <span class="comment">//关闭加载更多，使用paging的预加载即可</span></span><br><span class="line">    mBinding.refreshArticle.setEnableLoadMore(<span class="keyword">false</span>);</span><br><span class="line">    mBinding.refreshArticle.setOnRefreshListener(<span class="keyword">new</span> OnRefreshListener() &#123;</span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onRefresh</span><span class="params">(@NonNull RefreshLayout refreshLayout)</span> </span>&#123;</span><br><span class="line">            <span class="comment">//下拉刷新</span></span><br><span class="line">            mViewModel.refresh();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">    mAdapter = <span class="keyword">new</span> NetworkListAdapter2();</span><br><span class="line">    mBinding.rvArticle.setAdapter(mAdapter);</span><br><span class="line">    mBinding.rvArticle.setLayoutManager(<span class="keyword">new</span> LinearLayoutManager(<span class="keyword">this</span>));</span><br><span class="line"></span><br><span class="line">    mViewModel.getPageData().observe(<span class="keyword">this</span>, <span class="keyword">new</span> Observer&lt;PagedList&lt;ArticleBean.DataBean.Article&gt;&gt;() &#123;</span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onChanged</span><span class="params">(PagedList&lt;ArticleBean.DataBean.Article&gt; articles)</span> </span>&#123;</span><br><span class="line">            mAdapter.submitList(articles);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这几个类名都加了后缀2，这是因为笔者先写了一套老的<code>RecyclerView.Adapter</code>使用方案，用来对比两套实现方案，代码见<a href="https://github.com/holidayei/JetpackStudy">Jetpack笔记代码</a>，欢迎star。</p>
+<h2 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h2><p>同样，还是选择了几个问题进行分析，因为带着问题去跟进才能更聚焦：</p>
+<ul>
+<li>预加载怎么触发加载更多的</li>
+<li>mDataSource.invalidate()怎么实现下拉刷新的</li>
+</ul>
+<h3 id="预加载怎么触发加载更多的"><a href="#预加载怎么触发加载更多的" class="headerlink" title="预加载怎么触发加载更多的"></a>预加载怎么触发加载更多的</h3><p>首先来到<code>PagingNetworkViewModel2</code>里创建数据源的代码，在<code>loadAfter</code>方法里打个断点，上滑加载更多，查看调用栈，</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gem2e6pymdj30uc06gq52.jpg" alt=""></p>
+<p>因为切了线程，调用栈不是很全，点下第三行来到这里，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//ContiguousPagedList.java</span></span><br><span class="line"><span class="meta">@MainThread</span></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">scheduleAppend</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    mLoadStateManager.setState(LoadType.END, LoadState.LOADING, <span class="keyword">null</span>);</span><br><span class="line">    mBackgroundThreadExecutor.execute(<span class="keyword">new</span> Runnable() &#123;</span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            mDataSource.dispatchLoadAfter(position, item, mConfig.pageSize,</span><br><span class="line">                                          mMainThreadExecutor, mReceiver);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>给这个方法的第一行打一个断点，再触发一次加载更多，看看哪里调了<code>scheduleAppend</code>，</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gem2iia44gj30uk07u418.jpg" alt=""></p>
+<p>这时调用链就很清晰了，在<code>onBindViewHolder</code>中我们调了<code>getItem</code>取出条目数据，进而触发预加载的逻辑。下面顺着这个链路跟进看看，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//PagedListAdapter.java</span></span><br><span class="line"><span class="function"><span class="keyword">protected</span> T <span class="title">getItem</span><span class="params">(<span class="keyword">int</span> position)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> mDiffer.getItem(position);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//AsyncPagedListDiffer.java</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> T <span class="title">getItem</span><span class="params">(<span class="keyword">int</span> index)</span> </span>&#123;</span><br><span class="line">    mPagedList.loadAround(index);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//PagedList.java</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">loadAround</span><span class="params">(<span class="keyword">int</span> index)</span> </span>&#123;</span><br><span class="line">    loadAroundInternal(index);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//ContiguousPagedList.java</span></span><br><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">loadAroundInternal</span><span class="params">(<span class="keyword">int</span> index)</span> </span>&#123;</span><br><span class="line">    scheduleAppend();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">scheduleAppend</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">//这里切到了子线程</span></span><br><span class="line">    mBackgroundThreadExecutor.execute(<span class="keyword">new</span> Runnable() &#123;</span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            mDataSource.dispatchLoadAfter(position, item, mConfig.pageSize,</span><br><span class="line">                                          mMainThreadExecutor, mReceiver);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//ItemKeyedDataSource.java</span></span><br><span class="line"><span class="function"><span class="keyword">final</span> <span class="keyword">void</span> <span class="title">dispatchLoadAfter</span><span class="params">(<span class="keyword">int</span> currentEndIndex, @NonNull Value currentEndItem,</span></span></span><br><span class="line"><span class="function"><span class="params">            <span class="keyword">int</span> pageSize, @NonNull Executor mainThreadExecutor,</span></span></span><br><span class="line"><span class="function"><span class="params">            @NonNull PageResult.Receiver&lt;Value&gt; receiver)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//子线程回调</span></span><br><span class="line">    loadAfter(<span class="keyword">new</span> LoadParams&lt;&gt;(getKey(currentEndItem), pageSize),</span><br><span class="line">                <span class="keyword">new</span> LoadCallbackImpl&lt;&gt;(<span class="keyword">this</span>, PageResult.APPEND, mainThreadExecutor, receiver));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后在子线程回调的方法<code>loadAfter</code>里，我们同步获取网络数据，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//PagingNetworkViewModel2.java</span></span><br><span class="line"><span class="function"><span class="keyword">private</span> DataSource <span class="title">createDataSource</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> ItemKeyedDataSource&lt;Integer, ArticleBean.DataBean.Article&gt;() &#123;</span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">loadAfter</span><span class="params">(@NonNull LoadParams&lt;Integer&gt; params, @NonNull LoadCallback&lt;ArticleBean.DataBean.Article&gt; callback)</span> </span>&#123;</span><br><span class="line">            <span class="comment">//同步获取网络数据，然后callback.onResult</span></span><br><span class="line">            callback.onResult(Api.getArticle(String.valueOf(mPage++)));</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>callback.onResult</code>继续分发，链条有点长，就直接列出来了，</p>
+<blockquote>
+<p>ItemKeyedDataSource.LoadCallbackImpl#onResult<br>DataSource.LoadCallbackHelper#dispatchToReceiver（这里切回了主线程）<br>DataSource.LoadCallbackHelper#dispatchOnCurrentThread<br>PageResult.Receiver#onPageResult<br>PagedStorage#appendPage<br>ContiguousPagedList#onPageAppended<br>PagedList#notifyInserted<br>PagedList.Callback#onInserted（在AsyncPagedListDiffer类里）<br>AdapterListUpdateCallback#onInserted（这里调了mAdapter.notifyItemRangeInserted添加新数据）</p>
+</blockquote>
+<h3 id="mDataSource-invalidate-怎么实现下拉刷新的"><a href="#mDataSource-invalidate-怎么实现下拉刷新的" class="headerlink" title="mDataSource.invalidate()怎么实现下拉刷新的"></a>mDataSource.invalidate()怎么实现下拉刷新的</h3><p>首先我们会调用<code>mDataSource.invalidate()</code>，然后来到，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//DataSource.java</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">invalidate</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (mInvalid.compareAndSet(<span class="keyword">false</span>, <span class="keyword">true</span>)) &#123;</span><br><span class="line">        <span class="keyword">for</span> (InvalidatedCallback callback : mOnInvalidatedCallbacks) &#123;</span><br><span class="line">            callback.onInvalidated();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//LivePagedListBuilder.java</span></span><br><span class="line"><span class="keyword">final</span> DataSource.InvalidatedCallback mCallback =</span><br><span class="line">    <span class="keyword">new</span> DataSource.InvalidatedCallback() &#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onInvalidated</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        invalidate();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">//ComputableLiveData.java</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">invalidate</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    ArchTaskExecutor.getInstance().executeOnMainThread(mInvalidationRunnable);</span><br><span class="line">    <span class="comment">//mInvalidationRunnable - mRefreshRunnable - compute()</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//LivePagedListBuilder.java</span></span><br><span class="line"><span class="function"><span class="keyword">protected</span> PagedList&lt;Value&gt; <span class="title">compute</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">//调用我们提供的数据源工厂类实现，创建数据源</span></span><br><span class="line">    mDataSource = dataSourceFactory.create();</span><br><span class="line">    mList = <span class="keyword">new</span> PagedList.Builder&lt;&gt;(mDataSource, config)</span><br><span class="line">                            .setNotifyExecutor(notifyExecutor)</span><br><span class="line">                            .setFetchExecutor(fetchExecutor)</span><br><span class="line">                            .setBoundaryCallback(boundaryCallback)</span><br><span class="line">                            .setInitialKey(initializeKey)</span><br><span class="line">                            .build();</span><br><span class="line">    <span class="keyword">return</span> mList;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//ComputableLiveData.java</span></span><br><span class="line"><span class="comment">//执行完compute，设置值，通知观察者</span></span><br><span class="line">mLiveData.postValue(value);</span><br><span class="line"></span><br><span class="line"><span class="comment">//回到了activity</span></span><br><span class="line">mViewModel.getPageData().observe(<span class="keyword">this</span>, <span class="keyword">new</span> Observer&lt;PagedList&lt;ArticleBean.DataBean.Article&gt;&gt;() &#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onChanged</span><span class="params">(PagedList&lt;ArticleBean.DataBean.Article&gt; articles)</span> </span>&#123;</span><br><span class="line">        <span class="comment">//重新提交数据</span></span><br><span class="line">        mAdapter.submitList(articles);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>回到我们的数据源工厂类实现，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//PagingNetworkViewModel2.java</span></span><br><span class="line"><span class="keyword">private</span> DataSource.Factory mFactory = <span class="keyword">new</span> DataSource.Factory() &#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> DataSource <span class="title">create</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (mDataSource == <span class="keyword">null</span> || mDataSource.isInvalid()) &#123;</span><br><span class="line">            <span class="comment">//下拉刷新调用mDataSource.invalidate()，这时需要创建一个新的数据源</span></span><br><span class="line">            mDataSource = createDataSource();</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> mDataSource;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p><code>mDataSource.invalidate()</code>下拉刷新必须创建新的数据源，否则将引起死循环，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//LivePagedListBuilder.java</span></span><br><span class="line"><span class="function"><span class="keyword">protected</span> PagedList&lt;Value&gt; <span class="title">compute</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">do</span> &#123;</span><br><span class="line">        mDataSource = dataSourceFactory.create();</span><br><span class="line">        mDataSource.addInvalidatedCallback(mCallback);</span><br><span class="line">        mList = <span class="keyword">new</span> PagedList.Builder&lt;&gt;(mDataSource, config)</span><br><span class="line">            .setNotifyExecutor(notifyExecutor)</span><br><span class="line">            .setFetchExecutor(fetchExecutor)</span><br><span class="line">            .setBoundaryCallback(boundaryCallback)</span><br><span class="line">            .setInitialKey(initializeKey)</span><br><span class="line">            .build();</span><br><span class="line">    &#125; <span class="keyword">while</span> (mList.isDetached());<span class="comment">//始终为true，引起死循环</span></span><br><span class="line">    <span class="keyword">return</span> mList;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="优缺点"><a href="#优缺点" class="headerlink" title="优缺点"></a>优缺点</h2><ul>
+<li>优点：<ul>
+<li>自带分页，预加载处理</li>
+<li>子线程diff，主线程局部刷新</li>
+<li>可以和<code>Room</code>无缝结合</li>
+</ul>
+</li>
+<li>缺点：<ul>
+<li>使用复杂，有待封装</li>
+</ul>
+</li>
+</ul>
+<h2 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h2><ul>
+<li><a href="https://juejin.im/post/5c53ad9e6fb9a049eb3c5cfd" target="_blank" rel="noopener">掘金-Android官方架构组件Paging:分页库的设计美学</a></li>
+<li><a href="https://blog.csdn.net/u013005316/article/details/83376370" target="_blank" rel="noopener">csdn-Android Paging数据刷新及原理解析</a></li>
+<li><a href="https://github.com/android/architecture-components-samples">GitHub-谷歌jetpack示例</a></li>
+</ul>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gefkvd6w0jj31bi0hc44f.jpg" alt=""></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/05/07/Android-Jetpack%E7%AC%94%E8%AE%B0-Paging%E7%BB%93%E5%90%88%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="next" title="Android-Jetpack笔记-Paging结合数据库">
+                <i class="fa fa-chevron-left"></i> Android-Jetpack笔记-Paging结合数据库
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">哈利迪</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/%7C%7C%20archive">
+              
+                  <span class="site-state-item-count">11</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">1</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#使用"><span class="nav-number">1.</span> <span class="nav-text">使用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#原理"><span class="nav-number">2.</span> <span class="nav-text">原理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#预加载怎么触发加载更多的"><span class="nav-number">2.1.</span> <span class="nav-text">预加载怎么触发加载更多的</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mDataSource-invalidate-怎么实现下拉刷新的"><span class="nav-number">2.2.</span> <span class="nav-text">mDataSource.invalidate()怎么实现下拉刷新的</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#优缺点"><span class="nav-number">3.</span> <span class="nav-text">优缺点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考文章"><span class="nav-number">4.</span> <span class="nav-text">参考文章</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">哈利迪</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
