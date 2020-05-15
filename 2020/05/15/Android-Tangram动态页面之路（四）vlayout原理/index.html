@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Android," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="本系列文章主要介绍天猫团队开源的Tangram框架的使用心得和原理，由于Tangram底层基于vlayout，所以也会简单讲解，该系列将按以下大纲进行介绍：  需求背景  Tangram和vlayout介绍  Tangram的使用  vlayout原理  Tangram原理  Tangram二次封装   本文将对Tangram的底层实现vlayout进行讲解。 基于vlayout最新源码 vlay">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android | Tangram动态页面之路（四）vlayout原理">
+<meta property="og:url" content="https://github.com/holidayei/2020/05/15/Android-Tangram%E5%8A%A8%E6%80%81%E9%A1%B5%E9%9D%A2%E4%B9%8B%E8%B7%AF%EF%BC%88%E5%9B%9B%EF%BC%89vlayout%E5%8E%9F%E7%90%86/index.html">
+<meta property="og:site_name" content="Holiday">
+<meta property="og:description" content="本系列文章主要介绍天猫团队开源的Tangram框架的使用心得和原理，由于Tangram底层基于vlayout，所以也会简单讲解，该系列将按以下大纲进行介绍：  需求背景  Tangram和vlayout介绍  Tangram的使用  vlayout原理  Tangram原理  Tangram二次封装   本文将对Tangram的底层实现vlayout进行讲解。 基于vlayout最新源码 vlay">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1gepida1zdlj30rs0kgwjg.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1ges20lrgbvj318g039mxx.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1ges3lgcxr7g30dc0nsah9.gif">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gesaachghdj30xc0oc7cc.jpg">
+<meta property="og:image" content="http://img.doutula.com/production/uploads/image/2017/11/19/20171119104990_rgCaVP.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gefkvd6w0jj31bi0hc44f.jpg">
+<meta property="article:published_time" content="2020-05-15T12:37:00.000Z">
+<meta property="article:modified_time" content="2020-05-15T12:38:42.129Z">
+<meta property="article:author" content="哈利迪">
+<meta property="article:tag" content="Android">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1gepida1zdlj30rs0kgwjg.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://github.com/holidayei/2020/05/15/Android-Tangram动态页面之路（四）vlayout原理/"/>
+
+
+
+
+
+  <title>Android | Tangram动态页面之路（四）vlayout原理 | Holiday</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Holiday</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://github.com/holidayei/2020/05/15/Android-Tangram%E5%8A%A8%E6%80%81%E9%A1%B5%E9%9D%A2%E4%B9%8B%E8%B7%AF%EF%BC%88%E5%9B%9B%EF%BC%89vlayout%E5%8E%9F%E7%90%86/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="哈利迪">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Holiday">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Android | Tangram动态页面之路（四）vlayout原理</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-05-15T20:37:00+08:00">
+                2020-05-15
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>本系列文章主要介绍天猫团队开源的<a href="https://github.com/alibaba/Tangram-Android.git">Tangram</a>框架的使用心得和原理，由于<code>Tangram</code>底层基于<a href="https://github.com/alibaba/vlayout.git">vlayout</a>，所以也会简单讲解，该系列将按以下大纲进行介绍：</p>
+<ol>
+<li><p><a href="https://juejin.im/post/5eb6ae935188256d5a0d9482" target="_blank" rel="noopener">需求背景</a></p>
+</li>
+<li><p><a href="https://juejin.im/post/5eba9113f265da7bd442576f" target="_blank" rel="noopener">Tangram和vlayout介绍</a></p>
+</li>
+<li><p><a href="https://juejin.im/post/5ebbe23ff265da7bfc40390c" target="_blank" rel="noopener">Tangram的使用</a></p>
+</li>
+<li><p>vlayout原理</p>
+</li>
+<li><p>Tangram原理</p>
+</li>
+<li><p>Tangram二次封装</p>
+</li>
+</ol>
+<p>本文将对<code>Tangram</code>的底层实现<code>vlayout</code>进行讲解。</p>
+<p><a href="https://github.com/alibaba/vlayout/commit/f394eff9beb5b13872d4637fe148e767f2f0320d">基于vlayout最新源码</a></p>
+<h2 id="vlayout"><a href="#vlayout" class="headerlink" title="vlayout"></a>vlayout</h2><p>在<a href="https://juejin.im/post/5eba9113f265da7bd442576f" target="_blank" rel="noopener">Tangram和vlayout介绍</a>这篇文章提到过，</p>
+<blockquote>
+<p>vlayout自定义了一个VirtualLayoutManager，它继承自 LinearLayoutManager；引入了 LayoutHelper 的概念，它负责具体的布局逻辑；VirtualLayoutManager管理了一系列LayoutHelper，将具体的布局能力交给LayoutHelper来完成，每一种LayoutHelper提供一种布局方式，框架内置提供了几种常用的布局类型，包括：网格布局、线性布局、瀑布流布局、悬浮布局、吸边布局等。这样实现了混合布局的能力，并且支持扩展外部，注册新的LayoutHelper，实现特殊的布局方式。</p>
+<p>引用自<a href="http://pingguohe.net/2017/02/28/vlayout-design.html" target="_blank" rel="noopener">苹果核 - Tangram 的基础 —— vlayout（Android）</a></p>
+</blockquote>
+<p>大致意思是这样，</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gepida1zdlj30rs0kgwjg.jpg" alt=""></p>
+<p>在<code>VLayoutActivity</code>中，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//VLayoutActivity.java</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">onCreate</span><span class="params">(Bundle savedInstanceState)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (FLOAT_LAYOUT) &#123;</span><br><span class="line">        <span class="comment">//创建布局方式layoutHelper，FloatLayoutHelper是浮动可拖拽布局，比如微信现在的浮窗功能</span></span><br><span class="line">        FloatLayoutHelper layoutHelper = <span class="keyword">new</span> FloatLayoutHelper();</span><br><span class="line">        <span class="comment">//设置初始位置为右下角</span></span><br><span class="line">        layoutHelper.setAlignType(FixLayoutHelper.BOTTOM_RIGHT);</span><br><span class="line">        <span class="comment">//设置偏移量，位置是右下角时，分别是marginRight和marginBottom</span></span><br><span class="line">        layoutHelper.setDefaultLocation(<span class="number">100</span>, <span class="number">400</span>);</span><br><span class="line">        <span class="comment">//设置宽高</span></span><br><span class="line">        LayoutParams layoutParams = <span class="keyword">new</span> LayoutParams(<span class="number">150</span>, <span class="number">150</span>);</span><br><span class="line">        <span class="comment">//创建子适配器，添加进适配器集合</span></span><br><span class="line">        adapters.add(<span class="keyword">new</span> SubAdapter(<span class="keyword">this</span>, layoutHelper, <span class="number">1</span>, layoutParams));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>来到子适配器<code>SubAdapter</code>，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//继承DelegateAdapter.Adapter</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">SubAdapter</span> <span class="keyword">extends</span> <span class="title">DelegateAdapter</span>.<span class="title">Adapter</span>&lt;<span class="title">MainViewHolder</span>&gt; </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> LayoutHelper mLayoutHelper;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">SubAdapter</span><span class="params">(Context context, LayoutHelper layoutHelper, <span class="keyword">int</span> count, LayoutParams layoutParams)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.mContext = context;</span><br><span class="line">        <span class="keyword">this</span>.mLayoutHelper = layoutHelper;</span><br><span class="line">        <span class="keyword">this</span>.mCount = count;</span><br><span class="line">        <span class="keyword">this</span>.mLayoutParams = layoutParams;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> LayoutHelper <span class="title">onCreateLayoutHelper</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="comment">//把传进来的布局方式LayoutHelper返回</span></span><br><span class="line">        <span class="keyword">return</span> mLayoutHelper;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//创建ViewHolder</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> MainViewHolder <span class="title">onCreateViewHolder</span><span class="params">(ViewGroup parent, <span class="keyword">int</span> viewType)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> MainViewHolder(LayoutInflater.from(mContext).inflate(R.layout.item, parent, <span class="keyword">false</span>));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//绑定ViewHolder</span></span><br><span class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">onBindViewHolderWithOffset</span><span class="params">(MainViewHolder holder, <span class="keyword">int</span> position, <span class="keyword">int</span> offsetTotal)</span> </span>&#123;</span><br><span class="line">        ((TextView) holder.itemView.findViewById(R.id.title)).setText(Integer.toString(offsetTotal));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在<code>delegateAdapter.setAdapters(adapters)</code>时，取出适配器指定的布局方式，进行透传，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//DelegateAdapter.java</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setAdapters</span><span class="params">(List&lt;Adapter&gt; adapters)</span> </span>&#123;</span><br><span class="line">    List&lt;LayoutHelper&gt; helpers = <span class="keyword">new</span> LinkedList&lt;&gt;();</span><br><span class="line">    <span class="keyword">for</span> (Adapter adapter : adapters) &#123;</span><br><span class="line">        LayoutHelper helper = adapter.onCreateLayoutHelper();</span><br><span class="line">        helpers.add(helper);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">super</span>.setLayoutHelpers(helpers);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>来到<code>VirtualLayoutManager</code>，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//VirtualLayoutManager.java</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">setLayoutHelpers</span><span class="params">(@Nullable List&lt;LayoutHelper&gt; helpers)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//设置每个布局方式LayoutHelper的管辖范围start和end</span></span><br><span class="line">    <span class="comment">//假设第1个模块是ColumnLayoutHelper，有3个元素，则管辖范围是[0,2]</span></span><br><span class="line">    <span class="comment">//第2个模块是OnePlusNLayoutHelper，有4个元素，则管辖范围是[3,6]</span></span><br><span class="line">    <span class="keyword">if</span> (helpers != <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">int</span> start = <span class="number">0</span>;</span><br><span class="line">        Iterator&lt;LayoutHelper&gt; it1 = helpers.iterator();</span><br><span class="line">        <span class="keyword">while</span> (it1.hasNext()) &#123;</span><br><span class="line">            LayoutHelper helper = it1.next();</span><br><span class="line">            <span class="keyword">if</span> (helper.getItemCount() &gt; <span class="number">0</span>) &#123;</span><br><span class="line">                helper.setRange(start, start + helper.getItemCount() - <span class="number">1</span>);</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                helper.setRange(-<span class="number">1</span>, -<span class="number">1</span>);</span><br><span class="line">            &#125;</span><br><span class="line">            start += helper.getItemCount();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//内部进行赋值和排序，RangeLayoutHelperFinder可以根据位置查找对应的LayoutHelper</span></span><br><span class="line">    <span class="keyword">this</span>.mHelperFinder.setLayouts(helpers);</span><br><span class="line">    requestLayout();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>LayoutHelper</code>被赋值好后，进行布局，这里暂不深究<code>View</code>的测量布局绘制流程，来到<code>VirtualLayoutManager.onLayoutChildren</code>，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//VirtualLayoutManager.java</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">onLayoutChildren</span><span class="params">(RecyclerView.Recycler recycler, RecyclerView.State state)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//预布局，也就是调用每个ayoutHelper的beforeLayout</span></span><br><span class="line">    runPreLayout(recycler, state);</span><br><span class="line">    <span class="keyword">super</span>.onLayoutChildren(recycler, state);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//ExposeLinearLayoutManagerEx.java</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">onLayoutChildren</span><span class="params">(RecyclerView.Recycler recycler, RecyclerView.State state)</span> </span>&#123;</span><br><span class="line">    fill(recycler, mLayoutState, state, <span class="keyword">false</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">fill</span><span class="params">(RecyclerView.Recycler recycler, LayoutState layoutState,</span></span></span><br><span class="line"><span class="function"><span class="params">                       RecyclerView.State state, <span class="keyword">boolean</span> stopOnFocusable)</span> </span>&#123;</span><br><span class="line">    layoutChunk(recycler, state, layoutState, layoutChunkResultCache);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//VirtualLayoutManager.java</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">layoutChunk</span><span class="params">(RecyclerView.Recycler recycler, RecyclerView.State state, </span></span></span><br><span class="line"><span class="function"><span class="params">                 LayoutState layoutState, </span></span></span><br><span class="line"><span class="function"><span class="params">                 com.alibaba.android.vlayout.layout.LayoutChunkResult result)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//RangeLayoutHelperFinder根据位置查找对应的的布局方式LayoutHelper</span></span><br><span class="line">    <span class="keyword">final</span> <span class="keyword">int</span> position = layoutState.mCurrentPosition;</span><br><span class="line">    LayoutHelper layoutHelper = mHelperFinder == <span class="keyword">null</span> ? <span class="keyword">null</span> : mHelperFinder.getLayoutHelper(position);</span><br><span class="line">    layoutHelper.doLayout(recycler, state, mTempLayoutStateWrapper, result, <span class="keyword">this</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//BaseLayoutHelper.java</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">doLayout</span><span class="params">(RecyclerView.Recycler recycler, RecyclerView.State state, </span></span></span><br><span class="line"><span class="function"><span class="params">              LayoutStateWrapper layoutState, LayoutChunkResult result, </span></span></span><br><span class="line"><span class="function"><span class="params">              LayoutManagerHelper helper)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//触发每个具体的LayoutHelper进行测量和布局</span></span><br><span class="line">    layoutViews(recycler, state, layoutState, result, helper);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>具体的测量和布局的实现<code>layoutViews</code>，我们举两个比较典型的布局方式分析，<code>ColumnLayoutHelper</code>和<code>FloatLayoutHelper</code>。</p>
+<h3 id="举例ColumnLayoutHelper列布局"><a href="#举例ColumnLayoutHelper列布局" class="headerlink" title="举例ColumnLayoutHelper列布局"></a>举例ColumnLayoutHelper列布局</h3><p>设置比重，第一列和第四列占比33，中间两列不指定比重，则平分剩余空间，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">layoutHelper.setWeights(<span class="keyword">new</span> <span class="keyword">float</span>[]&#123;<span class="number">33f</span>, Float.NaN, Float.NaN, <span class="number">33f</span>&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>效果如下，</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1ges20lrgbvj318g039mxx.jpg" alt=""></p>
+<p>来看<code>layoutViews</code>方法，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//ColumnLayoutHelper.java</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">layoutViews</span><span class="params">(RecyclerView.Recycler recycler, RecyclerView.State state, </span></span></span><br><span class="line"><span class="function"><span class="params">                 VirtualLayoutManager.LayoutStateWrapper layoutState, </span></span></span><br><span class="line"><span class="function"><span class="params">                 LayoutChunkResult result, LayoutManagerHelper helper)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">final</span> <span class="keyword">int</span> count = getAllChildren(mViews, recycler, layoutState, result, helper);</span><br><span class="line">    <span class="comment">//1. 计算每个child的margin</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">//2. 用总宽度和百分比为child分配宽高，没有设置百分比的child先存储进mEqViews</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; count; i++) &#123;</span><br><span class="line">        View view = mViews[i];</span><br><span class="line">        VirtualLayoutManager.LayoutParams params = (VirtualLayoutManager.LayoutParams) view.getLayoutParams();</span><br><span class="line">        <span class="keyword">int</span> heightSpec = helper.getChildMeasureSpec(</span><br><span class="line">            helper.getContentHeight() - helper.getPaddingTop() - helper.getPaddingBottom(),</span><br><span class="line">            uniformHeight &gt; <span class="number">0</span> ? uniformHeight : params.height, <span class="keyword">true</span>);</span><br><span class="line">        <span class="keyword">if</span> (mWeights != <span class="keyword">null</span> &amp;&amp; i &lt; mWeights.length &amp;&amp; !Float.isNaN(mWeights[i]) &amp;&amp; mWeights[i] &gt;= <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="comment">//根据百分比计算宽度</span></span><br><span class="line">            <span class="keyword">int</span> resizeWidth = (<span class="keyword">int</span>) (mWeights[i] * <span class="number">1.0f</span> / <span class="number">100</span> * availableWidth + <span class="number">0.5f</span>);</span><br><span class="line">            <span class="comment">//根据宽度和比例计算高度</span></span><br><span class="line">            <span class="keyword">if</span> (!Float.isNaN(params.mAspectRatio)) &#123;</span><br><span class="line">                <span class="keyword">int</span> specialHeight = (<span class="keyword">int</span>) (resizeWidth / params.mAspectRatio + <span class="number">0.5f</span>);</span><br><span class="line">                heightSpec = View.MeasureSpec</span><br><span class="line">                    .makeMeasureSpec(specialHeight, View.MeasureSpec.EXACTLY);</span><br><span class="line">            &#125;</span><br><span class="line">            helper.measureChildWithMargins(view, View.MeasureSpec.makeMeasureSpec(resizeWidth, View.MeasureSpec.EXACTLY), heightSpec);</span><br><span class="line">            <span class="comment">//记录已使用宽度</span></span><br><span class="line">            usedWidth += resizeWidth;</span><br><span class="line">            <span class="comment">//记录最小高度</span></span><br><span class="line">            minHeight = Math.min(minHeight, view.getMeasuredHeight());</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            mEqViews[eqSize++] = view;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>3.将剩余宽度平分给没有设置百分比的child，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//ColumnLayoutHelper.java</span></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; eqSize; i++) &#123;</span><br><span class="line">    View view = mEqViews[i];</span><br><span class="line">    VirtualLayoutManager.LayoutParams params = (VirtualLayoutManager.LayoutParams) view.getLayoutParams();</span><br><span class="line">    <span class="keyword">int</span> heightSpec;</span><br><span class="line">    <span class="keyword">int</span> resizeWidth = (<span class="keyword">int</span>) ((availableWidth - usedWidth) * <span class="number">1.0f</span> / eqSize + <span class="number">0.5f</span>);</span><br><span class="line">    <span class="comment">//根据宽度和比例计算高度</span></span><br><span class="line">    <span class="keyword">if</span> (!Float.isNaN(params.mAspectRatio)) &#123;</span><br><span class="line">        <span class="keyword">int</span> specialHeight = (<span class="keyword">int</span>) (resizeWidth / params.mAspectRatio + <span class="number">0.5f</span>);</span><br><span class="line">        heightSpec = View.MeasureSpec</span><br><span class="line">            .makeMeasureSpec(specialHeight, View.MeasureSpec.EXACTLY);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        heightSpec = helper.getChildMeasureSpec(</span><br><span class="line">            helper.getContentHeight() - helper.getPaddingTop() - helper.getPaddingBottom(),</span><br><span class="line">            uniformHeight &gt; <span class="number">0</span> ? uniformHeight : params.height, <span class="keyword">true</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    helper.measureChildWithMargins(view, View.MeasureSpec.makeMeasureSpec(resizeWidth, View.MeasureSpec.EXACTLY),</span><br><span class="line">                                   heightSpec);</span><br><span class="line">    <span class="comment">//记录最小高度</span></span><br><span class="line">    minHeight = Math.min(minHeight, view.getMeasuredHeight());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>4.为所有child统一高度，为最小高度</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//ColumnLayoutHelper.java</span></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; count; i++) &#123;</span><br><span class="line">    View view = mViews[i];</span><br><span class="line">    <span class="keyword">if</span> (view.getMeasuredHeight() != minHeight) &#123;</span><br><span class="line">        helper.measureChildWithMargins(view, View.MeasureSpec.makeMeasureSpec(view.getMeasuredWidth(), View.MeasureSpec.EXACTLY),</span><br><span class="line">                                       View.MeasureSpec.makeMeasureSpec(minHeight, View.MeasureSpec.EXACTLY));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>5.测量完成，进行布局，最终交给<code>RecyclerView.LayoutManager</code>进行处理，即<code>layoutDecorated</code>，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//ColumnLayoutHelper.java</span></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; count; i++) &#123;</span><br><span class="line">    View view = mViews[i];</span><br><span class="line">    <span class="keyword">int</span> top = mTempArea.top, bottom = mTempArea.bottom;</span><br><span class="line">    <span class="keyword">int</span> right = left + orientationHelper.getDecoratedMeasurementInOther(view);</span><br><span class="line">    layoutChildWithMargin(view, left, top, right, bottom, helper);</span><br><span class="line">    left = right;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="举例FloatLayoutHelper浮动可拖拽布局"><a href="#举例FloatLayoutHelper浮动可拖拽布局" class="headerlink" title="举例FloatLayoutHelper浮动可拖拽布局"></a>举例FloatLayoutHelper浮动可拖拽布局</h3><p><code>FloatLayoutHelper</code>的布局代码就不看了，大概就是根据位置和偏移量计算具体位置，我们重点关注下他的触摸事件实现，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//FloatLayoutHelper.java</span></span><br><span class="line">View.OnTouchListener touchDragListener = <span class="keyword">new</span> View.OnTouchListener() &#123;</span><br><span class="line">    <span class="function"><span class="keyword">boolean</span> <span class="title">onTouch</span><span class="params">(View v, MotionEvent event)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">int</span> action = event.getAction();</span><br><span class="line">        <span class="keyword">switch</span> (action) &#123;</span><br><span class="line">            <span class="keyword">case</span> MotionEvent.ACTION_DOWN:</span><br><span class="line">                isDrag = <span class="keyword">false</span>;</span><br><span class="line">                <span class="comment">//按下，让父view RecyclerView不要拦截事件</span></span><br><span class="line">                (v.getParent()).requestDisallowInterceptTouchEvent(<span class="keyword">true</span>);</span><br><span class="line">                lastPosX = (<span class="keyword">int</span>) event.getX();</span><br><span class="line">                lastPosY = (<span class="keyword">int</span>) event.getY();</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            <span class="keyword">case</span> MotionEvent.ACTION_MOVE:</span><br><span class="line">                <span class="keyword">if</span> (Math.abs(event.getX() - lastPosX) &gt; mTouchSlop</span><br><span class="line">                    || Math.abs(event.getY() - lastPosY) &gt; mTouchSlop) &#123;</span><br><span class="line">                    isDrag = <span class="keyword">true</span>;</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">if</span> (isDrag) &#123;</span><br><span class="line">                    <span class="comment">//...</span></span><br><span class="line">                    <span class="comment">//不断更新坐标，实现移动效果</span></span><br><span class="line">                    v.setTranslationX(curTranslateX);</span><br><span class="line">                    v.setTranslationY(curTranslateY);</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            <span class="keyword">case</span> MotionEvent.ACTION_UP:</span><br><span class="line">            <span class="keyword">case</span> MotionEvent.ACTION_CANCEL:</span><br><span class="line">                <span class="comment">//抬起或取消，播放吸边动画，即自动弹回两侧</span></span><br><span class="line">                doPullOverAnimation(v);</span><br><span class="line">                <span class="comment">//让父view RecyclerView恢复拦截事件</span></span><br><span class="line">                (v.getParent()).requestDisallowInterceptTouchEvent(<span class="keyword">false</span>);</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>效果如下，</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1ges3lgcxr7g30dc0nsah9.gif" alt=""></p>
+<h3 id="RecyclerView复用和Cantor函数"><a href="#RecyclerView复用和Cantor函数" class="headerlink" title="RecyclerView复用和Cantor函数"></a>RecyclerView复用和Cantor函数</h3><p><code>RecyclerView</code>最终使用的是管理子适配器集合的<code>DelegateAdapter</code>，通常情况下，我们是没法保证各个子适配器间的<code>viewType</code>能不冲突的，所以这里只分析<code>hasConsistItemType=false</code>的情况，具体原因见<a href="http://pingguohe.net/2017/08/31/vlayout-faq.html" target="_blank" rel="noopener">FAQ</a>（组件复用的问题），</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//DelegateAdapter.java</span></span><br><span class="line"></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">getItemViewType</span><span class="params">(<span class="keyword">int</span> position)</span> </span>&#123;</span><br><span class="line">    Pair&lt;AdapterDataObserver, Adapter&gt; p = findAdapterByPosition(position);</span><br><span class="line">    <span class="comment">//子适配器的viewType作为subItemType</span></span><br><span class="line">    <span class="keyword">int</span> subItemType = p.second.getItemViewType(position - p.first.mStartPosition);</span><br><span class="line">    <span class="comment">//布局方式LayoutHelper的所在位置作为index</span></span><br><span class="line">    <span class="keyword">int</span> index = p.first.mIndex;</span><br><span class="line">    <span class="comment">//Cantor运算转成一个数</span></span><br><span class="line">    <span class="keyword">return</span> (<span class="keyword">int</span>) Cantor.getCantor(subItemType, index);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="keyword">public</span> RecyclerView.<span class="function">ViewHolder <span class="title">onCreateViewHolder</span><span class="params">(ViewGroup parent, <span class="keyword">int</span> viewType)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//Cantor逆运算，把一个数转回subItemType和index</span></span><br><span class="line">    Cantor.reverseCantor(viewType, cantorReverse);</span><br><span class="line">    <span class="keyword">int</span> index = (<span class="keyword">int</span>)cantorReverse[<span class="number">1</span>];</span><br><span class="line">    <span class="keyword">int</span> subItemType = (<span class="keyword">int</span>)cantorReverse[<span class="number">0</span>];</span><br><span class="line">    <span class="comment">//根据index找到具体的子适配器</span></span><br><span class="line">    Adapter adapter = findAdapterByIndex(index);</span><br><span class="line">    <span class="comment">//由子适配器来创建具体的view</span></span><br><span class="line">    <span class="keyword">return</span> adapter.onCreateViewHolder(parent, subItemType);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这边有点晦涩，画了张图，需要细品~</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gesaachghdj30xc0oc7cc.jpg" alt=""></p>
+<p>这样，自然就可以利用<code>RecyclerView</code>自带的复用机制帮我们管理view的复用了，</p>
+<blockquote>
+<p>关于cantor函数：</p>
+<p>设idx1,type1;idx2,type2，</p>
+<p>当 idx1 != idx2 或 type1 != type2，</p>
+<p>viewType1 = cantor(idx1,type1) </p>
+<p>viewType2 = cantor(idx2,type2) 时</p>
+<p>满足 viewType1 != viewType2</p>
+<p>同时支持逆运算：</p>
+<p>viewType1 =&gt; idx1,type1</p>
+<p>viewType2 =&gt; idx2,type2</p>
+</blockquote>
+<p>感兴趣的话可以看<a href="http://pingguohe.net/2017/05/03/the-beauty-of-math-in-vlayout.html" target="_blank" rel="noopener">vlayout中使用数学的小场景</a>。</p>
+<p><img src="http://img.doutula.com/production/uploads/image/2017/11/19/20171119104990_rgCaVP.jpg" alt=""></p>
+<h2 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h2><ul>
+<li><a href="http://pingguohe.net/2017/02/28/vlayout-design.html" target="_blank" rel="noopener">苹果核 - Tangram 的基础 —— vlayout（Android）</a></li>
+<li><a href="http://pingguohe.net/2017/05/03/the-beauty-of-math-in-vlayout.html" target="_blank" rel="noopener">苹果核 - Pairing Function —— vlayout 中使用数学的小场景</a></li>
+<li><a href="https://www.cnblogs.com/dasusu/p/7746946.html" target="_blank" rel="noopener">博客园-基于场景解析RecyclerView的回收复用机制原理</a></li>
+<li><a href="https://www.jianshu.com/p/697ce543b1c1" target="_blank" rel="noopener">简书-RecyclerView理解-布局与回收复用</a></li>
+</ul>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gefkvd6w0jj31bi0hc44f.jpg" alt=""></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Android/" rel="tag"># Android</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/05/15/Android-Tangram%E5%8A%A8%E6%80%81%E9%A1%B5%E9%9D%A2%E4%B9%8B%E8%B7%AF%EF%BC%88%E4%B8%89%EF%BC%89%E4%BD%BF%E7%94%A8/" rel="next" title="Android | Tangram动态页面之路（三）使用">
+                <i class="fa fa-chevron-left"></i> Android | Tangram动态页面之路（三）使用
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">哈利迪</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/%7C%7C%20archive">
+              
+                  <span class="site-state-item-count">16</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">1</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#vlayout"><span class="nav-number">1.</span> <span class="nav-text">vlayout</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#举例ColumnLayoutHelper列布局"><span class="nav-number">1.1.</span> <span class="nav-text">举例ColumnLayoutHelper列布局</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#举例FloatLayoutHelper浮动可拖拽布局"><span class="nav-number">1.2.</span> <span class="nav-text">举例FloatLayoutHelper浮动可拖拽布局</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#RecyclerView复用和Cantor函数"><span class="nav-number">1.3.</span> <span class="nav-text">RecyclerView复用和Cantor函数</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考文章"><span class="nav-number">2.</span> <span class="nav-text">参考文章</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">哈利迪</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

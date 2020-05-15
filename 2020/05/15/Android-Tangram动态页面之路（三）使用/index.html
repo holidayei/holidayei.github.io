@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Android," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="本系列文章主要介绍天猫团队开源的Tangram框架的使用心得和原理，由于Tangram底层基于vlayout，所以也会简单讲解，该系列将按以下大纲进行介绍：  需求背景  Tangram和vlayout介绍  Tangram的使用  vlayout原理  Tangram原理  Tangram二次封装   本文将对Tangram的简单使用进行介绍。 Demo代码 基础使用引入依赖： 12345678">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android | Tangram动态页面之路（三）使用">
+<meta property="og:url" content="https://github.com/holidayei/2020/05/15/Android-Tangram%E5%8A%A8%E6%80%81%E9%A1%B5%E9%9D%A2%E4%B9%8B%E8%B7%AF%EF%BC%88%E4%B8%89%EF%BC%89%E4%BD%BF%E7%94%A8/index.html">
+<meta property="og:site_name" content="Holiday">
+<meta property="og:description" content="本系列文章主要介绍天猫团队开源的Tangram框架的使用心得和原理，由于Tangram底层基于vlayout，所以也会简单讲解，该系列将按以下大纲进行介绍：  需求背景  Tangram和vlayout介绍  Tangram的使用  vlayout原理  Tangram原理  Tangram二次封装   本文将对Tangram的简单使用进行介绍。 Demo代码 基础使用引入依赖： 12345678">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1geqsr04bk5j30og05ujum.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1geqsvmn2a6j30jg0b50yu.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1geqt9dqfjmj30jg07agov.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1geqw08ytrxj30xc0i17k0.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1geqw92yu2gj304q04s74l.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1ger3cv1av4j305i05ijr8.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gefkvd6w0jj31bi0hc44f.jpg">
+<meta property="article:published_time" content="2020-05-15T12:36:48.000Z">
+<meta property="article:modified_time" content="2020-05-15T12:38:42.127Z">
+<meta property="article:author" content="哈利迪">
+<meta property="article:tag" content="Android">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1geqsr04bk5j30og05ujum.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://github.com/holidayei/2020/05/15/Android-Tangram动态页面之路（三）使用/"/>
+
+
+
+
+
+  <title>Android | Tangram动态页面之路（三）使用 | Holiday</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Holiday</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://github.com/holidayei/2020/05/15/Android-Tangram%E5%8A%A8%E6%80%81%E9%A1%B5%E9%9D%A2%E4%B9%8B%E8%B7%AF%EF%BC%88%E4%B8%89%EF%BC%89%E4%BD%BF%E7%94%A8/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="哈利迪">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Holiday">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Android | Tangram动态页面之路（三）使用</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-05-15T20:36:48+08:00">
+                2020-05-15
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>本系列文章主要介绍天猫团队开源的<a href="https://github.com/alibaba/Tangram-Android.git">Tangram</a>框架的使用心得和原理，由于<code>Tangram</code>底层基于<a href="https://github.com/alibaba/vlayout.git">vlayout</a>，所以也会简单讲解，该系列将按以下大纲进行介绍：</p>
+<ol>
+<li><p><a href="https://juejin.im/post/5eb6ae935188256d5a0d9482" target="_blank" rel="noopener">需求背景</a></p>
+</li>
+<li><p><a href="https://juejin.im/post/5eba9113f265da7bd442576f" target="_blank" rel="noopener">Tangram和vlayout介绍</a></p>
+</li>
+<li><p>Tangram的使用</p>
+</li>
+<li><p>vlayout原理</p>
+</li>
+<li><p>Tangram原理</p>
+</li>
+<li><p>Tangram二次封装</p>
+</li>
+</ol>
+<p>本文将对<code>Tangram</code>的简单使用进行介绍。</p>
+<p><a href="https://github.com/holidayei/TangramDemo">Demo代码</a></p>
+<h2 id="基础使用"><a href="#基础使用" class="headerlink" title="基础使用"></a>基础使用</h2><p>引入依赖：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//tangram相关：tangram使用3.0之前的最新版本，其他直接使用最新版本</span></span><br><span class="line">implementation <span class="string">'com.alibaba.android:tangram:2.2.5@aar'</span></span><br><span class="line"><span class="comment">//tangram底层支持：vlayout</span></span><br><span class="line">implementation <span class="string">'com.alibaba.android:vlayout:1.2.36@aar'</span></span><br><span class="line"><span class="comment">//tangram虚拟视图（更灵活的视图，后面单独开篇讲）</span></span><br><span class="line">implementation(<span class="string">'com.alibaba.android:virtualview:1.4.6@aar'</span>) &#123;</span><br><span class="line">    transitive <span class="keyword">true</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//tangram支持banner翻页用的</span></span><br><span class="line">implementation <span class="string">'com.alibaba.android:ultraviewpager:1.0.7.8@aar'</span></span><br><span class="line"><span class="comment">//tangram内部需要rxjava</span></span><br><span class="line">implementation <span class="string">'io.reactivex.rxjava2:rxjava:2.1.12'</span></span><br><span class="line">implementation <span class="string">'io.reactivex.rxjava2:rxandroid:2.0.2'</span></span><br></pre></td></tr></table></figure>
+
+<p>初始化，主要是传递上下文进去，和设置图片加载能力，这里我们使用<code>Glide</code>，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MyApp</span> <span class="keyword">extends</span> <span class="title">Application</span> </span>&#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onCreate</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">super</span>.onCreate();</span><br><span class="line">        TangramBuilder.init(<span class="keyword">this</span>, <span class="keyword">new</span> IInnerImageSetter() &#123;</span><br><span class="line">            <span class="meta">@Override</span></span><br><span class="line">            <span class="keyword">public</span> &lt;IMAGE extends ImageView&gt; <span class="function"><span class="keyword">void</span> <span class="title">doLoadImageUrl</span><span class="params">(@NonNull IMAGE view, @Nullable String url)</span> </span>&#123;</span><br><span class="line">                Glide.with(view.getContext()).load(url).</span><br><span class="line">                        error(R.mipmap.ic_launcher).</span><br><span class="line">                        into(view);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;, NetImageView<span class="class">.<span class="keyword">class</span>)</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在activity中使用，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//MainActivity.java</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">onCreate</span><span class="params">(Bundle savedInstanceState)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//创建builder来配置参数</span></span><br><span class="line">    TangramBuilder.InnerBuilder builder = TangramBuilder.newInnerBuilder(<span class="keyword">this</span>);</span><br><span class="line">    <span class="comment">//注册自己的cell</span></span><br><span class="line">    builder.registerCell(ImageTextView<span class="class">.<span class="keyword">class</span>.<span class="title">getSimpleName</span>(), <span class="title">ImageTextView</span>.<span class="title">class</span>)</span>;</span><br><span class="line">    builder.registerCell(SingleImageView<span class="class">.<span class="keyword">class</span>.<span class="title">getSimpleName</span>(), <span class="title">SingleImageView</span>.<span class="title">class</span>)</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//创建引擎</span></span><br><span class="line">    mEngine = builder.build();</span><br><span class="line">    <span class="comment">//绑定RecyclerView</span></span><br><span class="line">    mEngine.bindView(mBinding.rvList);</span><br><span class="line"></span><br><span class="line">    mBinding.rvList.addOnScrollListener(<span class="keyword">new</span> RecyclerView.OnScrollListener() &#123;</span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onScrolled</span><span class="params">(RecyclerView recyclerView, <span class="keyword">int</span> dx, <span class="keyword">int</span> dy)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">super</span>.onScrolled(recyclerView, dx, dy);</span><br><span class="line">            <span class="comment">//在 scroll 事件中触发 engine 的 onScroll，内部会触发需要异步加载的卡片去提前加载数据</span></span><br><span class="line">            mEngine.onScrolled();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;);</span><br><span class="line"></span><br><span class="line">    <span class="comment">//设置数据，触发渲染</span></span><br><span class="line">    String file = FileUtil.getAssertsFile(<span class="keyword">this</span>, <span class="string">"main.json"</span>);</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        mEngine.setData(<span class="keyword">new</span> JSONArray(file));</span><br><span class="line">    &#125; <span class="keyword">catch</span> (JSONException e) &#123;</span><br><span class="line">        e.printStackTrace();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>前边的介绍篇提到过，<code>Tangram</code>内置了一些布局方式<code>Card</code>，基本满足需求了，所以我们只需定制自己的具体View也就是<code>Cell</code>即可，上边手动注册了两个<code>Cell</code>，<code>ImageTextView</code>和<code>SingleImageView</code>，我们先来看<code>ImageTextView</code>，他是一个<code>LinearLayout</code>，上边一个图标，下边一个文本，需要实现<code>ITangramViewLifeCycle</code>接口，在相应的回调里执行自己的逻辑，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ImageTextView</span> <span class="keyword">extends</span> <span class="title">LinearLayout</span> <span class="keyword">implements</span> <span class="title">ITangramViewLifeCycle</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> NetImageView mImgIcon;</span><br><span class="line">    <span class="keyword">private</span> TextView mTvTitle;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">ImageTextView</span><span class="params">(Context context, @Nullable AttributeSet attrs, <span class="keyword">int</span> defStyleAttr)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">super</span>(context, attrs, defStyleAttr);</span><br><span class="line">        setOrientation(VERTICAL);</span><br><span class="line">        setGravity(Gravity.CENTER);</span><br><span class="line">        inflate(getContext(), R.layout.cell_image_text, <span class="keyword">this</span>);</span><br><span class="line">        mImgIcon = findViewById(R.id.img_icon);</span><br><span class="line">        mTvTitle = findViewById(R.id.tv_title);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">cellInited</span><span class="params">(BaseCell cell)</span> </span>&#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">postBindView</span><span class="params">(BaseCell cell)</span> </span>&#123;</span><br><span class="line">        mImgIcon.load(cell.optStringParam(<span class="string">"imgUrl"</span>));</span><br><span class="line">        mTvTitle.setText(cell.optStringParam(<span class="string">"title"</span>));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">postUnBindView</span><span class="params">(BaseCell cell)</span> </span>&#123;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>其布局文件<code>cell_image_text.xml</code>如下，</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">merge</span> <span class="attr">xmlns:android</span>=<span class="string">"http://schemas.android.com/apk/res/android"</span></span></span><br><span class="line"><span class="tag">    <span class="attr">xmlns:tools</span>=<span class="string">"http://schemas.android.com/tools"</span></span></span><br><span class="line"><span class="tag">    <span class="attr">android:layout_width</span>=<span class="string">"wrap_content"</span></span></span><br><span class="line"><span class="tag">    <span class="attr">android:layout_height</span>=<span class="string">"wrap_content"</span>&gt;</span></span><br><span class="line"></span><br><span class="line">    <span class="tag">&lt;<span class="name">com.holiday.tangram.view.NetImageView</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:id</span>=<span class="string">"@+id/img_icon"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:layout_width</span>=<span class="string">"50dp"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:layout_height</span>=<span class="string">"50dp"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:scaleType</span>=<span class="string">"centerCrop"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">tools:background</span>=<span class="string">"@color/colorAccent"</span> /&gt;</span></span><br><span class="line"></span><br><span class="line">    <span class="tag">&lt;<span class="name">TextView</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:id</span>=<span class="string">"@+id/tv_title"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:layout_width</span>=<span class="string">"wrap_content"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:layout_height</span>=<span class="string">"wrap_content"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:layout_marginTop</span>=<span class="string">"4dp"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:ellipsize</span>=<span class="string">"end"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:maxLines</span>=<span class="string">"1"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">tools:text</span>=<span class="string">"@string/app_name"</span> /&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">merge</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p><code>Cell</code>都准备好了，下面就是准备<code>json模板</code>了，先来一个四列布局<code>container-fourColumn</code>，</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">"type"</span>: <span class="string">"container-fourColumn"</span>,</span><br><span class="line">    <span class="attr">"items"</span>: [</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">"imgUrl"</span>: <span class="string">"https://tva1.sinaimg.cn/large/007S8ZIlgy1geqp9zhftrj303r03r3yl.jpg"</span>,</span><br><span class="line">            <span class="attr">"title"</span>: <span class="string">"标题1"</span>,</span><br><span class="line">            <span class="attr">"type"</span>: <span class="string">"ImageTextView"</span></span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">"imgUrl"</span>: <span class="string">"https://tva1.sinaimg.cn/large/007S8ZIlgy1geqp9zhftrj303r03r3yl.jpg"</span>,</span><br><span class="line">            <span class="attr">"title"</span>: <span class="string">"标题2"</span>,</span><br><span class="line">            <span class="attr">"type"</span>: <span class="string">"ImageTextView"</span></span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">"imgUrl"</span>: <span class="string">"https://tva1.sinaimg.cn/large/007S8ZIlgy1geqp9zhftrj303r03r3yl.jpg"</span>,</span><br><span class="line">            <span class="attr">"title"</span>: <span class="string">"标题3"</span>,</span><br><span class="line">            <span class="attr">"type"</span>: <span class="string">"ImageTextView"</span></span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">"imgUrl"</span>: <span class="string">"https://tva1.sinaimg.cn/large/007S8ZIlgy1geqp9zhftrj303r03r3yl.jpg"</span>,</span><br><span class="line">            <span class="attr">"title"</span>: <span class="string">"标题4"</span>,</span><br><span class="line">            <span class="attr">"type"</span>: <span class="string">"ImageTextView"</span></span><br><span class="line">        &#125;</span><br><span class="line">    ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>运行如下，</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1geqsr04bk5j30og05ujum.jpg" alt=""></p>
+<p>下面再来看另一个自定义<code>Cell</code>，<code>SingleImageView</code>很简单，就是单图，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">SingleImageView</span> <span class="keyword">extends</span> <span class="title">NetImageView</span> <span class="keyword">implements</span> <span class="title">ITangramViewLifeCycle</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">SingleImageView</span><span class="params">(Context context, @Nullable AttributeSet attrs, <span class="keyword">int</span> defStyleAttr)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">super</span>(context, attrs, defStyleAttr);</span><br><span class="line">        setScaleType(ScaleType.CENTER_CROP);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">cellInited</span><span class="params">(BaseCell cell)</span> </span>&#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">postBindView</span><span class="params">(BaseCell cell)</span> </span>&#123;</span><br><span class="line">        load(cell.optStringParam(<span class="string">"imgUrl"</span>));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">postUnBindView</span><span class="params">(BaseCell cell)</span> </span>&#123;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后来一个1拖n布局<code>container-onePlusN</code>，</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">"type"</span>: <span class="string">"container-onePlusN"</span>,</span><br><span class="line">    <span class="attr">"style"</span>: &#123;</span><br><span class="line">        <span class="attr">"aspectRatio"</span>: <span class="string">"1.778"</span>,</span><br><span class="line">        <span class="attr">"margin"</span>: <span class="string">"[10,0,0,0]"</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">"items"</span>: [</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">"imgUrl"</span>: <span class="string">"https://wanandroid.com/blogimgs/942a5c62-ca87-4e7c-a93d-41ff59a15ba4.png"</span>,</span><br><span class="line">            <span class="attr">"type"</span>: <span class="string">"SingleImageView"</span></span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">"imgUrl"</span>: <span class="string">"https://www.wanandroid.com/blogimgs/62c1bd68-b5f3-4a3c-a649-7ca8c7dfabe6.png"</span>,</span><br><span class="line">            <span class="attr">"type"</span>: <span class="string">"SingleImageView"</span></span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">"imgUrl"</span>: <span class="string">"https://www.wanandroid.com/blogimgs/50c115c2-cf6c-4802-aa7b-a4334de444cd.png"</span>,</span><br><span class="line">            <span class="attr">"type"</span>: <span class="string">"SingleImageView"</span></span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">"imgUrl"</span>: <span class="string">"https://www.wanandroid.com/blogimgs/90c6cc12-742e-4c9f-b318-b912f163b8d0.png"</span>,</span><br><span class="line">            <span class="attr">"type"</span>: <span class="string">"SingleImageView"</span></span><br><span class="line">        &#125;</span><br><span class="line">    ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>图片取自<a href="https://www.wanandroid.com/index" target="_blank" rel="noopener">玩安卓</a>的banner图，运行如下，</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1geqsvmn2a6j30jg0b50yu.jpg" alt=""></p>
+<p>因为有4条数据，所以展示的效果就是1拖3。</p>
+<p>然后再来个轮播图布局<code>container-banner</code>，他的<code>Cell</code>还是使用单图<code>SingleImageView</code>，</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">"type"</span>: <span class="string">"container-banner"</span>,</span><br><span class="line">    <span class="attr">"style"</span>: &#123;</span><br><span class="line">        <span class="attr">"margin"</span>: <span class="string">"[0,0,10,0]"</span>,</span><br><span class="line">        <span class="attr">"pageWidth"</span>: <span class="number">200</span>,</span><br><span class="line">        <span class="attr">"pageHeight"</span>: <span class="number">100</span>,</span><br><span class="line">        <span class="attr">"indicatorMargin"</span>: <span class="string">"5"</span>,</span><br><span class="line">        <span class="attr">"infinite"</span>: <span class="string">"true"</span>,</span><br><span class="line">        <span class="attr">"indicatorImg2"</span>: <span class="string">"https://img.alicdn.com/tps/TB1XRNFNXXXXXXKXXXXXXXXXXXX-32-4.png"</span>,</span><br><span class="line">        <span class="attr">"indicatorImg1"</span>: <span class="string">"https://img.alicdn.com/tps/TB16i4qNXXXXXbBXFXXXXXXXXXX-32-4.png"</span>,</span><br><span class="line">        <span class="attr">"scrollMarginLeft"</span>: <span class="string">"10"</span>,</span><br><span class="line">        <span class="attr">"indicatorGap"</span>: <span class="string">"2"</span>,</span><br><span class="line">        <span class="attr">"indicatorHeight"</span>: <span class="string">"1.5"</span>,</span><br><span class="line">        <span class="attr">"itemRatio"</span>: <span class="string">"2.654"</span>,</span><br><span class="line">        <span class="attr">"scrollMarginRight"</span>: <span class="string">"10"</span>,</span><br><span class="line">        <span class="attr">"indicatorGravity"</span>: <span class="string">"center"</span>,</span><br><span class="line">        <span class="attr">"hGap"</span>: <span class="string">"20"</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">"items"</span>: [</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">"imgUrl"</span>: <span class="string">"https://wanandroid.com/blogimgs/942a5c62-ca87-4e7c-a93d-41ff59a15ba4.png"</span>,</span><br><span class="line">            <span class="attr">"type"</span>: <span class="string">"SingleImageView"</span></span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">"imgUrl"</span>: <span class="string">"https://www.wanandroid.com/blogimgs/62c1bd68-b5f3-4a3c-a649-7ca8c7dfabe6.png"</span>,</span><br><span class="line">            <span class="attr">"type"</span>: <span class="string">"SingleImageView"</span></span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">"imgUrl"</span>: <span class="string">"https://www.wanandroid.com/blogimgs/50c115c2-cf6c-4802-aa7b-a4334de444cd.png"</span>,</span><br><span class="line">            <span class="attr">"type"</span>: <span class="string">"SingleImageView"</span></span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">"imgUrl"</span>: <span class="string">"https://www.wanandroid.com/blogimgs/90c6cc12-742e-4c9f-b318-b912f163b8d0.png"</span>,</span><br><span class="line">            <span class="attr">"type"</span>: <span class="string">"SingleImageView"</span></span><br><span class="line">        &#125;</span><br><span class="line">    ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>可以看出可供配置的参数还是很多的，文档可以看<a href="http://tangram.pingguohe.net/docs/layout-support/pagescroll-layout" target="_blank" rel="noopener">这里</a>，运行如下，</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1geqt9dqfjmj30jg07agov.jpg" alt=""></p>
+<p>整体效果如下，</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1geqw08ytrxj30xc0i17k0.jpg" alt=""></p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1geqw92yu2gj304q04s74l.jpg" alt=""></p>
+<h2 id="内置support支持"><a href="#内置support支持" class="headerlink" title="内置support支持"></a>内置support支持</h2><p><code>Tangram</code>内置了一些<code>support</code>支持，如处理点击<code>SimpleClickSupport</code>，卡片数据加载<code>CardLoadSupport</code>，曝光逻辑<code>ExposureSupport</code>等，可以通过<code>TangramEngine</code>的<code>add</code>方法注册，如下，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//MainActivity.java</span></span><br><span class="line">mEngine.addSimpleClickSupport(<span class="keyword">new</span> MyClickSupport());</span><br></pre></td></tr></table></figure>
+
+<p>然后看<code>MyClickSupport</code>，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MyClickSupport</span> <span class="keyword">extends</span> <span class="title">SimpleClickSupport</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">MyClickSupport</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        setOptimizedMode(<span class="keyword">true</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">defaultClick</span><span class="params">(View targetView, BaseCell cell, <span class="keyword">int</span> eventType)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">super</span>.defaultClick(targetView, cell, eventType);</span><br><span class="line">        QrToast.show(cell.stringType);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>我们可以在自己的<code>Cell</code>里对view设置点击事件，也可以把点击事件交给<code>support</code>全局处理，如果要使用<code>support</code>处理点击事件，需要在<code>Cell</code>里加这行代码，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//SingleImageView.java</span></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">cellInited</span><span class="params">(BaseCell cell)</span> </span>&#123;</span><br><span class="line">    setOnClickListener(cell);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>比如商城首页，大多数模块都是点击进行页面跳转，行为比较单一，不需要每个<code>Cell</code>都去做点击事件，<code>SimpleClickSupport</code>就能很好的支持，在<code>defaultClick</code>里取出页面短链进行跳转即可，如，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MyClickSupport</span> <span class="keyword">extends</span> <span class="title">SimpleClickSupport</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">MyClickSupport</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        setOptimizedMode(<span class="keyword">true</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">defaultClick</span><span class="params">(View targetView, BaseCell cell, <span class="keyword">int</span> eventType)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">super</span>.defaultClick(targetView, cell, eventType);</span><br><span class="line">        <span class="comment">//取出页面短链，进行跳转。短链既可以是h5的，也可以是native的，由Router内部处理</span></span><br><span class="line">        PageRouter.to(cell.optStringParam(<span class="string">"link"</span>));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>用起来很简单有木有！好啦，<code>Tangram</code>的使用就介绍到这里了，后面会分析原理，实现模板和数据分离等等，敬请期待~</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1ger3cv1av4j305i05ijr8.jpg" alt=""></p>
+<h2 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h2><ul>
+<li><a href="https://github.com/alibaba/Tangram-Android/blob/master/docs/Tutorial-ch.md">GitHub-Tangram使用文档</a></li>
+<li><a href="http://tangram.pingguohe.net/" target="_blank" rel="noopener">Tangram官网</a></li>
+</ul>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gefkvd6w0jj31bi0hc44f.jpg" alt=""></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Android/" rel="tag"># Android</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/05/15/Android-Tangram%E5%8A%A8%E6%80%81%E9%A1%B5%E9%9D%A2%E4%B9%8B%E8%B7%AF%EF%BC%88%E4%BA%8C%EF%BC%89%E4%BB%8B%E7%BB%8D/" rel="next" title="Android | Tangram动态页面之路（二）介绍">
+                <i class="fa fa-chevron-left"></i> Android | Tangram动态页面之路（二）介绍
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2020/05/15/Android-Tangram%E5%8A%A8%E6%80%81%E9%A1%B5%E9%9D%A2%E4%B9%8B%E8%B7%AF%EF%BC%88%E5%9B%9B%EF%BC%89vlayout%E5%8E%9F%E7%90%86/" rel="prev" title="Android | Tangram动态页面之路（四）vlayout原理">
+                Android | Tangram动态页面之路（四）vlayout原理 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">哈利迪</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/%7C%7C%20archive">
+              
+                  <span class="site-state-item-count">16</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">1</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#基础使用"><span class="nav-number">1.</span> <span class="nav-text">基础使用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#内置support支持"><span class="nav-number">2.</span> <span class="nav-text">内置support支持</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考文章"><span class="nav-number">3.</span> <span class="nav-text">参考文章</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">哈利迪</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

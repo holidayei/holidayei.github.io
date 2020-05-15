@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Android," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="本系列文章主要介绍天猫团队开源的Tangram框架的使用心得和原理，由于Tangram底层基于vlayout，所以也会简单讲解，该系列将按以下大纲进行介绍：  需求背景 页面模板的多维度定投（分时、分人群等）、数据资源位聚合、RecyclerView的异构和扁平。  Tangram和vlayout介绍  Tangram的使用  vlayout原理  Tangram原理  Tangram二次封装">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android | Tangram动态页面之路（一）需求背景">
+<meta property="og:url" content="https://github.com/holidayei/2020/05/15/Android-Tangram%E5%8A%A8%E6%80%81%E9%A1%B5%E9%9D%A2%E4%B9%8B%E8%B7%AF%EF%BC%88%E4%B8%80%EF%BC%89%E9%9C%80%E6%B1%82%E8%83%8C%E6%99%AF/index.html">
+<meta property="og:site_name" content="Holiday">
+<meta property="og:description" content="本系列文章主要介绍天猫团队开源的Tangram框架的使用心得和原理，由于Tangram底层基于vlayout，所以也会简单讲解，该系列将按以下大纲进行介绍：  需求背景 页面模板的多维度定投（分时、分人群等）、数据资源位聚合、RecyclerView的异构和扁平。  Tangram和vlayout介绍  Tangram的使用  vlayout原理  Tangram原理  Tangram二次封装">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1genkqzkg67j30m80fiatx.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1geme4icm3wj30dw0gugny.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1gemer85vp1j30m807d403.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1genpjxyzjaj30jg0anab0.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1gemhvsspsvj30p00k2gsd.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gefkvd6w0jj31bi0hc44f.jpg">
+<meta property="article:published_time" content="2020-05-15T12:36:26.000Z">
+<meta property="article:modified_time" content="2020-05-15T12:38:42.126Z">
+<meta property="article:author" content="哈利迪">
+<meta property="article:tag" content="Android">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1genkqzkg67j30m80fiatx.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://github.com/holidayei/2020/05/15/Android-Tangram动态页面之路（一）需求背景/"/>
+
+
+
+
+
+  <title>Android | Tangram动态页面之路（一）需求背景 | Holiday</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Holiday</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://github.com/holidayei/2020/05/15/Android-Tangram%E5%8A%A8%E6%80%81%E9%A1%B5%E9%9D%A2%E4%B9%8B%E8%B7%AF%EF%BC%88%E4%B8%80%EF%BC%89%E9%9C%80%E6%B1%82%E8%83%8C%E6%99%AF/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="哈利迪">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Holiday">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Android | Tangram动态页面之路（一）需求背景</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-05-15T20:36:26+08:00">
+                2020-05-15
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>本系列文章主要介绍天猫团队开源的<a href="https://github.com/alibaba/Tangram-Android.git">Tangram</a>框架的使用心得和原理，由于<code>Tangram</code>底层基于<a href="https://github.com/alibaba/vlayout.git">vlayout</a>，所以也会简单讲解，该系列将按以下大纲进行介绍：</p>
+<ol>
+<li><p>需求背景</p>
+<p>页面模板的多维度定投（分时、分人群等）、数据资源位聚合、RecyclerView的异构和扁平。</p>
+</li>
+<li><p>Tangram和vlayout介绍</p>
+</li>
+<li><p>Tangram的使用</p>
+</li>
+<li><p>vlayout原理</p>
+</li>
+<li><p>Tangram原理</p>
+</li>
+<li><p>Tangram二次封装</p>
+</li>
+</ol>
+<p>本文先主要介绍下需求背景。</p>
+<h2 id="需求背景"><a href="#需求背景" class="headerlink" title="需求背景"></a>需求背景</h2><blockquote>
+<p>首先，笔者在工作中（生产环境）使用的并非Tangram，而是公司内部的框架（未开源），不过原理都大同小异，本系列文章也不会精细到每一行源码，不求齐全，只求用尽可能小的篇幅讲明白。</p>
+</blockquote>
+<h3 id="页面定投"><a href="#页面定投" class="headerlink" title="页面定投"></a>页面定投</h3><p>大家都知道，电商行业喜欢造节，从双11双12，到现在的321、618、921等，几乎一年四季都会有营销活动，这些活动能带动GMV持续造血。一场大促，通常会分预热期和正式期。预热期用来造势，着重透出主会场、活动等内容；正式期则在接近尾声时，着重透出倒计时内容增强紧迫感（再不剁手就没机会了），如下图：</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1genkqzkg67j30m80fiatx.jpg" alt=""></p>
+<p>可以看出，从预热期到正式期，着重透出的内容不同，结构也不同。也就是说，<code>需要足够灵活的页面模板，满足不同时间，不同人群（如多人多面）展示不同结构的页面</code>。当然这点h5也能做到，但是h5体验要差于native，一般用于临时活动页或高度灵活的页面。像商城首页，商品详情等相对稳定的页面，对灵活性的要求并非无限制的，只要各模块足够抽象、细粒度，native也是可以满足日常和大促需求的。</p>
+<h3 id="数据聚合"><a href="#数据聚合" class="headerlink" title="数据聚合"></a>数据聚合</h3><p>如前边的商城首页，数据来源也是多渠道的，比如头部的banner、各类入口、类目模块，数据来源于一个个不同的资源位，由不同的人进行配置，而尾部的商品流数据则来源于推荐引擎，如下图，</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1geme4icm3wj30dw0gugny.jpg" alt=""></p>
+<p>客户端不可能去发起多个请求拉取不同资源位的数据，所以就有了<code>聚合层</code>接口，客户端通过一个<code>聚合接口</code>，获取聚合数据，</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gemer85vp1j30m807d403.jpg" alt=""></p>
+<p>商品流不属于资源位数据，所以独立成一个接口。至此，我们会发现，<code>页面模板不仅要描述页面结构，还要描述各模块所需的数据来源</code>。大概如下所示：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">"template"</span>:[</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">"component"</span>:<span class="string">"banner"</span>,  <span class="comment">//轮播图模块</span></span><br><span class="line">            <span class="attr">"data"</span>:<span class="string">"makeup:banner"</span>  <span class="comment">//数据来源于聚合接口，key为banner</span></span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">"component"</span>:<span class="string">"category"</span>,  <span class="comment">//类目模块</span></span><br><span class="line">            <span class="attr">"data"</span>:<span class="string">"makeup:category"</span>  <span class="comment">//数据来源于聚合接口，key为category</span></span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">"component"</span>:<span class="string">"goods"</span>,  <span class="comment">//商品流模块</span></span><br><span class="line">            <span class="attr">"data"</span>:<span class="string">"request:recommend"</span>  <span class="comment">//数据来源于request，key为recommend</span></span><br><span class="line">        &#125;</span><br><span class="line">    ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="RecyclerView的异构和扁平"><a href="#RecyclerView的异构和扁平" class="headerlink" title="RecyclerView的异构和扁平"></a>RecyclerView的异构和扁平</h3><p>要实现前边商城首页的复杂布局，通常的思路是定义各种<code>itemType</code>，然后根据<code>itemType</code>来解析不同的布局文件，这么做往往需要进行一层嵌套，因为<code>RecyclerView</code>自带的<code>LayoutManager</code>不支持如此异构的布局，效果如下图左，</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1genpjxyzjaj30jg0anab0.jpg" alt=""></p>
+<p>而使用<code>vlayout</code>，可以免去这层嵌套，如上图右，让子view成为<code>RecyclerView</code>的直接子view，具体我们运行<code>vlayout</code>的官方Demo，然后使用AS的<code>Tools - Layout inspector</code>功能查看view树，可见图中的39和43两个小模块都是<code>RecyclerView</code>的直接子view，有着平级关系，</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gemhvsspsvj30p00k2gsd.jpg" alt=""></p>
+<p>这就是用<code>RecyclerView</code>实现异构和扁平化的基本概念，<code>vlayout</code>通过自定义<code>LayoutManager</code>进行了实现。关于异构和扁平，更详细的分析可见参考文章。</p>
+<h2 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h2><ul>
+<li><a href="http://pingguohe.net/2018/02/06/layouthelper-of-vlayout.html" target="_blank" rel="noopener">苹果核 - RecyclerView 里的自定义 LayoutManager 的一种设计与实现</a></li>
+</ul>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gefkvd6w0jj31bi0hc44f.jpg" alt=""></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Android/" rel="tag"># Android</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/05/15/Android-Jetpack%E7%AC%94%E8%AE%B0-WorkManager/" rel="next" title="Android-Jetpack笔记-WorkManager">
+                <i class="fa fa-chevron-left"></i> Android-Jetpack笔记-WorkManager
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2020/05/15/Android-Tangram%E5%8A%A8%E6%80%81%E9%A1%B5%E9%9D%A2%E4%B9%8B%E8%B7%AF%EF%BC%88%E4%BA%8C%EF%BC%89%E4%BB%8B%E7%BB%8D/" rel="prev" title="Android | Tangram动态页面之路（二）介绍">
+                Android | Tangram动态页面之路（二）介绍 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">哈利迪</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/%7C%7C%20archive">
+              
+                  <span class="site-state-item-count">16</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">1</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#需求背景"><span class="nav-number">1.</span> <span class="nav-text">需求背景</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#页面定投"><span class="nav-number">1.1.</span> <span class="nav-text">页面定投</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#数据聚合"><span class="nav-number">1.2.</span> <span class="nav-text">数据聚合</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#RecyclerView的异构和扁平"><span class="nav-number">1.3.</span> <span class="nav-text">RecyclerView的异构和扁平</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考文章"><span class="nav-number">2.</span> <span class="nav-text">参考文章</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">哈利迪</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Android," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="本系列文章主要介绍天猫团队开源的Tangram框架的使用心得和原理，由于Tangram底层基于vlayout，所以也会简单讲解，该系列将按以下大纲进行介绍：  需求背景  Tangram和vlayout介绍  Tangram的使用  vlayout原理  Tangram原理  Tangram二次封装   本文主要对Tangram和vlayout的一些概念进行介绍。 vlayout因为Tangram">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android | Tangram动态页面之路（二）介绍">
+<meta property="og:url" content="https://github.com/holidayei/2020/05/15/Android-Tangram%E5%8A%A8%E6%80%81%E9%A1%B5%E9%9D%A2%E4%B9%8B%E8%B7%AF%EF%BC%88%E4%BA%8C%EF%BC%89%E4%BB%8B%E7%BB%8D/index.html">
+<meta property="og:site_name" content="Holiday">
+<meta property="og:description" content="本系列文章主要介绍天猫团队开源的Tangram框架的使用心得和原理，由于Tangram底层基于vlayout，所以也会简单讲解，该系列将按以下大纲进行介绍：  需求背景  Tangram和vlayout介绍  Tangram的使用  vlayout原理  Tangram原理  Tangram二次封装   本文主要对Tangram和vlayout的一些概念进行介绍。 vlayout因为Tangram">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1gepg56drtyj30dw072jrr.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1gepida1zdlj30rs0kgwjg.jpg">
+<meta property="og:image" content="http://img.doutula.com/production/uploads/image/2019/01/08/20190108913892_xlfMJG.gif">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1gepnfcg5bqj31040fmdlp.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1getf5h7upgg308204l18z.gif">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gefkvd6w0jj31bi0hc44f.jpg">
+<meta property="article:published_time" content="2020-05-15T12:36:37.000Z">
+<meta property="article:modified_time" content="2020-05-15T12:43:08.041Z">
+<meta property="article:author" content="哈利迪">
+<meta property="article:tag" content="Android">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1gepg56drtyj30dw072jrr.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://github.com/holidayei/2020/05/15/Android-Tangram动态页面之路（二）介绍/"/>
+
+
+
+
+
+  <title>Android | Tangram动态页面之路（二）介绍 | Holiday</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Holiday</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://github.com/holidayei/2020/05/15/Android-Tangram%E5%8A%A8%E6%80%81%E9%A1%B5%E9%9D%A2%E4%B9%8B%E8%B7%AF%EF%BC%88%E4%BA%8C%EF%BC%89%E4%BB%8B%E7%BB%8D/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="哈利迪">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Holiday">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Android | Tangram动态页面之路（二）介绍</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-05-15T20:36:37+08:00">
+                2020-05-15
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>本系列文章主要介绍天猫团队开源的<a href="https://github.com/alibaba/Tangram-Android.git">Tangram</a>框架的使用心得和原理，由于<code>Tangram</code>底层基于<a href="https://github.com/alibaba/vlayout.git">vlayout</a>，所以也会简单讲解，该系列将按以下大纲进行介绍：</p>
+<ol>
+<li><p><a href="https://juejin.im/post/5eb6ae935188256d5a0d9482" target="_blank" rel="noopener">需求背景</a></p>
+</li>
+<li><p>Tangram和vlayout介绍</p>
+</li>
+<li><p>Tangram的使用</p>
+</li>
+<li><p>vlayout原理</p>
+</li>
+<li><p>Tangram原理</p>
+</li>
+<li><p>Tangram二次封装</p>
+</li>
+</ol>
+<p>本文主要对<code>Tangram</code>和<code>vlayout</code>的一些概念进行介绍。</p>
+<h2 id="vlayout"><a href="#vlayout" class="headerlink" title="vlayout"></a>vlayout</h2><p>因为<code>Tangram</code>底层基于<code>vlayout</code>，所以需要先了解下<code>vlayout</code>。</p>
+<p>首先，在view上的性能消耗通常有以下几种：</p>
+<ul>
+<li>布局嵌套导致多重measure/layout</li>
+</ul>
+<p>可以使用<code>ConstraintLayout</code>或<code>RelativeLayout</code>减少布局嵌套</p>
+<ul>
+<li>view的频繁创建与销毁</li>
+</ul>
+<p>列表使用<code>RecyclerView</code>来复用布局</p>
+<ul>
+<li>xml转换成view解析过程产生的内存和耗时</li>
+</ul>
+<p>如果列表的样式不多，使用<code>RecyclerView</code>的复用机制可以避免大量的xml解析；如果样式比较多比如商品图墙等，则有必要把xml解析提前到编译期，在编译期根据注解将xml转成对应的view类，直接使用view类创建viewHolder，当然这么做会势必会增大包体积，需要克制使用</p>
+<p>然后，<code>vlayout</code>主要解决前两点，做到复杂布局下扁平和细粒度复用。</p>
+<p>常规的<code>RecyclerView</code>使用：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 设置适配器，管理数据源和view</span></span><br><span class="line">recyclerView.setAdapter()</span><br><span class="line"><span class="comment">// 设置LayoutManager，指定布局方式</span></span><br><span class="line">recyclerView.setLayoutManager()</span><br></pre></td></tr></table></figure>
+
+<p>其中<code>LayoutManager</code>有3种，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">LinearLayoutManager extends LayoutManager  <span class="comment">//线性</span></span><br><span class="line">GridLayoutManager extends LinearLayoutManager  <span class="comment">//网格</span></span><br><span class="line">StaggeredGridLayoutManager extends LayoutManager  <span class="comment">//瀑布流</span></span><br></pre></td></tr></table></figure>
+
+<p>在面对比较复杂的布局时，如1拖3样式，</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gepg56drtyj30dw072jrr.jpg" alt=""></p>
+<p>通常只能在1拖3外边套上一层layout，然后使用<code>LinearLayoutManager</code>实现。为了解决这个问题，</p>
+<blockquote>
+<p>vlayout自定义了一个VirtualLayoutManager，它继承自 LinearLayoutManager；引入了 LayoutHelper 的概念，它负责具体的布局逻辑；VirtualLayoutManager管理了一系列LayoutHelper，将具体的布局能力交给LayoutHelper来完成，每一种LayoutHelper提供一种布局方式，框架内置提供了几种常用的布局类型，包括：网格布局、线性布局、瀑布流布局、悬浮布局、吸边布局等。这样实现了混合布局的能力，并且支持扩展外部，注册新的LayoutHelper，实现特殊的布局方式。</p>
+<p>引用自<a href="http://pingguohe.net/2017/02/28/vlayout-design.html" target="_blank" rel="noopener">苹果核 - Tangram 的基础 —— vlayout（Android）</a></p>
+</blockquote>
+<p>大致意思是这样，</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gepida1zdlj30rs0kgwjg.jpg" alt=""></p>
+<p>在<code>vlayout</code>Demo中，使用代码是这样，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//VLayoutActivity.java</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//子适配器集合</span></span><br><span class="line">List&lt;DelegateAdapter.Adapter&gt; adapters = <span class="keyword">new</span> LinkedList&lt;&gt;();</span><br><span class="line"></span><br><span class="line"><span class="comment">//创建子适配器，需指定其布局方式</span></span><br><span class="line">SubAdapter subAdapter1 = <span class="keyword">new</span> SubAdapter(<span class="keyword">new</span> LinearLayoutHelper());</span><br><span class="line">adapters.add(subAdapter1);</span><br><span class="line">SubAdapter subAdapter2 = <span class="keyword">new</span> SubAdapter(<span class="keyword">new</span> ColumnLayoutHelper());</span><br><span class="line">adapters.add(subAdapter2);</span><br><span class="line"></span><br><span class="line"><span class="comment">//把子适配器集合设置给代理适配器</span></span><br><span class="line">delegateAdapter.setAdapters(adapters);</span><br><span class="line"></span><br><span class="line">recyclerView.setAdapter(delegateAdapter);</span><br></pre></td></tr></table></figure>
+
+<p>可以看到，随着布局样式越来越多，代码量也会越来越多，于是，<code>用json模板描述页面</code>的<code>Tangram</code>诞生了。</p>
+<h2 id="Tangram"><a href="#Tangram" class="headerlink" title="Tangram"></a>Tangram</h2><p>把<code>vlayout</code>直接给到业务方使用，这样的接入成本是不能接受的，于是需要屏蔽掉<code>vlayout</code>细节，让业务方用的更舒服。至于为何要引入<code>json模板</code>，<a href="https://juejin.im/post/5eb6ae935188256d5a0d9482" target="_blank" rel="noopener">需求背景</a>里已经做过介绍。</p>
+<p><img src="http://img.doutula.com/production/uploads/image/2019/01/08/20190108913892_xlfMJG.gif" alt=""></p>
+<p><code>Tangram</code>的意思是七巧板，旨在用七巧板的方式拼凑出各式各样的页面。他抽象了两个概念，<code>Card</code>和<code>Cell</code>，<code>Card</code>用于描述布局方式，<code>Cell</code>用于描述在这个布局方式下，用什么样的view去展示，比如<code>Tangram</code>Demo里的<code>data.json</code>，</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">[</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="attr">"type"</span>: <span class="string">"container-oneColumn"</span>,  <span class="comment">//Card，布局方式</span></span><br><span class="line">        <span class="attr">"items"</span>: [</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="attr">"imgUrl"</span>: <span class="string">"https://gw.alicdn.com/tfs/TB1vqF.PpXXXXaRaXXXXXXXXXXX-110-72.png"</span>,</span><br><span class="line">                <span class="attr">"arrowImgUrl"</span>: <span class="string">"https://gw.alicdn.com/tfs/TB1vqF.PpXXXXaRaXXXXXXXXXXX-110-72.png"</span>,</span><br><span class="line">                <span class="attr">"title"</span>: <span class="string">"标题1"</span>,</span><br><span class="line">                <span class="attr">"type"</span>: <span class="string">"vvtest"</span>  <span class="comment">//Cell，具体展示的view</span></span><br><span class="line">            &#125;,</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="attr">"imgUrl"</span>: <span class="string">"https://gw.alicdn.com/tfs/TB1vqF.PpXXXXaRaXXXXXXXXXXX-110-72.png"</span>,</span><br><span class="line">                <span class="attr">"arrowImgUrl"</span>: <span class="string">"https://gw.alicdn.com/tfs/TB1vqF.PpXXXXaRaXXXXXXXXXXX-110-72.png"</span>,</span><br><span class="line">                <span class="attr">"title"</span>: <span class="string">"标题2"</span>,</span><br><span class="line">                <span class="attr">"type"</span>: <span class="string">"vvtest"</span></span><br><span class="line">            &#125;</span><br><span class="line">        ]</span><br><span class="line">    &#125;</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
+
+<p>这些布局方式<code>Card</code>，在<code>Tangram</code>内部会进行注册，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//TangramBuilder.java</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">installDefaultRegistry</span><span class="params">(<span class="keyword">final</span> DefaultResolverRegistry registry)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// built-in cards</span></span><br><span class="line">    registry.registerCard(TYPE_CONTAINER_BANNER, BannerCard<span class="class">.<span class="keyword">class</span>)</span>;</span><br><span class="line">    registry.registerCard(TYPE_SINGLE_COLUMN_COMPACT, SingleColumnCard<span class="class">.<span class="keyword">class</span>)</span>;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>布局方式确定好后，需要具体的View来展示，也就是<code>Cell</code>，比如单图<code>SingleImageView</code>，纯文本<code>RatioTextView</code>等等，这些<code>Cell</code>则需手动注册，如果是偏业务的<code>Cell</code>，可以在业务层按需注册，如果是更抽象的通用<code>Cell</code>，则应该下沉到基础库里全局注册，更抽象的<code>Cell</code>意味着需要提供更为通用的配置属性，能提供给更多不同的业务方使用。<code>Cell</code>的手动注册如下，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//TangramActivity.java</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">onCreate</span><span class="params">(Bundle savedInstanceState)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//Step 3: register business cells and cards</span></span><br><span class="line">    builder.registerCell(<span class="number">1</span>, TestView<span class="class">.<span class="keyword">class</span>)</span>;</span><br><span class="line">    builder.registerCell(<span class="number">2</span>, SimpleImgView<span class="class">.<span class="keyword">class</span>)</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">//绑定recyclerView</span></span><br><span class="line">    engine.bindView(recyclerView);</span><br><span class="line">    </span><br><span class="line">    JSONArray data = <span class="keyword">new</span> JSONArray(<span class="keyword">new</span> String(getAssertsFile(<span class="keyword">this</span>, <span class="string">"data.json"</span>)));</span><br><span class="line">    <span class="comment">//设置json数据</span></span><br><span class="line">    engine.setData(data);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>Card</code>和<code>Cell</code>都注册好了，通过<code>TangramEngine</code>将数据设置进去，跟进去可以看到，<code>Tangram</code>把布局能力交给了<code>vlayout</code>，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//GroupBasicAdapter extends VirtualLayoutAdapter</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">setData</span><span class="params">(List&lt;L&gt; cards, <span class="keyword">boolean</span> silence)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//把Card转成LayoutHelper</span></span><br><span class="line">    setLayoutHelpers(transformCards(cards, mData, mCards));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>Tangram</code>把json模板中描述的一个个<code>Card</code>解析成了所对应的<code>vlayout</code>的布局方式<code>LayoutHelper</code>，</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gepnfcg5bqj31040fmdlp.jpg" alt=""></p>
+<p>值得注意的是，<code>Tangram</code>Demo里的json模板都是包含了业务数据的，这么做可能是为了剔除掉网络请求的代码，方便开源学习，而在实际业务中不太可能把数据绑定在模板里，这样模板会很臃肿，我们要做的是，<code>用模板描述页面结构和数据源</code>，而非数据本身，如，</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">"template"</span>:[</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">"card"</span>: <span class="string">"container-banner"</span>,  <span class="comment">//轮播图模块，使用banner布局方式</span></span><br><span class="line">            <span class="attr">"cell"</span>:<span class="string">"imageView"</span>,  <span class="comment">//具体的view就是一张图片</span></span><br><span class="line">            <span class="attr">"data"</span>:<span class="string">"makeup:banner"</span>  <span class="comment">//数据来源于聚合接口，key为banner</span></span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">"card"</span>: <span class="string">"container-fiveColumn"</span>,  <span class="comment">//类目模块，使用Column布局方式</span></span><br><span class="line">            <span class="attr">"cell"</span>:<span class="string">"imageAndTextView"</span>,  <span class="comment">//具体的view是上图下文本</span></span><br><span class="line">            <span class="attr">"data"</span>:<span class="string">"makeup:category"</span>  <span class="comment">//数据来源于聚合接口，key为category</span></span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">"card"</span>: <span class="string">"container-waterfall"</span>,  <span class="comment">//商品流模块，使用Staggered布局方式</span></span><br><span class="line">            <span class="attr">"cell"</span>:<span class="string">"goodsView"</span>,  <span class="comment">//具体的view是商品样式</span></span><br><span class="line">            <span class="attr">"data"</span>:<span class="string">"request:recommend"</span>  <span class="comment">//数据来源于request，key为recommend</span></span><br><span class="line">        &#125;</span><br><span class="line">    ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>既然json模板可以由后端下发，也就意味着，我们可以让运营同学通过后台拖动模块搭建页面，选择资源位设置数据源，然后生成json模板下发，开发同学从此就可以解放双手，做<del>更有趣</del>（更有挑战）的事情了。</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1getf5h7upgg308204l18z.gif" alt=""></p>
+<p>不过这都是后话了，对<code>Tangram</code>和<code>vlayout</code>的介绍就到这里了，下篇文章将对Tangram的使用进行更详细的讲解，点关注，不迷路~</p>
+<h2 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h2><ul>
+<li><a href="http://pingguohe.net/2017/02/28/vlayout-design.html" target="_blank" rel="noopener">苹果核 - Tangram 的基础 —— vlayout（Android）</a></li>
+<li><a href="http://pingguohe.net/2016/12/20/Tangram-design-and-practice.html" target="_blank" rel="noopener">苹果核 - 页面动态化的基础 —— Tangram</a></li>
+</ul>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gefkvd6w0jj31bi0hc44f.jpg" alt=""></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Android/" rel="tag"># Android</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/05/15/Android-Tangram%E5%8A%A8%E6%80%81%E9%A1%B5%E9%9D%A2%E4%B9%8B%E8%B7%AF%EF%BC%88%E4%B8%80%EF%BC%89%E9%9C%80%E6%B1%82%E8%83%8C%E6%99%AF/" rel="next" title="Android | Tangram动态页面之路（一）需求背景">
+                <i class="fa fa-chevron-left"></i> Android | Tangram动态页面之路（一）需求背景
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2020/05/15/Android-Tangram%E5%8A%A8%E6%80%81%E9%A1%B5%E9%9D%A2%E4%B9%8B%E8%B7%AF%EF%BC%88%E4%B8%89%EF%BC%89%E4%BD%BF%E7%94%A8/" rel="prev" title="Android | Tangram动态页面之路（三）使用">
+                Android | Tangram动态页面之路（三）使用 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">哈利迪</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/%7C%7C%20archive">
+              
+                  <span class="site-state-item-count">16</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">1</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#vlayout"><span class="nav-number">1.</span> <span class="nav-text">vlayout</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Tangram"><span class="nav-number">2.</span> <span class="nav-text">Tangram</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考文章"><span class="nav-number">3.</span> <span class="nav-text">参考文章</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">哈利迪</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
