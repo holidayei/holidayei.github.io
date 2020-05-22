@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="何为Virtualview，简单来说，就是通过xml来描述视图，然后压缩成二进制格式，客户端通过解析并渲染成原生view或交由Canvas绘制的过程。 系列文章：  需求背景 Tangram和vlayout介绍 Tangram的使用 vlayout原理 Tangram原理 json模板和数据分离  GitHub地址：  GitHub - Virtualview-Android GitHub - v">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android | Tangram动态页面之路（七）硬核的Virtualview">
+<meta property="og:url" content="https://github.com/holidayei/2020/05/22/Android-Tangram%E5%8A%A8%E6%80%81%E9%A1%B5%E9%9D%A2%E4%B9%8B%E8%B7%AF%EF%BC%88%E4%B8%83%EF%BC%89%E7%A1%AC%E6%A0%B8%E7%9A%84Virtualview/index.html">
+<meta property="og:site_name" content="Holiday">
+<meta property="og:description" content="何为Virtualview，简单来说，就是通过xml来描述视图，然后压缩成二进制格式，客户端通过解析并渲染成原生view或交由Canvas绘制的过程。 系列文章：  需求背景 Tangram和vlayout介绍 Tangram的使用 vlayout原理 Tangram原理 json模板和数据分离  GitHub地址：  GitHub - Virtualview-Android GitHub - v">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1gf0aq4ge1mj319a08cjwm.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gf1b6vrdc3j30ec03cdgw.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1gezurf3cbyj30rs0e5jta.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1geu5bpe178j303d0233ye.jpg">
+<meta property="og:image" content="https://gw.alicdn.com/tfs/TB1H9.tg8fH8KJjy1XbXXbLdXXa-1270-300.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1gf0codtiuuj30i2095n5o.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1gf0cvczmxwj304e030a9z.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1gf02ie1cqrj30xc0pndvk.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1gf02imelbgj30xc0prh20.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1gf064vz01xj30ci06rac2.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1gezwsfhgv2j30xc0futfc.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1gezwsw65l9j312w0mutzj.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gefkvd6w0jj31bi0hc44f.jpg">
+<meta property="article:published_time" content="2020-05-22T11:46:00.000Z">
+<meta property="article:modified_time" content="2020-05-22T11:46:34.005Z">
+<meta property="article:author" content="哈利迪">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1gf0aq4ge1mj319a08cjwm.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://github.com/holidayei/2020/05/22/Android-Tangram动态页面之路（七）硬核的Virtualview/"/>
+
+
+
+
+
+  <title>Android | Tangram动态页面之路（七）硬核的Virtualview | Holiday</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Holiday</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://github.com/holidayei/2020/05/22/Android-Tangram%E5%8A%A8%E6%80%81%E9%A1%B5%E9%9D%A2%E4%B9%8B%E8%B7%AF%EF%BC%88%E4%B8%83%EF%BC%89%E7%A1%AC%E6%A0%B8%E7%9A%84Virtualview/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="哈利迪">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Holiday">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Android | Tangram动态页面之路（七）硬核的Virtualview</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-05-22T19:46:00+08:00">
+                2020-05-22
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>何为<code>Virtualview</code>，简单来说，就是通过<code>xml</code>来描述视图，然后压缩成二进制格式，客户端通过解析并渲染成原生view或交由Canvas绘制的过程。</p>
+<p>系列文章：</p>
+<ol>
+<li><a href="https://juejin.im/post/5eb6ae935188256d5a0d9482" target="_blank" rel="noopener">需求背景</a></li>
+<li><a href="https://juejin.im/post/5eba9113f265da7bd442576f" target="_blank" rel="noopener">Tangram和vlayout介绍</a></li>
+<li><a href="https://juejin.im/post/5ebbe23ff265da7bfc40390c" target="_blank" rel="noopener">Tangram的使用</a></li>
+<li><a href="https://juejin.im/post/5ebd467af265da7bd4425bb4" target="_blank" rel="noopener">vlayout原理</a></li>
+<li><a href="https://juejin.im/post/5ebf64ef6fb9a043790e4679" target="_blank" rel="noopener">Tangram原理</a></li>
+<li><a href="https://juejin.im/post/5ec148465188256d5324e0a3" target="_blank" rel="noopener">json模板和数据分离</a></li>
+</ol>
+<p>GitHub地址：</p>
+<ul>
+<li><a href="https://github.com/alibaba/Virtualview-Android">GitHub - Virtualview-Android</a></li>
+<li><a href="https://github.com/alibaba/virtualview_tools/tree/master/compiler-tools/RealtimePreview">GitHub - virtualview_tools</a></li>
+</ul>
+<p>本文基于最新源码分析。</p>
+<h2 id="VirtualView"><a href="#VirtualView" class="headerlink" title="VirtualView"></a>VirtualView</h2><p><a href="https://juejin.im/post/5eb6ae935188256d5a0d9482" target="_blank" rel="noopener">需求背景</a>一文介绍了模块化搭建页面的由来，那有没有想过这样一种场景，有天产品灵光一闪，想要不发版把<code>上图下文</code>换成<code>上文下图</code>，又或者想要在每个图片右上角加个双11大促角标来营造氛围，由于客户端只预埋了上图下文的样式（以下简称<code>cell</code>），即<code>ImageTextView</code>，所以只能延期到下一班车，</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gf0aq4ge1mj319a08cjwm.jpg" alt=""></p>
+<p>很显然，即便我们根据当下的业务抽象了一些常用的<code>Cell</code>，比如<code>上图下文</code>、<code>纯文本</code>、<code>单图</code>等，而且还支持了一些通用的属性配置如文本大小颜色等，也无法满足多变的业务需求，也即<code>cell</code>不够用了，我们要有线上生产<code>cell</code>并下发的能力。所以，<code>VirtualView</code>诞生了。</p>
+<p><code>VirtualView</code>的核心思想是，编写<code>xml</code>样式文件，编译压缩成二进制文件，下发到客户端，客户端解析，转成<code>native view</code>，或者用<code>canvas</code>绘制。引用官方的一张图片，</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gf1b6vrdc3j30ec03cdgw.jpg" alt=""></p>
+<p>因此，当UI有细节变动时，只需要修改<code>xml</code>，然后编译好下发给客户端替换即可。不过，我们的生产环境用的是另外一套基于<a href="https://github.com/google/flexbox-layout">flexbox-layout</a>的方案而非<code>VirtualView</code>，本文是站在学习的角度进行调研。</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gezurf3cbyj30rs0e5jta.jpg" alt=""></p>
+<p>框架名字<code>积木</code>和<code>七巧板</code>，可见，相似的业务场景，衍生出了相似的技术方案。</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1geu5bpe178j303d0233ye.jpg" alt=""></p>
+<p><code>VirtualView</code>很赞的两点是，他的<code>二进制压缩</code>和<code>实时预览</code>，接下来进行详细分析。</p>
+<h3 id="二进制压缩"><a href="#二进制压缩" class="headerlink" title="二进制压缩"></a>二进制压缩</h3><blockquote>
+<p>通过 XML 编写的业务组件，如果直接加载解析，会有几个问题：一是原始文件相对较大，因为 XML 里会有冗余信息，如空格、换行、还有重复出现的字符串等，文件体积比较大；二是解析 XML 会有一定开销，相对于二进制数据直接解析，XML 解析会比较重，例如节点遍历、属性访问等都显得有些臃肿。通过提前将 XML 模板处理成二进制格式，可以将繁重的解析工作从客户端运行时中剥离出来，而通过将一些重复的资源做合并处理并建立索引，可以减少冗余信息，减少模板文件大小，通常情况下，处理成二进制格式的模板比原始模板可减少 50% - 60% 的大小。</p>
+<p>引用自<a href="http://pingguohe.net/2017/12/27/deep-into-virtualview-android-1.html" target="_blank" rel="noopener">苹果核 - VirtualView Android实现详解（一）—— 文件格式与模板编译</a></p>
+</blockquote>
+<p>先来看一个简单的<code>xml</code>样式文件，直接把他下发到客户端存在两个问题，一是冗余字符引起的带宽浪费，二是客户端解析耗时和内存，在用户手机内存吃紧时，面对一个样式繁多的<code>RecyclerView</code>时，即便存在复用机制也可能因解析引起oom（来自电商的痛），往往需要在编译期就把<code>xml</code>转成view类，</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">VHLayout</span> <span class="attr">xmlns:xsi</span>=<span class="string">"http://www.w3.org/2001/XMLSchema-instance"</span></span></span><br><span class="line"><span class="tag">          <span class="attr">xsi:noNamespaceSchemaLocation</span>=<span class="string">"../../vv.xsd"</span></span></span><br><span class="line"><span class="tag">          <span class="attr">orientation</span>=<span class="string">"V"</span></span></span><br><span class="line"><span class="tag">          <span class="attr">layoutWidth</span>=<span class="string">"match_parent"</span></span></span><br><span class="line"><span class="tag">          <span class="attr">layoutHeight</span>=<span class="string">"200"</span></span></span><br><span class="line"><span class="tag">          <span class="attr">background</span>=<span class="string">"#11000000"</span>&gt;</span></span><br><span class="line"></span><br><span class="line">  <span class="tag">&lt;<span class="name">NText</span> <span class="attr">text</span>=<span class="string">"$&#123;text&#125;"</span></span></span><br><span class="line"><span class="tag">         <span class="attr">textSize</span>=<span class="string">"30"</span></span></span><br><span class="line"><span class="tag">         <span class="attr">textColor</span>=<span class="string">"@&#123;$&#123;items[0].info.textColor&#125; ? $&#123;items[1].subItems[0].info.textColor&#125; : $&#123;items[2].subItems[0].info.textColor&#125;&#125;"</span></span></span><br><span class="line"><span class="tag">         <span class="attr">background</span>=<span class="string">"#fffff0"</span></span></span><br><span class="line"><span class="tag">         <span class="attr">layoutWidth</span>=<span class="string">"match_parent"</span></span></span><br><span class="line"><span class="tag">         <span class="attr">layoutHeight</span>=<span class="string">"200"</span></span></span><br><span class="line"><span class="tag">         <span class="attr">gravity</span>=<span class="string">"h_center|v_center"</span> /&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;/<span class="name">VHLayout</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>连Android自带的<code>XmlPullParser</code>解析都足够重了，那我们能不能避开这个思路呢？来看看<code>VirtualView</code>的思路，首先看到<a href="https://github.com/alibaba/virtualview_tools/tree/master/compiler-tools/RealtimePreview">virtualview_tools工程</a>，在<code>virtualview_tools/compiler-tools/RealtimePreview/config.properties</code>文件中，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 把内置支持的view映射成int，1000以内</span></span><br><span class="line">VIEW_ID_FrameLayout=<span class="number">1</span></span><br><span class="line">VIEW_ID_NImage=<span class="number">9</span></span><br><span class="line">VIEW_ID_VImage=<span class="number">10</span></span><br><span class="line"><span class="comment">// 1000以上给外部自定义的view</span></span><br><span class="line">VIEW_ID_TotalContainer=<span class="number">1010</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 定义枚举映射，即xml里写的row、row-reverse也会被转成int</span></span><br><span class="line">flexDirection=Enum&lt;row:<span class="number">0</span>,row-reverse:<span class="number">1</span>,column:<span class="number">2</span>,column-reverse:<span class="number">3</span>&gt;</span><br><span class="line">orientation=Enum&lt;H:<span class="number">1</span>,V:<span class="number">0</span>&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 定义一些属性值的类型</span></span><br><span class="line">borderWidth=Float</span><br><span class="line">itemWidth=Number</span><br></pre></td></tr></table></figure>
+
+<p>在进行类型的简化后，约定一种数据格式，每一块分别展示什么信息，如下，</p>
+<p><img src="https://gw.alicdn.com/tfs/TB1H9.tg8fH8KJjy1XbXXbLdXXa-1270-300.jpg" alt=""></p>
+<p>比如，开头有<code>版本区</code>，后面有<code>组件区</code>、<code>组件长度区</code>、<code>字符串区</code>、<code>字符串长度区</code>、<code>表达式区</code>、<code>表达式长度区</code>…这有点像<code>JVM</code>校验解析字节码的过程。一些资源的映射处理，如下，</p>
+<blockquote>
+<ul>
+<li>颜色：转换成4字节整型颜色值，格式 AARRGGBB；</li>
+<li>枚举：按照预定义的整数转换，比如 gravity 的类型，orientation 的类型；</li>
+<li>字符串：以 hashCode 值作为它的序列化后整数，并在字符串资源区建立以 hashCode 为索引的列表，在解析的时候从中获取原始的字符串值；</li>
+<li>逻辑表达式：与字符串的处理类似；</li>
+<li>数字：直接转换成 4 字节的整型或者浮点型，并支持带单位的类型；</li>
+</ul>
+<p>引用自<a href="http://pingguohe.net/2017/12/27/deep-into-virtualview-android-1.html" target="_blank" rel="noopener">苹果核 - VirtualView Android实现详解（一）—— 文件格式与模板编译</a></p>
+</blockquote>
+<p>字符串用hashCode值为索引的列表方案，可以节省重复字符串的空间，表达式是用来绑定动态数据如<code>${text}</code>。</p>
+<p>得到二进制数据，</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gf0codtiuuj30i2095n5o.jpg" alt=""></p>
+<p>把二进制数据下发到客户端，在<a href="https://github.com/alibaba/Virtualview-Android">Virtualview-Android工程</a>中，可以看到一个<code>BinaryLoader</code>类，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//BinaryLoader.java</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//二进制数据，转成byte数组进行读取</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">loadFromBuffer</span><span class="params">(<span class="keyword">byte</span>[] buf, <span class="keyword">boolean</span> override)</span> </span>&#123;</span><br><span class="line">    CodeReader reader = <span class="keyword">new</span> CodeReader();</span><br><span class="line"></span><br><span class="line">    reader.setCode(buf);</span><br><span class="line">    reader.seekBy(Common.TAG.length());</span><br><span class="line"></span><br><span class="line">    <span class="comment">// check version</span></span><br><span class="line">    <span class="keyword">int</span> majorVersion = reader.readShort();  <span class="comment">//读取主版本号</span></span><br><span class="line">    <span class="keyword">int</span> minorVersion = reader.readShort();  <span class="comment">//读取副版本号</span></span><br><span class="line">    <span class="keyword">int</span> patchVersion = reader.readShort();  <span class="comment">//读取修订版本号</span></span><br><span class="line">    reader.setPatchVersion(patchVersion);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">int</span> uiStartPos = reader.readInt();  <span class="comment">//读取UI开始位置</span></span><br><span class="line">    reader.seekBy(<span class="number">4</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">int</span> strStartPos = reader.readInt();  <span class="comment">//读取字符串开始位置</span></span><br><span class="line">    reader.seekBy(<span class="number">4</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">int</span> exprCodeStartPos = reader.readInt();  <span class="comment">//读取表达式开始位置</span></span><br><span class="line">    reader.seekBy(<span class="number">4</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这样，把<code>xml</code>样式文件压缩成二进制文件，既节省了带宽，又免去了客户端比较重的<code>XmlPullParser</code>解析，真是快乐Double~</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gf0cvczmxwj304e030a9z.jpg" alt=""></p>
+<h3 id="原生控件和虚拟控件"><a href="#原生控件和虚拟控件" class="headerlink" title="原生控件和虚拟控件"></a>原生控件和虚拟控件</h3><p><code>VirtualView</code>翻译成中文就是虚拟视图，因为他里边有个虚拟控件的概念。可以看到它里边有些控件有两份，分别是V和N开头的，如<code>VImage</code>和<code>NImage</code>、<code>VText</code>和<code>NText</code>，</p>
+<p>V开头指的是<code>Virtual View</code>虚拟视图，即不需要实际的<code>ImageView</code>或<code>TextView</code>，而是在一个<code>Container</code>（如ViewGroup）内，直接拿他的画布<code>canvas</code>进行内容绘制，如<code>drawText</code>或<code>drawBitmap</code>等操作；</p>
+<p>N开头指的是<code>Native View</code>即原生视图，需要实际的<code>ImageView</code>或<code>TextView</code>来承载。</p>
+<p>看下截图更直观，</p>
+<p><code>Virtual View</code>：</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gf02ie1cqrj30xc0pndvk.jpg" alt=""></p>
+<p><code>Native View</code>：</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gf02imelbgj30xc0prh20.jpg" alt=""></p>
+<p>虚拟视图跟原生视图相比会更轻量，当然具体还得结合业务使用，目前支持两种视图的混用，这样就需要去避免一个问题，虚拟视图画在宿主上作为”背景“，原生视图放在宿主上有可能会遮挡虚拟视图。</p>
+<h3 id="实时预览"><a href="#实时预览" class="headerlink" title="实时预览"></a>实时预览</h3><p>安装<code>fswatch</code>监听文件修改，</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">brew install fswatch</span><br></pre></td></tr></table></figure>
+
+<p>安装<code>qrencode</code>生成二维码（可选），</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">brew install qrencode</span><br></pre></td></tr></table></figure>
+
+<p>在<a href="https://github.com/alibaba/virtualview_tools/tree/master/compiler-tools/RealtimePreview">virtualview_tools项目</a>中<code>virtualview_tools/compiler-tools/RealtimePreview</code>目录下，执行<code>./run.sh</code>启动服务器，手机和电脑连同一网络，手机运行<a href="https://github.com/alibaba/Virtualview-Android">Virtualview-Android项目</a>（记得把<code>HttpUtil</code>类中的ip地址改成电脑的ip），进入<code>模板实时预览</code>，可以加载服务器下发的<code>HelloWorld</code>，点进去就可以看样式了，</p>
+<p>接着修改文件保存，<code>fswatch</code>监听到修改，触发服务器重新编译<code>HelloWorld</code>，</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gf064vz01xj30ci06rac2.jpg" alt=""></p>
+<p><code>合并结果data.json</code>如下，</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">"templates"</span>: [  <span class="comment">//样式：xml -&gt; 二进制 -&gt; Base64.encode ，客户端拿到后decode回二进制进行解析</span></span><br><span class="line">        <span class="string">"QUxJVlYAAQAAOMQAAAAvAAAAkAAAAL8AAAD1AAABuAAAAAAAAAG8AAAAAAABAAAAAAABAApIZWxsb1dvcmxkAH4AAAIEqjL10AAAAABc1fDxAAAAyLCYVS4RAAAAd3CsvP////8AAAACfREwBNF35jvOOvRwYx6r5gAAAAAHBcQtOs4AAAAUXNXw8QAAAMiwmFUu////8BC4ck4AAAAkd3CsvP////8AAAACADZFLUjWynnAmy42tiGl5gAAAQEAAAAGfREwBAAdeHNpOm5vTmFtZXNwYWNlU2NoZW1hTG9jYXRpb262IaXmAG9AeyR7aXRlbXNbMF0uaW5mby50ZXh0Q29sb3J9ID8gJHtpdGVtc1sxXS5zdWJJdGVtc1swXS5pbmZvLnRleHRDb2xvcn0gOiAke2l0ZW1zWzJdLnN1Ykl0ZW1zWzBdLmluZm8udGV4dENvbG9yfX1jHqvmAClodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYS1pbnN0YW5jZc469HAACXhtbG5zOnhzadF35jsADC4uLy4uL3Z2LnhzZEjWynkAByR7dGV4dH0AAAAA"</span></span><br><span class="line">    ], </span><br><span class="line">    <span class="attr">"data"</span>: &#123;  <span class="comment">//数据</span></span><br><span class="line">        <span class="attr">"text"</span>: <span class="string">"Hello World!"</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>可见实时预览时，服务端把二进制数据进行了Base64编码（真实的业务场景也可以参考），客户端点击<code>Refresh</code>按钮重新加载<code>http://127.0.0.1:7788/helloworld/data.json</code>，在<code>PreviewActivity</code>中，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//PreviewActivity.java</span></span><br><span class="line"><span class="comment">//获取网络数据data.json</span></span><br><span class="line">PreviewData previewData = <span class="keyword">new</span> Gson().fromJson(string, PreviewData<span class="class">.<span class="keyword">class</span>)</span>;</span><br><span class="line"><span class="comment">//取出templates字段</span></span><br><span class="line">loadTemplates(previewData.templates);</span><br><span class="line"></span><br><span class="line"><span class="comment">//进行Base64解码，然后读取二进制数据进行解析</span></span><br><span class="line">sViewManager.loadBinBufferSync(Base64.decode(temp, Base64.DEFAULT));</span><br></pre></td></tr></table></figure>
+
+<p>在<code>VirtualView</code>的加持下，<code>Tangram</code>的动态能力得到进一步提升，实现了线上生产<code>cell</code>并下发替换。</p>
+<h3 id="一些案例"><a href="#一些案例" class="headerlink" title="一些案例"></a>一些案例</h3><p><code>Tangram</code>：</p>
+<p><a href="http://tangram.pingguohe.net/show-case/" target="_blank" rel="noopener">官方show-case</a>、</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gezwsfhgv2j30xc0futfc.jpg" alt=""></p>
+<p>内部<code>Lego</code>：</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gezwsw65l9j312w0mutzj.jpg" alt=""></p>
+<h2 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h2><ul>
+<li><a href="http://pingguohe.net/2018/01/09/a-taste-of-virtualview-android.html" target="_blank" rel="noopener">苹果核 - 天猫客户端组件动态化的方案——VirtualView 上手体验</a></li>
+<li><a href="http://pingguohe.net/2018/01/23/virtualview-tool.html" target="_blank" rel="noopener">苹果核 - VirtualView 工具大更新啦</a></li>
+<li><a href="http://pingguohe.net/2018/03/07/improve-dev-experience-preview-your-template.html" target="_blank" rel="noopener">苹果核 - 提升开发体验，预览 VirtualView</a></li>
+<li><a href="http://pingguohe.net/2018/03/20/deep-into-virtualview-android-3.html" target="_blank" rel="noopener">苹果核 - VirtualView Android 实现详解（三）—— 添加一个自定义控件</a></li>
+<li><a href="http://tangram.pingguohe.net/docs/virtualview/about-virtualview" target="_blank" rel="noopener">文档 - Virtualview</a></li>
+</ul>
+<hr>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gefkvd6w0jj31bi0hc44f.jpg" alt=""></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/05/22/Android-Tangram%E5%8A%A8%E6%80%81%E9%A1%B5%E9%9D%A2%E4%B9%8B%E8%B7%AF%EF%BC%88%E5%85%AD%EF%BC%89%E6%95%B0%E6%8D%AE%E5%88%86%E7%A6%BB/" rel="next" title="Android | Tangram动态页面之路（六）数据分离">
+                <i class="fa fa-chevron-left"></i> Android | Tangram动态页面之路（六）数据分离
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">哈利迪</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/%7C%7C%20archive">
+              
+                  <span class="site-state-item-count">19</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">1</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#VirtualView"><span class="nav-number">1.</span> <span class="nav-text">VirtualView</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#二进制压缩"><span class="nav-number">1.1.</span> <span class="nav-text">二进制压缩</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#原生控件和虚拟控件"><span class="nav-number">1.2.</span> <span class="nav-text">原生控件和虚拟控件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#实时预览"><span class="nav-number">1.3.</span> <span class="nav-text">实时预览</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#一些案例"><span class="nav-number">1.4.</span> <span class="nav-text">一些案例</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考文章"><span class="nav-number">2.</span> <span class="nav-text">参考文章</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">哈利迪</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

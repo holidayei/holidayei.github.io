@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="经过前五篇系列文章，对Tangram和vlayout也有了初步认识，这篇文章开始将结合业务场景使用，探索框架能力能对业务带来的支持，因为调研本身是一个需要不断踩坑的过程，所以大纲也做了微调，后续会根据实际使用过程发现的问题和解决方案进行更新。  需求背景 Tangram和vlayout介绍 Tangram的使用 vlayout原理 Tangram原理 json模板和数据分离 待定  本文将对Tan">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android | Tangram动态页面之路（六）数据分离">
+<meta property="og:url" content="https://github.com/holidayei/2020/05/22/Android-Tangram%E5%8A%A8%E6%80%81%E9%A1%B5%E9%9D%A2%E4%B9%8B%E8%B7%AF%EF%BC%88%E5%85%AD%EF%BC%89%E6%95%B0%E6%8D%AE%E5%88%86%E7%A6%BB/index.html">
+<meta property="og:site_name" content="Holiday">
+<meta property="og:description" content="经过前五篇系列文章，对Tangram和vlayout也有了初步认识，这篇文章开始将结合业务场景使用，探索框架能力能对业务带来的支持，因为调研本身是一个需要不断踩坑的过程，所以大纲也做了微调，后续会根据实际使用过程发现的问题和解决方案进行更新。  需求背景 Tangram和vlayout介绍 Tangram的使用 vlayout原理 Tangram原理 json模板和数据分离 待定  本文将对Tan">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gevozhybooj30p00rwava.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gevsq05j30j305k07fgn3.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gevrizs55sj30p00le41z.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gevsr40ncwj307x04raah.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gefkvd6w0jj31bi0hc44f.jpg">
+<meta property="article:published_time" content="2020-05-22T11:45:47.000Z">
+<meta property="article:modified_time" content="2020-05-22T11:46:49.052Z">
+<meta property="article:author" content="哈利迪">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gevozhybooj30p00rwava.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://github.com/holidayei/2020/05/22/Android-Tangram动态页面之路（六）数据分离/"/>
+
+
+
+
+
+  <title>Android | Tangram动态页面之路（六）数据分离 | Holiday</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Holiday</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://github.com/holidayei/2020/05/22/Android-Tangram%E5%8A%A8%E6%80%81%E9%A1%B5%E9%9D%A2%E4%B9%8B%E8%B7%AF%EF%BC%88%E5%85%AD%EF%BC%89%E6%95%B0%E6%8D%AE%E5%88%86%E7%A6%BB/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="哈利迪">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Holiday">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Android | Tangram动态页面之路（六）数据分离</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-05-22T19:45:47+08:00">
+                2020-05-22
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>经过前五篇系列文章，对<a href="https://github.com/alibaba/Tangram-Android.git">Tangram</a>和<a href="https://github.com/alibaba/vlayout.git">vlayout</a>也有了初步认识，这篇文章开始将<code>结合业务场景</code>使用，探索框架能力能对业务带来的支持，因为调研本身是一个需要不断踩坑的过程，所以大纲也做了微调，后续会根据实际使用过程发现的问题和解决方案进行更新。</p>
+<ol>
+<li><a href="https://juejin.im/post/5eb6ae935188256d5a0d9482" target="_blank" rel="noopener">需求背景</a></li>
+<li><a href="https://juejin.im/post/5eba9113f265da7bd442576f" target="_blank" rel="noopener">Tangram和vlayout介绍</a></li>
+<li><a href="https://juejin.im/post/5ebbe23ff265da7bfc40390c" target="_blank" rel="noopener">Tangram的使用</a></li>
+<li><a href="https://juejin.im/post/5ebd467af265da7bd4425bb4" target="_blank" rel="noopener">vlayout原理</a></li>
+<li><a href="https://juejin.im/post/5ebf64ef6fb9a043790e4679" target="_blank" rel="noopener">Tangram原理</a></li>
+<li>json模板和数据分离</li>
+<li>待定</li>
+</ol>
+<p>本文将对<code>Tangram</code>的json模板和数据进行分离。</p>
+<p><a href="https://github.com/holidayei/TangramDemo/tree/master/app/src/main/java/com/holiday/tangram/demo2">笔者Demo代码</a>，内容见<code>demo2</code>包。</p>
+<h2 id="数据分离"><a href="#数据分离" class="headerlink" title="数据分离"></a>数据分离</h2><p>前面的文章提到过，在实际业务中不太可能把数据绑定在模板里，这样模板会很臃肿，我们要做的是，<code>用模板描述页面结构和数据源</code>，而非数据本身，因此需要将数据剥离出来。</p>
+<p>运行效果：</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gevozhybooj30p00rwava.jpg" alt=""></p>
+<p>数据mock自<a href="https://www.wanandroid.com/index" target="_blank" rel="noopener">玩安卓</a>（看着有点乱，后续有时间搭个小服务，向业务贴近），</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gevsq05j30j305k07fgn3.jpg" alt=""></p>
+<p>重点看页面结构即可，远程模板调整了<code>Card</code>顺序、4列布局改成5列、改了文本颜色和瀑布流item背景色。</p>
+<p>然后来看该页面实现<code>ShoppingHomeAct</code>，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ShoppingHomeAct</span> <span class="keyword">extends</span> <span class="title">TangramActivity</span> </span>&#123;</span><br><span class="line">    ActivityShoppingHomeBinding mBinding;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">onCreate</span><span class="params">(Bundle savedInstanceState)</span> </span>&#123;</span><br><span class="line">        mBinding = DataBindingUtil.setContentView(<span class="keyword">this</span>, R.layout.activity_shopping_home);</span><br><span class="line">        <span class="keyword">super</span>.onCreate(savedInstanceState);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">protected</span> String <span class="title">createBizDomain</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="string">"shopping_home"</span>;<span class="comment">//返回业务域：商城首页</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">protected</span> RecyclerView <span class="title">createRecyclerView</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> mBinding.rvList;<span class="comment">//返回RecyclerView</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">boolean</span> <span class="title">needRefreshAndLoadMore</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;<span class="comment">//开启下拉刷新和加载更多</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>代码很少，只需继承具备<code>Tangram</code>能力的<code>TangramActivity</code>，返回其需要的对象即可。</p>
+<h3 id="动态合并数据"><a href="#动态合并数据" class="headerlink" title="动态合并数据"></a>动态合并数据</h3><p>参考官方Demo，首先想到的方法是，动态来合并数据，也就是按如下思路，</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gevrizs55sj30p00le41z.jpg" alt=""></p>
+<p>进行数据准备，</p>
+<ol>
+<li>模板地址：<a href="http://rest.apizza.net/mock/3f233eed2d9be716a5f48fccb9c719f2/tangram/template/net_shopping_home.json" target="_blank" rel="noopener">net_shopping_home.json</a></li>
+<li>聚合数据接口：<a href="http://rest.apizza.net/mock/3f233eed2d9be716a5f48fccb9c719f2/tangram/shopping/home" target="_blank" rel="noopener">tangram/shopping/home</a></li>
+<li>瀑布流数据接口：<a href="https://www.wanandroid.com/article/list/0/json" target="_blank" rel="noopener">玩安卓 - article/list/0/json</a></li>
+</ol>
+<p>模板如下（有删减），描述了页面结构和数据源，</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="comment">//聚合数据接口，当然实际业务中不需要写完整路径，如tangram/shopping/home</span></span><br><span class="line">    <span class="attr">"requestMakeup"</span>:<span class="string">"http://rest.apizza.net/mock/3f233eed2d9be716a5f48fccb9c719f2/tangram/shopping/home"</span>,</span><br><span class="line">    <span class="comment">//瀑布流数据接口</span></span><br><span class="line">    <span class="attr">"requestList"</span>:<span class="string">"https://www.wanandroid.com/article/list/%s/json"</span>,</span><br><span class="line">    <span class="comment">//模板名字</span></span><br><span class="line">    <span class="attr">"templateName"</span>:<span class="string">"net_shopping_home"</span>,</span><br><span class="line">    <span class="comment">//页面结构template</span></span><br><span class="line">    <span class="attr">"template"</span>:[</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">"type"</span>:<span class="string">"container-fiveColumn"</span>,  <span class="comment">//五列布局</span></span><br><span class="line">            <span class="attr">"load"</span>:<span class="string">"makeup:category"</span>,  <span class="comment">//数据源是聚合接口的category字段</span></span><br><span class="line">            <span class="attr">"itemType"</span>:<span class="string">"ImageTextView"</span>,  <span class="comment">//具体视图cell是上图下文ImageTextView</span></span><br><span class="line">            <span class="attr">"style"</span>:&#123;</span><br><span class="line">                <span class="attr">"textColor"</span>:<span class="string">"#6699ff"</span>,  <span class="comment">//扩展字段，文本颜色</span></span><br><span class="line">                <span class="attr">"padding"</span>:[</span><br><span class="line">                    <span class="number">9</span>,</span><br><span class="line">                    <span class="number">9</span>,</span><br><span class="line">                    <span class="number">0</span>,</span><br><span class="line">                    <span class="number">9</span></span><br><span class="line">                ]</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">"type"</span>:<span class="string">"container-waterfall"</span>,  <span class="comment">//瀑布流布局</span></span><br><span class="line">            <span class="attr">"itemType"</span>:<span class="string">"GoodsItemView"</span>,  <span class="comment">//具体视图cell是商品样式GoodsItemView</span></span><br><span class="line">            <span class="attr">"load"</span>:<span class="string">"xxx"</span>,  <span class="comment">//不用写，只要配置了requestList，默认最后一个Crad取瀑布流数据</span></span><br><span class="line">            <span class="attr">"style"</span>:&#123;</span><br><span class="line">                <span class="attr">"column"</span>:<span class="number">2</span>,  <span class="comment">//展示两列</span></span><br><span class="line">                <span class="attr">"hGap"</span>:<span class="string">"4"</span>,  <span class="comment">//间隙</span></span><br><span class="line">                <span class="attr">"vGap"</span>:<span class="string">"4"</span>,</span><br><span class="line">                <span class="attr">"margin"</span>:[</span><br><span class="line">                    <span class="number">9</span>,</span><br><span class="line">                    <span class="number">9</span>,</span><br><span class="line">                    <span class="number">0</span>,</span><br><span class="line">                    <span class="number">9</span></span><br><span class="line">                ],</span><br><span class="line">                <span class="attr">"itemBgColor"</span>:<span class="string">"#1F1F1F"</span>,  <span class="comment">//扩展字段，item背景颜色</span></span><br><span class="line">                <span class="attr">"textColor"</span>:<span class="string">"#ffffff"</span>  <span class="comment">//扩展字段，文本颜色</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>聚合数据如下（有删减），</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">"errorCode"</span>:<span class="number">0</span>,</span><br><span class="line">    <span class="attr">"errorMsg"</span>:<span class="string">""</span>,</span><br><span class="line">    <span class="attr">"data"</span>:&#123;</span><br><span class="line">        <span class="attr">"banner"</span>:[  <span class="comment">//轮播图数据</span></span><br><span class="line">            &#123;</span><br><span class="line">                <span class="attr">"imgUrl"</span>:<span class="string">"https://wanandroid.com/blogimgs/942a5c62-ca87-4e7c-a93d-41ff59a15ba4.png"</span>,</span><br><span class="line">                <span class="attr">"link"</span>:<span class="string">"https://www.wanandroid.com/navi"</span></span><br><span class="line">            &#125;,</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="attr">"imgUrl"</span>:<span class="string">"https://www.wanandroid.com/blogimgs/62c1bd68-b5f3-4a3c-a649-7ca8c7dfabe6.png"</span>,</span><br><span class="line">                <span class="attr">"link"</span>:<span class="string">"https://www.wanandroid.com/blog/show/2"</span></span><br><span class="line">            &#125;,</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="attr">"imgUrl"</span>:<span class="string">"https://www.wanandroid.com/blogimgs/50c115c2-cf6c-4802-aa7b-a4334de444cd.png"</span>,</span><br><span class="line">                <span class="attr">"link"</span>:<span class="string">"https://flutter.cn/"</span></span><br><span class="line">            &#125;</span><br><span class="line">        ],</span><br><span class="line">        <span class="attr">"bottomTitle"</span>:[  <span class="comment">//瀑布流标题数据</span></span><br><span class="line">            &#123;</span><br><span class="line">                <span class="attr">"title"</span>:<span class="string">"猜你喜欢"</span></span><br><span class="line">            &#125;</span><br><span class="line">        ]</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>一切准备就绪，开始实现<code>TangramActivity</code>，关注主要实现即可。</p>
+<p>把聚合数据合并进模板对象的template字段，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//TangramActivity.java</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">mergeMakeupDataToTemplate</span><span class="params">(JSONObject data, JSONArray template)</span> <span class="keyword">throws</span> JSONException </span>&#123;</span><br><span class="line">    <span class="comment">//遍历每一个卡片（布局），把数据填充进字段items</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; template.length(); i++) &#123;</span><br><span class="line">        JSONObject card = template.getJSONObject(i);</span><br><span class="line">        <span class="comment">//如果card有load字段，并且字段值是makeup:开头，表示card的数据源为聚合数据</span></span><br><span class="line">        <span class="keyword">if</span> (card.has(<span class="string">"load"</span>) &amp;&amp; card.getString(<span class="string">"load"</span>).startsWith(<span class="string">"makeup:"</span>)) &#123;</span><br><span class="line">            String load = card.getString(<span class="string">"load"</span>);</span><br><span class="line">            JSONArray cells = data.getJSONArray(load.substring(load.indexOf(<span class="string">":"</span>) + <span class="number">1</span>));</span><br><span class="line">            <span class="comment">//把模板配置的itemType即具体视图cell写进数据源</span></span><br><span class="line">            <span class="keyword">for</span> (<span class="keyword">int</span> cellIdx = <span class="number">0</span>; cellIdx &lt; cells.length(); cellIdx++) &#123;</span><br><span class="line">                cells.getJSONObject(cellIdx).put(<span class="string">"type"</span>, card.getString(<span class="string">"itemType"</span>));</span><br><span class="line">            &#125;</span><br><span class="line">            card.put(<span class="string">"items"</span>, cells);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>解析瀑布流数据，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//TangramActivity.java</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">parseListData</span><span class="params">(List&lt;ArticleBean.DataBean.Article&gt; list, @NonNull Card card)</span> </span>&#123;</span><br><span class="line">    JSONArray cells = <span class="keyword">new</span> JSONArray();</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; list.size(); i++) &#123;</span><br><span class="line">            JSONObject obj = <span class="keyword">new</span> JSONObject(MyApp.gson.toJson(list.get(i)));</span><br><span class="line">            obj.put(<span class="string">"type"</span>, card.optStringParam(<span class="string">"itemType"</span>));</span><br><span class="line">            <span class="comment">//由于使用了玩安卓的数据结构，这里手动添加一些参数用于演示</span></span><br><span class="line">            obj.put(<span class="string">"imgUrl"</span>, DataUtil.getImgByIdx(i + mListDataPage * list.size()));</span><br><span class="line">            cells.put(obj);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">catch</span> (JSONException e) &#123;</span><br><span class="line">        e.printStackTrace();</span><br><span class="line">    &#125;</span><br><span class="line">    List&lt;BaseCell&gt; cs = mEngine.parseComponent(cells);</span><br><span class="line">    card.addCells(cs);</span><br><span class="line">    card.notifyDataChange();</span><br><span class="line">    finishLoad();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>完整代码可见<a href="https://github.com/holidayei/TangramDemo/blob/master/app/src/main/java/com/holiday/tangram/demo2/TangramActivity.java">TangramActivity.java</a>。</p>
+<h2 id="待解决问题"><a href="#待解决问题" class="headerlink" title="待解决问题"></a>待解决问题</h2><ul>
+<li>局部刷新问题，暂时无解。之前有小伙伴提到过tangram不支持局部刷新，然后实践了一下，处理起来确实挺棘手，如加载瀑布流数据后，<code>card.notifyDataChange</code>的本质还是<code>notifyDataSetChanged</code>。</li>
+<li>优化成非继承<code>TangramActivity</code>实现。让业务Activity继承实现始终不够灵活，尝试包装一下核心引擎<code>TangramEngine</code>。</li>
+</ul>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gevsr40ncwj307x04raah.jpg" alt=""></p>
+<hr>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gefkvd6w0jj31bi0hc44f.jpg" alt=""></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/05/22/Android-Tangram%E5%8A%A8%E6%80%81%E9%A1%B5%E9%9D%A2%E4%B9%8B%E8%B7%AF%EF%BC%88%E4%BA%94%EF%BC%89Tangram%E5%8E%9F%E7%90%86/" rel="next" title="Android | Tangram动态页面之路（五）Tangram原理">
+                <i class="fa fa-chevron-left"></i> Android | Tangram动态页面之路（五）Tangram原理
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2020/05/22/Android-Tangram%E5%8A%A8%E6%80%81%E9%A1%B5%E9%9D%A2%E4%B9%8B%E8%B7%AF%EF%BC%88%E4%B8%83%EF%BC%89%E7%A1%AC%E6%A0%B8%E7%9A%84Virtualview/" rel="prev" title="Android | Tangram动态页面之路（七）硬核的Virtualview">
+                Android | Tangram动态页面之路（七）硬核的Virtualview <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">哈利迪</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/%7C%7C%20archive">
+              
+                  <span class="site-state-item-count">19</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">1</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#数据分离"><span class="nav-number">1.</span> <span class="nav-text">数据分离</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#动态合并数据"><span class="nav-number">1.1.</span> <span class="nav-text">动态合并数据</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#待解决问题"><span class="nav-number">2.</span> <span class="nav-text">待解决问题</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">哈利迪</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="本系列文章主要介绍天猫团队开源的Tangram框架的使用心得和原理，由于Tangram底层基于vlayout，所以也会简单讲解，该系列将按以下大纲进行介绍：  需求背景  Tangram和vlayout介绍  Tangram的使用  vlayout原理  Tangram原理  Tangram二次封装   本文将对Tangram进行初步讲解。 基于Tangram最新源码分析 笔者Demo代码 Tan">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android | Tangram动态页面之路（五）Tangram原理">
+<meta property="og:url" content="https://github.com/holidayei/2020/05/22/Android-Tangram%E5%8A%A8%E6%80%81%E9%A1%B5%E9%9D%A2%E4%B9%8B%E8%B7%AF%EF%BC%88%E4%BA%94%EF%BC%89Tangram%E5%8E%9F%E7%90%86/index.html">
+<meta property="og:site_name" content="Holiday">
+<meta property="og:description" content="本系列文章主要介绍天猫团队开源的Tangram框架的使用心得和原理，由于Tangram底层基于vlayout，所以也会简单讲解，该系列将按以下大纲进行介绍：  需求背景  Tangram和vlayout介绍  Tangram的使用  vlayout原理  Tangram原理  Tangram二次封装   本文将对Tangram进行初步讲解。 基于Tangram最新源码分析 笔者Demo代码 Tan">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1gepnfcg5bqj31040fmdlp.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1geu2dvtoi5j30uk0o20vl.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1geu3h2wiqjj30uf0kkq91.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1geu5bpe178j303d0233ye.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gefkvd6w0jj31bi0hc44f.jpg">
+<meta property="article:published_time" content="2020-05-22T11:45:36.000Z">
+<meta property="article:modified_time" content="2020-05-22T11:47:00.316Z">
+<meta property="article:author" content="哈利迪">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1gepnfcg5bqj31040fmdlp.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://github.com/holidayei/2020/05/22/Android-Tangram动态页面之路（五）Tangram原理/"/>
+
+
+
+
+
+  <title>Android | Tangram动态页面之路（五）Tangram原理 | Holiday</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Holiday</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://github.com/holidayei/2020/05/22/Android-Tangram%E5%8A%A8%E6%80%81%E9%A1%B5%E9%9D%A2%E4%B9%8B%E8%B7%AF%EF%BC%88%E4%BA%94%EF%BC%89Tangram%E5%8E%9F%E7%90%86/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="哈利迪">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Holiday">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Android | Tangram动态页面之路（五）Tangram原理</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-05-22T19:45:36+08:00">
+                2020-05-22
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>本系列文章主要介绍天猫团队开源的<a href="https://github.com/alibaba/Tangram-Android.git">Tangram</a>框架的使用心得和原理，由于<code>Tangram</code>底层基于<a href="https://github.com/alibaba/vlayout.git">vlayout</a>，所以也会简单讲解，该系列将按以下大纲进行介绍：</p>
+<ol>
+<li><p><a href="https://juejin.im/post/5eb6ae935188256d5a0d9482" target="_blank" rel="noopener">需求背景</a></p>
+</li>
+<li><p><a href="https://juejin.im/post/5eba9113f265da7bd442576f" target="_blank" rel="noopener">Tangram和vlayout介绍</a></p>
+</li>
+<li><p><a href="https://juejin.im/post/5ebbe23ff265da7bfc40390c" target="_blank" rel="noopener">Tangram的使用</a></p>
+</li>
+<li><p><a href="https://juejin.im/post/5ebd467af265da7bd4425bb4" target="_blank" rel="noopener">vlayout原理</a></p>
+</li>
+<li><p>Tangram原理</p>
+</li>
+<li><p>Tangram二次封装</p>
+</li>
+</ol>
+<p>本文将对<code>Tangram</code>进行初步讲解。</p>
+<p><a href="https://github.com/alibaba/Tangram-Android/commit/64842305eeabd08b2dc8f1915da6a589665ceabc">基于Tangram最新源码分析</a></p>
+<p><a href="https://github.com/holidayei/TangramDemo">笔者Demo代码</a></p>
+<h2 id="Tangram"><a href="#Tangram" class="headerlink" title="Tangram"></a>Tangram</h2><p>在<a href="https://juejin.im/post/5eba9113f265da7bd442576f" target="_blank" rel="noopener">Tangram和vlayout介绍</a>这篇文章提到过，<code>Tangram</code>通过解析json模板得到布局方式<code>Card</code>和具体视图<code>Cell</code>，然后将<code>Card</code>转换成对应的<code>vlayout</code>的<code>LayoutHelper</code>来进行测量和布局，如下，</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gepnfcg5bqj31040fmdlp.jpg" alt=""></p>
+<p><a href="http://tangram.pingguohe.net/docs/basic-concept/structure" target="_blank" rel="noopener">官网的架构图</a>如下，</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1geu2dvtoi5j30uk0o20vl.jpg" alt=""></p>
+<h3 id="Card转成LayoutHelper"><a href="#Card转成LayoutHelper" class="headerlink" title="Card转成LayoutHelper"></a>Card转成LayoutHelper</h3><p>跟进<code>TangramActivity</code>的<code>engine.setData(data)</code>，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//BaseTangramEngine.java</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">setData</span><span class="params">(T data)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//模板解析，json文件 -&gt; JSONArray -&gt; List&lt;Card&gt;</span></span><br><span class="line">    List&lt;C&gt; cards = mDataParser.parseGroup(data, <span class="keyword">this</span>);</span><br><span class="line">    <span class="keyword">this</span>.setData(cards);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">setData</span><span class="params">(List&lt;C&gt; data)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">this</span>.mGroupBasicAdapter.setData(data);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>来到<code>GroupBasicAdapter</code>，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//GroupBasicAdapter.java</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">setData</span><span class="params">(List&lt;L&gt; cards, <span class="keyword">boolean</span> silence)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//把cards转成vlayout的layoutHelpers</span></span><br><span class="line">    setLayoutHelpers(transformCards(cards, mData, mCards));</span><br><span class="line">    <span class="keyword">if</span> (!silence)</span><br><span class="line">        notifyDataSetChanged();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//cards指json模板中的多个布局方式card，</span></span><br><span class="line"><span class="comment">//data指每个card里边的具体视图cell</span></span><br><span class="line"><span class="comment">//rangeCards指一段管辖范围内所对应的布局方式card</span></span><br><span class="line"><span class="comment">//假设第1个card对应ColumnLayoutHelper，有3个元素，则管辖范围是[0,2]</span></span><br><span class="line"><span class="comment">//第2个card对应OnePlusNLayoutHelper，有4个元素，则管辖范围是[3,6]，以此类推</span></span><br><span class="line"><span class="function">List&lt;LayoutHelper&gt; <span class="title">transformCards</span><span class="params">(List&lt;L&gt; cards, List&lt;C&gt; data,</span></span></span><br><span class="line"><span class="function"><span class="params">                                  List&lt;Pair&lt;Range&lt;Integer&gt;, L&gt;&gt; rangeCards)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//data.size()初始值为0</span></span><br><span class="line">    <span class="keyword">int</span> lastPos = data.size();</span><br><span class="line">    List&lt;LayoutHelper&gt; helpers = <span class="keyword">new</span> ArrayList&lt;&gt;(cards.size());</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>, size = cards.size(); i &lt; size; i++) &#123;</span><br><span class="line">        <span class="comment">//遍历每个card</span></span><br><span class="line">        L card = cards.get(i);</span><br><span class="line">        <span class="comment">//获取card的类型，如列布局container-fourColumn</span></span><br><span class="line">        <span class="keyword">final</span> String ctype = getCardStringType(card);</span><br><span class="line">        <span class="comment">//获取card内的cell数组</span></span><br><span class="line">        List&lt;C&gt; items = getItems(card);</span><br><span class="line">        <span class="comment">//如果card里边没有cell，即没有视图，直接跳过</span></span><br><span class="line">        <span class="keyword">if</span> (items == <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="keyword">continue</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//记录每个card里边的多个cell</span></span><br><span class="line">        data.addAll(items);</span><br><span class="line">        <span class="keyword">int</span> offset = lastPos;</span><br><span class="line">        lastPos += items.size();</span><br><span class="line">        <span class="comment">//记录每一段管辖范围，和其对应的card</span></span><br><span class="line">        rangeCards.add(Pair.create(Range.create(offset, lastPos), card));</span><br><span class="line">        <span class="comment">//获取card对应的LayoutHelper，暂不深究</span></span><br><span class="line">        LayoutBinder&lt;L&gt; binder = mCardBinderResolver.create(ctype);</span><br><span class="line">        LayoutHelper helper = binder.getHelper(ctype, card);</span><br><span class="line">        <span class="keyword">if</span> (helper != <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="comment">//设置cell个数</span></span><br><span class="line">            helper.setItemCount(items.size());</span><br><span class="line">            helpers.add(helper);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> helpers;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>Card</code>被转换成<code>LayoutHelper</code>，</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1geu3h2wiqjj30uf0kkq91.jpg" alt=""></p>
+<p>转换完成后，调用了<code>notifyDataSetChanged</code>，是如何显示到<code>RecyclerView</code>上的呢？</p>
+<h3 id="RecyclerView展示"><a href="#RecyclerView展示" class="headerlink" title="RecyclerView展示"></a>RecyclerView展示</h3><p>跟进<code>TangramActivity</code>的<code>engine.bindView(recyclerView)</code>，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//BaseTangramEngine.java</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">bindView</span><span class="params">(@NonNull <span class="keyword">final</span> RecyclerView view)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">this</span>.mContentView = view;</span><br><span class="line">    <span class="comment">//设置VirtualLayoutManager</span></span><br><span class="line">    <span class="keyword">this</span>.mContentView.setLayoutManager(mLayoutManager);</span><br><span class="line">    <span class="comment">//设置性能监控，mLayoutManager负责监控cell的耗时</span></span><br><span class="line">    mLayoutManager.setPerformanceMonitor(mPerformanceMonitor);</span><br><span class="line">    <span class="keyword">if</span> (mGroupBasicAdapter == <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">this</span>.mGroupBasicAdapter = mAdapterBuilder.newAdapter(mContext, mLayoutManager, <span class="keyword">this</span>);</span><br><span class="line">        <span class="comment">//设置性能监控，mGroupBasicAdapter负责监控card和cell的耗时</span></span><br><span class="line">        mGroupBasicAdapter.setPerformanceMonitor(mPerformanceMonitor);</span><br><span class="line">        <span class="comment">//错误报告</span></span><br><span class="line">        mGroupBasicAdapter.setErrorSupport(getService(InternalErrorSupport<span class="class">.<span class="keyword">class</span>))</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (mContentView.getRecycledViewPool() != <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="comment">//设置RecyclerView缓存池，InnerRecycledViewPool装饰了RecycledViewPool</span></span><br><span class="line">        mContentView.setRecycledViewPool(<span class="keyword">new</span> InnerRecycledViewPool(mContentView.getRecycledViewPool()));</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//注册服务，暂不深究</span></span><br><span class="line">    register(GroupBasicAdapter<span class="class">.<span class="keyword">class</span>, <span class="title">mGroupBasicAdapter</span>)</span>;</span><br><span class="line">    register(RecyclerView.RecycledViewPool<span class="class">.<span class="keyword">class</span>, <span class="title">mContentView</span>.<span class="title">getRecycledViewPool</span>())</span>;</span><br><span class="line">    <span class="comment">//设置适配器</span></span><br><span class="line">    <span class="keyword">this</span>.mContentView.setAdapter(mGroupBasicAdapter);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>可见<code>RecyclerView</code>设置的适配器是<code>GroupBasicAdapter</code>，看下我们比较关心的几个方法，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//GroupBasicAdapter.java</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">getItemViewType</span><span class="params">(<span class="keyword">int</span> position)</span> </span>&#123;</span><br><span class="line">    C data = mData.get(position);</span><br><span class="line">    <span class="comment">//内部缓存了Map&lt;String, Integer&gt; mStrKeys</span></span><br><span class="line">    <span class="comment">//String就是cell名字如SingleImageView，Integer就是一系列从0开始递增的ViewType</span></span><br><span class="line">    <span class="keyword">return</span> getItemType(data);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>官方Demo早期用了<code>int</code>来声明<code>Cell</code>，这样容易混乱，不利于在json模板里表意，现在改成了<code>String</code>来声明（为此还做了些兼容代码），建议直接使用<code>String</code>来注册，可参考<a href="https://juejin.im/post/5ebbe23ff265da7bfc40390c" target="_blank" rel="noopener">Tangram的使用</a>，</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">"id"</span>: <span class="string">"banner1"</span>,</span><br><span class="line">    <span class="attr">"type"</span>: <span class="string">"container-oneColumn"</span>,</span><br><span class="line">    <span class="attr">"style"</span>: &#123;</span><br><span class="line">        <span class="attr">"aspectRatio"</span>: <span class="number">3.223</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">"items"</span>: [</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">"bizId"</span>:<span class="string">"item1"</span>,</span><br><span class="line">            <span class="attr">"type"</span>: <span class="number">110</span>,  <span class="comment">//不要再使用int声明cell，建议使用唯一字符串如SingleImageView</span></span><br><span class="line">            <span class="attr">"msg"</span>: <span class="string">"info1"</span></span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">"bizId"</span>:<span class="string">"item2"</span>,</span><br><span class="line">            <span class="attr">"type"</span>: <span class="number">110</span>,  <span class="comment">//不要再使用int声明cell，建议使用唯一字符串如SingleImageView</span></span><br><span class="line">            <span class="attr">"msg"</span>: <span class="string">"info2"</span></span><br><span class="line">        &#125;</span><br><span class="line">    ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后看下<code>onCreateViewHolder</code>和<code>onBindViewHolder</code>，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//GroupBasicAdapter.java</span></span><br><span class="line"></span><br><span class="line">BinderViewHolder&lt;C, ? extends View&gt; onCreateViewHolder(ViewGroup parent, <span class="keyword">int</span> viewType) &#123;</span><br><span class="line">    <span class="comment">//根据viewType得到cell名字</span></span><br><span class="line">    String cellType = getCellTypeFromItemType(viewType);</span><br><span class="line">    <span class="comment">//大概是通过cellType帮我们创建对应的view，暂不深究</span></span><br><span class="line">    ControlBinder&lt;C, ? extends View&gt; binder = mCompBinderResolver.create(cellType);</span><br><span class="line">    <span class="comment">//一个普通的ViewHolder，提供了bind方法</span></span><br><span class="line">    BinderViewHolder binderViewHolder = createViewHolder(binder, mContext, parent);</span><br><span class="line">    <span class="keyword">return</span> binderViewHolder;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">onBindViewHolder</span><span class="params">(BinderViewHolder&lt;C, ? extends View&gt; holder, <span class="keyword">int</span> position)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//获取cell</span></span><br><span class="line">    C data = mData.get(position);</span><br><span class="line">    <span class="comment">//绑定cell</span></span><br><span class="line">    holder.bind(data);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//省略调用链：</span></span><br><span class="line"><span class="comment">//BinderViewHolder.bind -&gt; BaseCellBinder.mountView -&gt; MVHelper.mountView</span></span><br><span class="line"><span class="comment">// -&gt; MVHelper.postMountView -&gt; ITangramViewLifeCycle.postBindView</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//回调到业务层，如TestView.java</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">postBindView</span><span class="params">(BaseCell cell)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//业务逻辑</span></span><br><span class="line">    textView.setText(<span class="string">"xxx"</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>至此，整个流程就跑通了。</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1geu5bpe178j303d0233ye.jpg" alt=""></p>
+<h2 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h2><ul>
+<li><a href="http://tangram.pingguohe.net/docs/basic-concept/structure" target="_blank" rel="noopener">Tangram官网-基础架构</a></li>
+</ul>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gefkvd6w0jj31bi0hc44f.jpg" alt=""></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/05/15/Android-Tangram%E5%8A%A8%E6%80%81%E9%A1%B5%E9%9D%A2%E4%B9%8B%E8%B7%AF%EF%BC%88%E5%9B%9B%EF%BC%89vlayout%E5%8E%9F%E7%90%86/" rel="next" title="Android | Tangram动态页面之路（四）vlayout原理">
+                <i class="fa fa-chevron-left"></i> Android | Tangram动态页面之路（四）vlayout原理
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2020/05/22/Android-Tangram%E5%8A%A8%E6%80%81%E9%A1%B5%E9%9D%A2%E4%B9%8B%E8%B7%AF%EF%BC%88%E5%85%AD%EF%BC%89%E6%95%B0%E6%8D%AE%E5%88%86%E7%A6%BB/" rel="prev" title="Android | Tangram动态页面之路（六）数据分离">
+                Android | Tangram动态页面之路（六）数据分离 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">哈利迪</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/%7C%7C%20archive">
+              
+                  <span class="site-state-item-count">19</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">1</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Tangram"><span class="nav-number">1.</span> <span class="nav-text">Tangram</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Card转成LayoutHelper"><span class="nav-number">1.1.</span> <span class="nav-text">Card转成LayoutHelper</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#RecyclerView展示"><span class="nav-number">1.2.</span> <span class="nav-text">RecyclerView展示</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考文章"><span class="nav-number">2.</span> <span class="nav-text">参考文章</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">哈利迪</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
