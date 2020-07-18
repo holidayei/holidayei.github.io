@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Android," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="《看完不忘系列》之Glide （树干篇）一文对Glide加载图片的核心流程做了介绍，细枝篇作为补充，将对一些具体实现细节进行深入。本文篇幅略大，大家可以根据目录索引到感兴趣的章节阅读~ 源码基于最新版本4.11.0，先上一张职责图预览下，一家人就要整整齐齐~   本文约3200字，阅读大约10分钟。如个别大图模糊（官方会压缩），可前往个人站点阅读  Generated API通过创建一些类，继承相">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android | Glide细枝篇">
+<meta property="og:url" content="https://github.com/holidayei/2020/07/18/Android-Glide%E7%BB%86%E6%9E%9D%E7%AF%87/index.html">
+<meta property="og:site_name" content="Holiday">
+<meta property="og:description" content="《看完不忘系列》之Glide （树干篇）一文对Glide加载图片的核心流程做了介绍，细枝篇作为补充，将对一些具体实现细节进行深入。本文篇幅略大，大家可以根据目录索引到感兴趣的章节阅读~ 源码基于最新版本4.11.0，先上一张职责图预览下，一家人就要整整齐齐~   本文约3200字，阅读大约10分钟。如个别大图模糊（官方会压缩），可前往个人站点阅读  Generated API通过创建一些类，继承相">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gguvc4ytqwj30vc0he77u.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1ggtpcq8dqrj30lq0e23zw.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gguatdh4fgj30s80hojth.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1ggudguraphj315u0j8whl.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gguedyaj70j310i08w401.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gguqrpk7d5j30yq0motc5.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gguqwkbx8zj31eq0gq791.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1ggurpxfz5kj31610u017l.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1ggui12oggxj30ci05cq31.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gg3mnwsbshj308c0augmm.jpg">
+<meta property="article:published_time" content="2020-07-18T02:40:01.000Z">
+<meta property="article:modified_time" content="2020-07-18T02:40:39.615Z">
+<meta property="article:author" content="哈利迪">
+<meta property="article:tag" content="Android">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gguvc4ytqwj30vc0he77u.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://github.com/holidayei/2020/07/18/Android-Glide细枝篇/"/>
+
+
+
+
+
+  <title>Android | Glide细枝篇 | Holiday</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Holiday</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://github.com/holidayei/2020/07/18/Android-Glide%E7%BB%86%E6%9E%9D%E7%AF%87/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="哈利迪">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Holiday">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Android | Glide细枝篇</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-07-18T10:40:01+08:00">
+                2020-07-18
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><a href="https://juejin.im/post/5f0ec887e51d45349917c614" target="_blank" rel="noopener">《看完不忘系列》之Glide</a> （树干篇）一文对<code>Glide</code>加载图片的核心流程做了介绍，细枝篇作为补充，将对一些具体实现细节进行深入。本文篇幅略大，大家可以根据目录索引到感兴趣的章节阅读~</p>
+<p>源码基于最新版本<code>4.11.0</code>，先上一张职责图预览下，一家人就要整整齐齐~</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gguvc4ytqwj30vc0he77u.jpg" alt=""></p>
+<blockquote>
+<p>本文约3200字，阅读大约10分钟。如个别大图模糊（官方会压缩），可前往<a href="https://imholiday.cn/" target="_blank" rel="noopener">个人站点</a>阅读</p>
+</blockquote>
+<h2 id="Generated-API"><a href="#Generated-API" class="headerlink" title="Generated API"></a>Generated API</h2><p>通过创建一些类，继承相关接口，然后打上注解，由apt来处理这些类，从而实现接口扩展。</p>
+<h3 id="全局配置"><a href="#全局配置" class="headerlink" title="全局配置"></a>全局配置</h3><p>注解<code>@GlideModule</code>用来配置全局参数和注册定制的能力，在application里使用<code>AppGlideModule</code>，在library里使用<code>LibraryGlideModule</code>，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@GlideModule</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MyAppGlideModule</span> <span class="keyword">extends</span> <span class="title">AppGlideModule</span> </span>&#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">isManifestParsingEnabled</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">false</span>;<span class="comment">//新版本不需要解析manifest里的元数据（没用过老版本，不太懂，按文档返回false即可）</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">applyOptions</span><span class="params">(Context context, GlideBuilder builder)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">super</span>.applyOptions(context, builder);</span><br><span class="line">        <span class="comment">//全局配置</span></span><br><span class="line">        <span class="comment">//builder.setBitmapPool(xxx);</span></span><br><span class="line">        <span class="comment">//builder.setDefaultRequestOptions(xxx);</span></span><br><span class="line">        <span class="comment">//...</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">registerComponents</span><span class="params">(Context context, Glide glide, Registry registry)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">super</span>.registerComponents(context, glide, registry);</span><br><span class="line">        <span class="comment">//注册一些定制的能力，比如扩展新的图片来源ModelLoader</span></span><br><span class="line">        <span class="comment">//registry.register(xxx);</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>比如现在的<code>Glide</code>的Bitmap默认配置是<code>ARGB_8888</code>，如果项目图片类型比较单一，不需要透明度通道和高色域，可以配置全局的<code>RGB_565</code>减少一半内存。见<a href="https://muyangmin.github.io/glide-docs-cn/doc/configuration.html#%E9%BB%98%E8%AE%A4%E8%AF%B7%E6%B1%82%E9%80%89%E9%A1%B9" target="_blank" rel="noopener">默认请求选项</a>，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@GlideModule</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MyAppGlideModule</span> <span class="keyword">extends</span> <span class="title">AppGlideModule</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">applyOptions</span><span class="params">(@NonNull Context context, @NonNull GlideBuilder builder)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">super</span>.applyOptions(context, builder);</span><br><span class="line">        builder.setDefaultRequestOptions(<span class="keyword">new</span> RequestOptions()</span><br><span class="line">                .format(DecodeFormat.PREFER_RGB_565));</span><br><span class="line">        <span class="comment">//注：由于png需要透明度通道，这类图依旧会采用8888</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>或者可以根据设备评分来衡量，普通机型配置<code>RGB_565</code>（在需要透明度通道的场景局部使用<code>ARGB_8888</code>），高端机型则可以直接配置<code>ARGB_8888</code>，纵享奢华体验。</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1ggtpcq8dqrj30lq0e23zw.jpg" alt=""></p>
+<h3 id="行为打包"><a href="#行为打包" class="headerlink" title="行为打包"></a>行为打包</h3><p>注解<code>@GlideExtension</code>可以将一些通用行为打包起来，扩展一个接口方便业务层调用。比如电商App很多页面都有商品列表，这些商品图片的宽高如果是固定的，就可以包装起来，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@GlideExtension</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MyAppExtension</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> GOODS_W = <span class="number">300</span>; <span class="comment">//商品图宽度</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> GOODS_H = <span class="number">400</span>; <span class="comment">//商品图高度</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="title">MyAppExtension</span><span class="params">()</span> </span>&#123; <span class="comment">//私有化构造方法</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@GlideOption</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> BaseRequestOptions&lt;?&gt; goods(BaseRequestOptions&lt;?&gt; options) &#123;</span><br><span class="line">        <span class="keyword">return</span> options</span><br><span class="line">            .fitCenter()</span><br><span class="line">            .override(GOODS_W, GOODS_H) <span class="comment">//宽高</span></span><br><span class="line">            .placeholder(R.mipmap.ic_launcher) <span class="comment">//商品占位图</span></span><br><span class="line">            .error(R.mipmap.ic_launcher); <span class="comment">//商品图加载失败时</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>rebuild一下项目，生成类<code>build/generated/ap_generated_sources/debug/out/com/holiday/srccodestudy/glide/GlideOptions.java</code>，里面会多出一个方法，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">GlideOptions</span> <span class="keyword">extends</span> <span class="title">RequestOptions</span> <span class="keyword">implements</span> <span class="title">Cloneable</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> GlideOptions <span class="title">goods</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> (GlideOptions) MyAppExtension.goods(<span class="keyword">this</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这时，就可以用goods来直接使用这一组打包好的行为了，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//要用GlideApp</span></span><br><span class="line">GlideApp.with(<span class="keyword">this</span>).load(url).goods().into(img);</span><br></pre></td></tr></table></figure>
+
+<p><code>Generated API</code>比较适合短周期/小型项目，中大型项目往往不会直接裸使用<code>Glide</code>，会包一个中间层来进行隔离（禁止业务层用到<code>Glide</code>的任何类），以便随时可以升级替换，这个中间层就可以根据需要来自行扩展。</p>
+<h2 id="空Fragment取消请求"><a href="#空Fragment取消请求" class="headerlink" title="空Fragment取消请求"></a>空Fragment取消请求</h2><p>Glide.with(context)，当context是Activity时，每个页面都会被添加一个空fragment，由空fragment持有<code>页面级别RequestManager</code>来管理请求，那退出页面时是如何取消请求的呢？</p>
+<p>with通过<code>RequestManagerRetriever</code>获取<code>SupportRequestManagerFragment</code>，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//SupportRequestManagerFragment.java</span></span><br><span class="line"><span class="comment">//创建SupportRequestManagerFragment</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">SupportRequestManagerFragment</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">//创建Lifecycle</span></span><br><span class="line">    <span class="keyword">this</span>(<span class="keyword">new</span> ActivityFragmentLifecycle());</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//RequestManager.java</span></span><br><span class="line"><span class="comment">//创建RequestManager，传入Lifecycle</span></span><br><span class="line">RequestManager(</span><br><span class="line">    Glide glide,</span><br><span class="line">    Lifecycle lifecycle,</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">    Context context) &#123;</span><br><span class="line">    <span class="comment">//lifecycle添加RequestManager为观察者</span></span><br><span class="line">    lifecycle.addListener(<span class="keyword">this</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//ActivityFragmentLifecycle.java</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">addListener</span><span class="params">(LifecycleListener listener)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//记录观察者们</span></span><br><span class="line">    lifecycleListeners.add(listener);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>退出页面时，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//SupportRequestManagerFragment.java</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onDestroy</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    lifecycle.onDestroy();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//ActivityFragmentLifecycle.java</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">onDestroy</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">for</span> (LifecycleListener lifecycleListener : Util.getSnapshot(lifecycleListeners)) &#123;</span><br><span class="line">        lifecycleListener.onDestroy();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//RequestManager.java</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">synchronized</span> <span class="keyword">void</span> <span class="title">onDestroy</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">//各种取消、注销操作</span></span><br><span class="line">    targetTracker.onDestroy();</span><br><span class="line">    <span class="keyword">for</span> (Target&lt;?&gt; target : targetTracker.getAll()) &#123;</span><br><span class="line">        clear(target);</span><br><span class="line">    &#125;</span><br><span class="line">    targetTracker.clear();</span><br><span class="line">    requestTracker.clearRequests();</span><br><span class="line">    lifecycle.removeListener(<span class="keyword">this</span>);</span><br><span class="line">    lifecycle.removeListener(connectivityMonitor);</span><br><span class="line">    mainHandler.removeCallbacks(addSelfToLifecycle);</span><br><span class="line">    glide.unregisterRequestManager(<span class="keyword">this</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>代码看起来有点绕，大致如下图，</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gguatdh4fgj30s80hojth.jpg" alt=""></p>
+<h2 id="Cache缓存"><a href="#Cache缓存" class="headerlink" title="Cache缓存"></a>Cache缓存</h2><h3 id="内存"><a href="#内存" class="headerlink" title="内存"></a>内存</h3><p>内存缓存有两级，一是处于活跃状态，正被view使用着的缓存，称<code>活跃资源</code>；二是没被view使用的，就叫他<code>非活跃资源</code>吧，</p>
+<p>读取内存：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//Engine.java</span></span><br><span class="line"><span class="keyword">public</span> &lt;R&gt; <span class="function">LoadStatus <span class="title">load</span><span class="params">(...)</span></span>&#123;</span><br><span class="line">    <span class="comment">//获取内存缓存</span></span><br><span class="line">    memoryResource = loadFromMemory(key, isMemoryCacheable, startTime);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span> EngineResource&lt;?&gt; loadFromMemory(</span><br><span class="line">    EngineKey key, <span class="keyword">boolean</span> isMemoryCacheable, <span class="keyword">long</span> startTime) &#123;</span><br><span class="line">	<span class="comment">//活跃资源，从ActiveResources的Map中获取</span></span><br><span class="line">    <span class="comment">//Map&lt;Key, ResourceWeakReference&gt; activeEngineResources，值是弱引用，会手动计数</span></span><br><span class="line">    EngineResource&lt;?&gt; active = loadFromActiveResources(key);</span><br><span class="line">    <span class="keyword">if</span> (active != <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> active;</span><br><span class="line">    &#125;</span><br><span class="line">	<span class="comment">//非活跃资源，从LruResourceCache获取，也有手动计数</span></span><br><span class="line">    <span class="comment">//返回后，说明这个缓存被view给用上了，非活跃资源则变成活跃</span></span><br><span class="line">    EngineResource&lt;?&gt; cached = loadFromCache(key);</span><br><span class="line">    <span class="keyword">if</span> (cached != <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> cached;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//内存没有缓存，load就会去请求</span></span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>写入内存：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//Engine.java</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">synchronized</span> <span class="keyword">void</span> <span class="title">onEngineJobComplete</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">    EngineJob&lt;?&gt; engineJob, Key key, EngineResource&lt;?&gt; resource)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (resource != <span class="keyword">null</span> &amp;&amp; resource.isMemoryCacheable()) &#123;</span><br><span class="line">        <span class="comment">//简单理解，就是图片加载完成，这时写入活跃资源的</span></span><br><span class="line">        activeResources.activate(key, resource);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onResourceReleased</span><span class="params">(Key cacheKey, EngineResource&lt;?&gt; resource)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//活跃资源已经没有被引用了，就移出</span></span><br><span class="line">    activeResources.deactivate(cacheKey);</span><br><span class="line">    <span class="keyword">if</span> (resource.isMemoryCacheable()) &#123;</span><br><span class="line">        <span class="comment">//转入非活跃资源</span></span><br><span class="line">        cache.put(cacheKey, resource);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如下图：</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1ggudguraphj315u0j8whl.jpg" alt=""></p>
+<h3 id="磁盘"><a href="#磁盘" class="headerlink" title="磁盘"></a>磁盘</h3><p>看看缓存目录<code>/data/data/com.holiday.srccodestudy/cache/image_manager_disk_cache/</code>，</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gguedyaj70j310i08w401.jpg" alt=""></p>
+<p>先看日志文件<code>journal</code>，</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">libcore.io.DiskLruCache  &#x2F;&#x2F;头部名字</span><br><span class="line">1  &#x2F;&#x2F;磁盘缓存版本</span><br><span class="line">1  &#x2F;&#x2F;App版本</span><br><span class="line">1  &#x2F;&#x2F;每个entry（日志条目）存放的文件数，默认为1，即一个entry对应一个图片文件，比如下面就有4个entry，即4张图片</span><br><span class="line"></span><br><span class="line">DIRTY 64d4b00d8ce8b0942d53b3048d5cf6aaa7173acd321e17420891bbc35b98629f</span><br><span class="line">CLEAN 64d4b00d8ce8b0942d53b3048d5cf6aaa7173acd321e17420891bbc35b98629f 5246</span><br><span class="line">DIRTY 2c23e32bd9b208092b3cbee8db6f1aff5bc11cb0d4ebd092604ee53099beff37</span><br><span class="line">CLEAN 2c23e32bd9b208092b3cbee8db6f1aff5bc11cb0d4ebd092604ee53099beff37 404730</span><br><span class="line">READ 64d4b00d8ce8b0942d53b3048d5cf6aaa7173acd321e17420891bbc35b98629f</span><br><span class="line">READ 2c23e32bd9b208092b3cbee8db6f1aff5bc11cb0d4ebd092604ee53099beff37</span><br><span class="line">DIRTY b566e62aa0e2fb8cb219ad3aa7a0ade9a96521526501ccd775d70aa4f6489272</span><br><span class="line">CLEAN b566e62aa0e2fb8cb219ad3aa7a0ade9a96521526501ccd775d70aa4f6489272 9878</span><br><span class="line">READ 2c23e32bd9b208092b3cbee8db6f1aff5bc11cb0d4ebd092604ee53099beff37</span><br><span class="line">READ b566e62aa0e2fb8cb219ad3aa7a0ade9a96521526501ccd775d70aa4f6489272</span><br><span class="line">DIRTY 55f4af9c1020e3272ce8063c351aff3518f3a1c9508f38345eab27686e263a4c</span><br><span class="line">CLEAN 55f4af9c1020e3272ce8063c351aff3518f3a1c9508f38345eab27686e263a4c 69284</span><br></pre></td></tr></table></figure>
+
+<p>下半部分是操作记录，行开头指操作行为，<code>DIRTY</code>表示在编辑（处于脏数据状态，别读），<code>CLEAN</code>（干净状态）表示写好了，可以读了，<code>READ</code>表示被读入了，<code>REMOVE</code>则表示被删除，中间很长的一串字符就是缓存键或文件名字，最后的数字是文件大小，如404730 B=395.2 KB，只有处于<code>CLEAN</code>状态才会写大小。那么图中的文件名是什么意思，为啥key的后面还有<code>.0</code>后缀？因为一个<code>entry</code>（日志条目）可以对应多个图片，<code>.0</code>代表<code>entry</code>的第一张图片，如果有配置1对多，那就会有<code>.1</code>、<code>.2</code>这样的后缀。选一个<code>.0</code>文件点击右键，<code>Save as</code>保存到电脑，改个jpg后缀，就能看图了。</p>
+<p>来到<code>DiskLruCache</code>类（看名字知道还是<code>最近最少使用算法</code>），</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//DiskLruCache.java</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//有序Map，实现最近最少使用算法</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> LinkedHashMap&lt;String, Entry&gt; lruEntries =</span><br><span class="line">    <span class="keyword">new</span> LinkedHashMap&lt;String, Entry&gt;(<span class="number">0</span>, <span class="number">0.75f</span>, <span class="keyword">true</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">//读取磁盘缓存</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">synchronized</span> Value <span class="title">get</span><span class="params">(String key)</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">    <span class="comment">//根据key找到entry</span></span><br><span class="line">    Entry entry = lruEntries.get(key);</span><br><span class="line">    <span class="keyword">if</span> (entry == <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//还不可以读，返回null</span></span><br><span class="line">    <span class="keyword">if</span> (!entry.readable) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//追加一行日志：READ</span></span><br><span class="line">    journalWriter.append(READ);</span><br><span class="line">    journalWriter.append(<span class="string">' '</span>);</span><br><span class="line">    journalWriter.append(key);</span><br><span class="line">    journalWriter.append(<span class="string">'\n'</span>);</span><br><span class="line">    <span class="comment">//Value就是用来封装的实体</span></span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> Value(key, entry.sequenceNumber, entry.cleanFiles, entry.lengths);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//写入磁盘缓存（这里只是存进内存的Map，真正的写入在DiskLruCacheWrapper）</span></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">synchronized</span> Editor <span class="title">edit</span><span class="params">(String key, <span class="keyword">long</span> expectedSequenceNumber)</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">    Entry entry = lruEntries.get(key);</span><br><span class="line">    <span class="keyword">if</span> (entry == <span class="keyword">null</span>) &#123;</span><br><span class="line">        entry = <span class="keyword">new</span> Entry(key);</span><br><span class="line">        <span class="comment">//存进LinkedHashMap</span></span><br><span class="line">        lruEntries.put(key, entry);</span><br><span class="line">    &#125;</span><br><span class="line">    Editor editor = <span class="keyword">new</span> Editor(entry);</span><br><span class="line">    entry.currentEditor = editor;</span><br><span class="line">    <span class="comment">//追加一行日志：DIRTY</span></span><br><span class="line">    journalWriter.append(DIRTY);</span><br><span class="line">    <span class="keyword">return</span> editor;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//删除磁盘缓存</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">synchronized</span> <span class="keyword">boolean</span> <span class="title">remove</span><span class="params">(String key)</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">    Entry entry = lruEntries.get(key);</span><br><span class="line">    <span class="keyword">if</span> (entry == <span class="keyword">null</span> || entry.currentEditor != <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//删除entry对应的图片文件</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; valueCount; i++) &#123;</span><br><span class="line">        File file = entry.getCleanFile(i);</span><br><span class="line">        size -= entry.lengths[i];</span><br><span class="line">        entry.lengths[i] = <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//追加一行日志：REMOVE</span></span><br><span class="line">    journalWriter.append(REMOVE);</span><br><span class="line">    <span class="comment">//从内存Map中移除</span></span><br><span class="line">    lruEntries.remove(key);</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//当日志操作数和entry数都达到2000，就清空日志重写</span></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">boolean</span> <span class="title">journalRebuildRequired</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">final</span> <span class="keyword">int</span> redundantOpCompactThreshold = <span class="number">2000</span>;</span><br><span class="line">    <span class="keyword">return</span> redundantOpCount &gt;= redundantOpCompactThreshold <span class="comment">//</span></span><br><span class="line">        &amp;&amp; redundantOpCount &gt;= lruEntries.size();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>那么读取和写入时机在哪呢？我们反向追踪一波<code>get</code>方法，从<code>DiskLruCache</code>到<code>DiskLruCacheWrapper</code>的<code>get</code>，然后再追，发现有两个类调了<code>get</code>，分别是<code>DataCacheGenerator</code>和<code>ResourceCacheGenerator</code>，前者是原始图片的缓存，后者是经过<code>downsampled</code>向下采样或<code>transformed</code>转换过的图片，在<a href="https://muyangmin.github.io/glide-docs-cn/doc/caching.html#磁盘缓存策略disk-cache-strategy" target="_blank" rel="noopener">磁盘缓存策略</a>中提到：</p>
+<blockquote>
+<p>目前支持的策略允许你阻止加载过程使用或写入磁盘缓存，选择性地仅缓存无修改的原生数据，或仅缓存变换过的缩略图，或是兼而有之。</p>
+</blockquote>
+<p>默认情况下，网络图片缓存的是原始数据，那我们继续跟<code>DataCacheGenerator</code>，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//DataCacheGenerator.java</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">startNext</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">while</span> (modelLoaders == <span class="keyword">null</span> || !hasNextModelLoader()) &#123;</span><br><span class="line">        sourceIdIndex++;</span><br><span class="line">        <span class="keyword">if</span> (sourceIdIndex &gt;= cacheKeys.size()) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        Key sourceId = cacheKeys.get(sourceIdIndex);</span><br><span class="line">        Key originalKey = <span class="keyword">new</span> DataCacheKey(sourceId, helper.getSignature());</span><br><span class="line">        <span class="comment">//获取磁盘缓存的图片文件</span></span><br><span class="line">        cacheFile = helper.getDiskCache().get(originalKey);</span><br><span class="line">        <span class="keyword">if</span> (cacheFile != <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="keyword">this</span>.sourceKey = sourceId;</span><br><span class="line">            <span class="comment">//获取能够处理File类型的modelLoaders集合，</span></span><br><span class="line">            <span class="comment">//modelLoader就是图片加载类型，比如网络url、本地Uri、文件File都有各自的loader</span></span><br><span class="line">            modelLoaders = helper.getModelLoaders(cacheFile);</span><br><span class="line">            modelLoaderIndex = <span class="number">0</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    loadData = <span class="keyword">null</span>;</span><br><span class="line">    <span class="keyword">boolean</span> started = <span class="keyword">false</span>;</span><br><span class="line">    <span class="keyword">while</span> (!started &amp;&amp; hasNextModelLoader()) &#123;</span><br><span class="line">        <span class="comment">//成功找到ByteBufferFileLoader，可以处理File</span></span><br><span class="line">        ModelLoader&lt;File, ?&gt; modelLoader = modelLoaders.get(modelLoaderIndex++);</span><br><span class="line">        <span class="comment">//传入磁盘缓存的图片文件cacheFile</span></span><br><span class="line">        loadData =</span><br><span class="line">            modelLoader.buildLoadData(</span><br><span class="line">            cacheFile, helper.getWidth(), helper.getHeight(), helper.getOptions());</span><br><span class="line">        <span class="keyword">if</span> (loadData != <span class="keyword">null</span> &amp;&amp; helper.hasLoadPath(loadData.fetcher.getDataClass())) &#123;</span><br><span class="line">            started = <span class="keyword">true</span>;</span><br><span class="line">            loadData.fetcher.loadData(helper.getPriority(), <span class="keyword">this</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> started;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>继续跟<code>modelLoader.buildLoadData</code>，后边就是把图片文件cacheFile封装成<code>ByteBufferFetcher</code>，然后调用上边的<code>loadData.fetcher.loadData</code>进行回调，就不继续跟了，<code>startNext</code>方法在<code>DecodeJob</code>里会被调用，树干篇中可知他就是图片加载过程用到的一个Runnable，好了，下面看看缓存写入时机，反向追踪<code>edit</code>方法，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//DiskLruCacheWrapper.java</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">put</span><span class="params">(Key key, Writer writer)</span> </span>&#123;</span><br><span class="line">    String safeKey = safeKeyGenerator.getSafeKey(key);</span><br><span class="line">    writeLocker.acquire(safeKey);</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            DiskLruCache diskCache = getDiskCache();</span><br><span class="line">            Value current = diskCache.get(safeKey);</span><br><span class="line">            <span class="comment">//已经有缓存，结束</span></span><br><span class="line">            <span class="keyword">if</span> (current != <span class="keyword">null</span>) &#123;</span><br><span class="line">                <span class="keyword">return</span>;</span><br><span class="line">            &#125;</span><br><span class="line">			<span class="comment">//获取Editor</span></span><br><span class="line">            DiskLruCache.Editor editor = diskCache.edit(safeKey);</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                File file = editor.getFile(<span class="number">0</span>);</span><br><span class="line">                <span class="keyword">if</span> (writer.write(file)) &#123;<span class="comment">//编码写入文件</span></span><br><span class="line">                    <span class="comment">//提交“事务”，追加一行日志：CLEAN，表示该条目对应的缓存文件已经干净可以使用了</span></span><br><span class="line">                    editor.commit();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">                editor.abortUnlessCommitted();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="keyword">catch</span> (IOException e) &#123;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">        writeLocker.release(safeKey);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>同样，<code>put</code>方法也会在<code>DecodeJob</code>里被调用，就不往上跟了。</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gguqrpk7d5j30yq0motc5.jpg" alt=""></p>
+<p>合并内存缓存和磁盘缓存，</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gguqwkbx8zj31eq0gq791.jpg" alt=""></p>
+<h2 id="BitmapPool令人诟病"><a href="#BitmapPool令人诟病" class="headerlink" title="BitmapPool令人诟病"></a>BitmapPool令人诟病</h2><p><code>Glide</code>有将Bitmap进行池化，默认是<code>LruBitmapPool</code>，他会决定怎么复用Bitmap、何时回收Bitmap、池子上限时清理，也就是说，他全盘接管了Bitmap的处理，如果项目中有<code>在回调方法外持有Bitmap</code>、<code>手动回收Bitmap</code>的场景，会发生意料外的crash，详见<a href="https://muyangmin.github.io/glide-docs-cn/doc/resourcereuse.html#资源重用错误的征兆" target="_blank" rel="noopener">资源重用错误的征兆</a>。即，我们要有这样的意识，既然使用了<code>Glide</code>，就不要再关心Bitmap的事情了，全盘交由<code>BitmapPool</code>管理即可。</p>
+<blockquote>
+<p>发散：所谓池化，就是设计模式中的享元模式，即维护一个有限个数的对象池来实现对象复用，从而避免频繁的创建销毁对象。比如Handler消息机制中的<code>Message.obtain</code>，就是从消息池（链表）里取出对象来复用，池子的消息总数被限制在MAX_POOL_SIZE=50。Android内的很多实现都是基于Handler（消息驱动）的，池化能减少很大部分的创建销毁。</p>
+</blockquote>
+<h2 id="Decoder解码"><a href="#Decoder解码" class="headerlink" title="Decoder解码"></a>Decoder解码</h2><p>链路有点长，直接看调用栈，</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1ggurpxfz5kj31610u017l.jpg" alt=""></p>
+<p>可见最终走的是native层的<code>nativeDecodeStream</code>，哈迪就不跟了，对inputstream转成bitmap感兴趣的读者自行研究啦~</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1ggui12oggxj30ci05cq31.jpg" alt=""></p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p><code>Glide</code>有如下优势：</p>
+<ol>
+<li>空Fragment感知页面生命周期，避免无效请求</li>
+<li>高度可配置，详见<a href="https://muyangmin.github.io/glide-docs-cn/doc/configuration.html" target="_blank" rel="noopener">配置</a></li>
+<li>三级缓存（网络层缓存如okhttp就不考虑了）：内存活跃资源<code>ActiveResources</code>、内存非活跃资源<code>LruResourceCache</code>、磁盘缓存<code>DiskLruCache</code></li>
+<li>可定制，引入apt处理注解，打包行为，扩展接口。（哈迪没怎么用，感觉有点鸡肋，可能以后会真香）</li>
+<li>可扩展，可以替换网络层、定制自己的图片来源<code>ModelLoader</code>，详见<a href="https://muyangmin.github.io/glide-docs-cn/tut/custom-modelloader.html" target="_blank" rel="noopener">编写定制的ModelLoader</a></li>
+<li>无侵入，into可以传入最简单的ImageView</li>
+<li>优秀的设计模式运用、应用层优雅的链式调用</li>
+</ol>
+<p>至于缺点吧，暂时还没想到。本文只列出了哈迪觉得比较精彩的细节，可能还有遗漏的一些点，大家有补充的可以留下评论，后续我会更新进本文。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a href="https://muyangmin.github.io/glide-docs-cn/" target="_blank" rel="noopener">官方文档</a> &amp; <a href="https://github.com/bumptech/glide">GitHub</a></li>
+</ul>
+<hr>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gg3mnwsbshj308c0augmm.jpg" alt=""></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Android/" rel="tag"># Android</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/07/15/Android-%E3%80%8A%E7%9C%8B%E5%AE%8C%E4%B8%8D%E5%BF%98%E7%B3%BB%E5%88%97%E3%80%8B%E4%B9%8BGlide/" rel="next" title="Android | 《看完不忘系列》之Glide">
+                <i class="fa fa-chevron-left"></i> Android | 《看完不忘系列》之Glide
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">哈利迪</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+
+              <div class="site-state-item site-state-posts">
+                <a href="/archives">
+                  <span class="site-state-item-count">23</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+
+
+
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">2</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Generated-API"><span class="nav-number">1.</span> <span class="nav-text">Generated API</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#全局配置"><span class="nav-number">1.1.</span> <span class="nav-text">全局配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#行为打包"><span class="nav-number">1.2.</span> <span class="nav-text">行为打包</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#空Fragment取消请求"><span class="nav-number">2.</span> <span class="nav-text">空Fragment取消请求</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Cache缓存"><span class="nav-number">3.</span> <span class="nav-text">Cache缓存</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#内存"><span class="nav-number">3.1.</span> <span class="nav-text">内存</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#磁盘"><span class="nav-number">3.2.</span> <span class="nav-text">磁盘</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#BitmapPool令人诟病"><span class="nav-number">4.</span> <span class="nav-text">BitmapPool令人诟病</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Decoder解码"><span class="nav-number">5.</span> <span class="nav-text">Decoder解码</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">6.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料"><span class="nav-number">7.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">哈利迪</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
