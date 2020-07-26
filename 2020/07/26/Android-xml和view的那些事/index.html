@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Android," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="嗨，我是写博客满脑子骚东西的哈利迪~今天和大伙聊聊Android中的xml和view的那些事，首先会分析一下xml布局解析inflate的流程，然后会介绍一些业内的方案，如： 提效篇：  JakeWharton：著名的Butterknife、 Android自带：双向绑定的DataBinding、省去findViewById的ViewBinding和kotlin扩展、  性能优化篇：  掌阅：将x">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android | xml和view的那些事">
+<meta property="og:url" content="https://github.com/holidayei/2020/07/26/Android-xml%E5%92%8Cview%E7%9A%84%E9%82%A3%E4%BA%9B%E4%BA%8B/index.html">
+<meta property="og:site_name" content="Holiday">
+<meta property="og:description" content="嗨，我是写博客满脑子骚东西的哈利迪~今天和大伙聊聊Android中的xml和view的那些事，首先会分析一下xml布局解析inflate的流程，然后会介绍一些业内的方案，如： 提效篇：  JakeWharton：著名的Butterknife、 Android自带：双向绑定的DataBinding、省去findViewById的ViewBinding和kotlin扩展、  性能优化篇：  掌阅：将x">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gh045c14tvj317u0f8n00.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gh3baeqyywj316y0s6dna.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gh0rpfpmtbj30z30u0q9m.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gh1unnmpz0j30v00du0wc.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gh4bv3w8qpj31480jo77a.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gg3mnwsbshj308c0augmm.jpg">
+<meta property="article:published_time" content="2020-07-26T06:32:14.000Z">
+<meta property="article:modified_time" content="2020-07-26T06:33:01.516Z">
+<meta property="article:author" content="哈利迪">
+<meta property="article:tag" content="Android">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gh045c14tvj317u0f8n00.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://github.com/holidayei/2020/07/26/Android-xml和view的那些事/"/>
+
+
+
+
+
+  <title>Android | xml和view的那些事 | Holiday</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Holiday</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://github.com/holidayei/2020/07/26/Android-xml%E5%92%8Cview%E7%9A%84%E9%82%A3%E4%BA%9B%E4%BA%8B/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="哈利迪">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Holiday">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Android | xml和view的那些事</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-07-26T14:32:14+08:00">
+                2020-07-26
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>嗨，我是<code>写博客满脑子骚东西</code>的哈利迪~今天和大伙聊聊Android中的xml和view的那些事，首先会分析一下xml布局解析<code>inflate</code>的流程，然后会介绍一些业内的方案，如：</p>
+<p><code>提效</code>篇：</p>
+<ul>
+<li>JakeWharton：著名的<code>Butterknife</code>、</li>
+<li>Android自带：双向绑定的<code>DataBinding</code>、省去findViewById的<code>ViewBinding</code>和<code>kotlin扩展</code>、</li>
+</ul>
+<p><code>性能优化</code>篇：</p>
+<ul>
+<li>掌阅：将xml转view的流程提前到编译期的<code>x2c</code>、</li>
+<li>鸿洋大佬最近研究的：自定义Factory来创建view的思路<code>ViewOpt</code>、</li>
+<li>天猫：把xml压缩成二进制文件，可动态下发、流式解析的<code>VirtualView</code>、</li>
+</ul>
+<blockquote>
+<p>本文约5000字，阅读大约13分钟。如个别大图模糊，可前往<a href="https://imholiday.cn/" target="_blank" rel="noopener">个人站点</a>阅读。</p>
+</blockquote>
+<h2 id="inflate"><a href="#inflate" class="headerlink" title="inflate"></a>inflate</h2><h3 id="java层"><a href="#java层" class="headerlink" title="java层"></a>java层</h3><blockquote>
+<p>源码基于compileSdkVersion 29 和 androidx.appcompat:appcompat:1.1.0</p>
+</blockquote>
+<p>通常，我们在开发布局的时候都是采用xml，这么做的好处一是<code>可拖拽可预览</code>，二是<code>语法简单清晰</code>，然后在Activity中<code>setContentView</code>，即可完成布局的加载，那具体流程是怎么样的呢？主要分为三步，io读取xml文件，parser解析xml结构得到view树，反射创建view。我们从<code>setContentView</code>开始，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//AppCompatActivity.java</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">setContentView</span><span class="params">(<span class="keyword">int</span> layoutResID)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//交给代理类处理</span></span><br><span class="line">    getDelegate().setContentView(layoutResID);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//AppCompatDelegateImpl.java</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">setContentView</span><span class="params">(<span class="keyword">int</span> resId)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//默认指定父布局为content</span></span><br><span class="line">    ViewGroup contentParent = mSubDecor.findViewById(android.R.id.content);</span><br><span class="line">    <span class="comment">//from通过系统服务得到服务对象</span></span><br><span class="line">    <span class="comment">//inflate解析布局，同时指定contentParent为父布局</span></span><br><span class="line">    LayoutInflater.from(mContext).inflate(resId, contentParent);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>可见，核心实现交给了<code>LayoutInflater</code>，跟进<code>inflate</code>方法，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//LayoutInflater.java</span></span><br><span class="line"><span class="function">View <span class="title">inflate</span><span class="params">(<span class="keyword">int</span> resource, ViewGroup root, <span class="keyword">boolean</span> attachToRoot)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//尝试通过预编译得到view，谷歌还在开发中的功能，先忽略</span></span><br><span class="line">    View view = tryInflatePrecompiled(resource, res, root, attachToRoot);</span><br><span class="line">    <span class="keyword">if</span> (view != <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> view;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//获取XmlResourceParser</span></span><br><span class="line">    XmlResourceParser parser = res.getLayout(resource);</span><br><span class="line">    <span class="comment">//开始解析</span></span><br><span class="line">    <span class="keyword">return</span> inflate(parser, root, attachToRoot);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>XmlResourceParser</code>是一个接口，实现了<code>XmlPullParser</code>（解析xml的布局结构）和 <code>AttributeSet</code>（解析xml标签属性）两个接口，我们先往下跟<code>inflate</code>，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//LayoutInflater.java</span></span><br><span class="line"><span class="comment">//inflate方法有一段注释提到，解析所用的是经过预处理的xml二进制文件而非原始文件，这点后面分析</span></span><br><span class="line"><span class="function">View <span class="title">inflate</span><span class="params">(XmlPullParser parser, ViewGroup root, <span class="keyword">boolean</span> attachToRoot)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//得到xml里标签的属性</span></span><br><span class="line">    <span class="keyword">final</span> AttributeSet attrs = Xml.asAttributeSet(parser);</span><br><span class="line">    View result = root;</span><br><span class="line">    <span class="comment">//定位到view树的根节点</span></span><br><span class="line">    advanceToRootNode(parser);</span><br><span class="line">    <span class="keyword">final</span> String name = parser.getName();</span><br><span class="line">    <span class="keyword">if</span> (TAG_MERGE.equals(name)) &#123;<span class="comment">//根节点是merge标签</span></span><br><span class="line">        <span class="keyword">if</span> (root == <span class="keyword">null</span> || !attachToRoot) &#123;</span><br><span class="line">            <span class="comment">//merge标签必须指定父布局，否则抛异常</span></span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> InflateException(<span class="string">"&lt;merge /&gt; can be used only with a valid "</span></span><br><span class="line">                                       + <span class="string">"ViewGroup root and attachToRoot=true"</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//解析</span></span><br><span class="line">        rInflate(parser, root, inflaterContext, attrs, <span class="keyword">false</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">//得到根视图</span></span><br><span class="line">        <span class="keyword">final</span> View temp = createViewFromTag(root, name, inflaterContext, attrs);</span><br><span class="line">        ViewGroup.LayoutParams params = <span class="keyword">null</span>;</span><br><span class="line">        <span class="keyword">if</span> (root != <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="comment">//用传入的contentParent父布局生成参数给根视图</span></span><br><span class="line">            params = root.generateLayoutParams(attrs);</span><br><span class="line">            <span class="keyword">if</span> (!attachToRoot) &#123;</span><br><span class="line">                temp.setLayoutParams(params);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//解析</span></span><br><span class="line">        rInflateChildren(parser, temp, attrs, <span class="keyword">true</span>);</span><br><span class="line">        <span class="keyword">if</span> (root != <span class="keyword">null</span> &amp;&amp; attachToRoot) &#123;</span><br><span class="line">            <span class="comment">//传入的contentParent作为父布局</span></span><br><span class="line">            root.addView(temp, params);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//没有传入父布局，就直接返回根视图</span></span><br><span class="line">        <span class="keyword">if</span> (root == <span class="keyword">null</span> || !attachToRoot) &#123;</span><br><span class="line">            result = temp;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>继续跟进<code>rInflateChildren</code>，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//LayoutInflater.java</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">rInflateChildren</span><span class="params">(...)</span></span>&#123;</span><br><span class="line">    rInflate(parser, parent, parent.getContext(), attrs, finishInflate);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//遍历、递归（比如LinearLayout里又有一个LinearLayout）</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">rInflate</span><span class="params">(XmlPullParser parser, View parent, Context context,</span></span></span><br><span class="line"><span class="function"><span class="params">              AttributeSet attrs, <span class="keyword">boolean</span> finishInflate)</span></span>&#123;</span><br><span class="line">	<span class="comment">//view树深度</span></span><br><span class="line">    <span class="keyword">final</span> <span class="keyword">int</span> depth = parser.getDepth();</span><br><span class="line">    <span class="keyword">int</span> type;</span><br><span class="line">    <span class="keyword">boolean</span> pendingRequestFocus = <span class="keyword">false</span>;</span><br><span class="line">    <span class="keyword">while</span> (((type = parser.next()) != XmlPullParser.END_TAG ||</span><br><span class="line">            parser.getDepth() &gt; depth) &amp;&amp; type != XmlPullParser.END_DOCUMENT) &#123;</span><br><span class="line">        <span class="keyword">if</span> (type != XmlPullParser.START_TAG) &#123;</span><br><span class="line">            <span class="keyword">continue</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">final</span> String name = parser.getName();</span><br><span class="line">        <span class="comment">//根据不同的标签名进行各自的操作</span></span><br><span class="line">        <span class="keyword">if</span> (TAG_REQUEST_FOCUS.equals(name)) &#123;<span class="comment">//requestFocus</span></span><br><span class="line">            pendingRequestFocus = <span class="keyword">true</span>;</span><br><span class="line">            consumeChildElements(parser);</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (TAG_TAG.equals(name)) &#123;<span class="comment">//tag</span></span><br><span class="line">			<span class="comment">//...</span></span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (TAG_MERGE.equals(name)) &#123;<span class="comment">//merge</span></span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> InflateException(<span class="string">"&lt;merge /&gt; must be the root element"</span>);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;<span class="comment">//重点关注</span></span><br><span class="line">            <span class="comment">//创建view</span></span><br><span class="line">            <span class="keyword">final</span> View view = createViewFromTag(parent, name, context, attrs);</span><br><span class="line">            <span class="keyword">final</span> ViewGroup viewGroup = (ViewGroup) parent;</span><br><span class="line">            <span class="keyword">final</span> ViewGroup.LayoutParams params = viewGroup.generateLayoutParams(attrs);</span><br><span class="line">            <span class="comment">//递归</span></span><br><span class="line">            rInflateChildren(parser, view, attrs, <span class="keyword">true</span>);</span><br><span class="line">            viewGroup.addView(view, params);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">	<span class="comment">//...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>跟进<code>createViewFromTag</code>，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//LayoutInflater.java</span></span><br><span class="line"><span class="function">View <span class="title">createViewFromTag</span><span class="params">(View parent, String name, Context context, </span></span></span><br><span class="line"><span class="function"><span class="params">                       AttributeSet attrs,<span class="keyword">boolean</span> ignoreThemeAttr)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (name.equals(<span class="string">"view"</span>)) &#123;</span><br><span class="line">        <span class="comment">//如果是小写的view，就取class属性的值作为名字</span></span><br><span class="line">        name = attrs.getAttributeValue(<span class="keyword">null</span>, <span class="string">"class"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//选择一个工厂来创建view，可以setFactory/setFactory2来自定义工厂，干预view的创建</span></span><br><span class="line">    View view = tryCreateView(parent, name, context, attrs);</span><br><span class="line">    <span class="keyword">if</span> (view == <span class="keyword">null</span>) &#123;<span class="comment">//工厂处理不了的view，就手动创建</span></span><br><span class="line">        <span class="keyword">if</span> (-<span class="number">1</span> == name.indexOf(<span class="string">'.'</span>)) &#123;</span><br><span class="line">            <span class="comment">//像&lt;Button/&gt;这样没有包名，则加上前缀android.view.</span></span><br><span class="line">            <span class="comment">//运行时，真正的实例是子类PhoneLayoutInflater，他会先在3个前缀里选一个：</span></span><br><span class="line">            <span class="comment">//android.widget.  android.webkit.  android.app.</span></span><br><span class="line">            <span class="comment">//如果3个前缀都找不到类，才交给父类使用前缀android.view.</span></span><br><span class="line">            view = onCreateView(context, parent, name, attrs);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="comment">//已有包名</span></span><br><span class="line">            view = createView(context, name, <span class="keyword">null</span>, attrs);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> view;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>跟进<code>createView</code>，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//LayoutInflater.java</span></span><br><span class="line"><span class="comment">//通过反射创建view</span></span><br><span class="line"><span class="function">View <span class="title">createView</span><span class="params">(Context viewContext, String name,String prefix, AttributeSet attrs)</span></span>&#123;</span><br><span class="line">    <span class="comment">//从缓存中取出构造方法</span></span><br><span class="line">    Constructor&lt;? extends View&gt; constructor = sConstructorMap.get(name);</span><br><span class="line">    Class&lt;? extends View&gt; clazz = <span class="keyword">null</span>;</span><br><span class="line">    <span class="comment">//加载class</span></span><br><span class="line">    clazz = Class.forName(prefix != <span class="keyword">null</span> ? (prefix + name) : name, <span class="keyword">false</span>,</span><br><span class="line">                          mContext.getClassLoader()).asSubclass(View<span class="class">.<span class="keyword">class</span>)</span>;</span><br><span class="line">    <span class="comment">//缓存里没有构造方法，则用clazz获取两个参数的构造方法</span></span><br><span class="line">    <span class="keyword">if</span> (constructor == <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="comment">//Class&lt;?&gt;[] mConstructorSignature = new Class[] &#123;Context.class, AttributeSet.class&#125;</span></span><br><span class="line">        constructor = clazz.getConstructor(mConstructorSignature);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">    <span class="comment">//反射创建view</span></span><br><span class="line">    View view = constructor.newInstance(args);</span><br><span class="line">    <span class="keyword">return</span> view;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>以上就是常规流程，如果有设置工厂，则可以在<code>tryCreateView</code>中就把view给创建了。利用工厂可以做一些全局处理，比如一键切换皮肤、字体等，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//LayoutInflater.java</span></span><br><span class="line"><span class="function">View <span class="title">tryCreateView</span><span class="params">(View parent, String name,Context context,AttributeSet attrs)</span> </span>&#123;</span><br><span class="line">    View view;</span><br><span class="line">    <span class="comment">//选择一个工厂来创建view，可以setFactory/setFactory2来自定义工厂，干预view的创建</span></span><br><span class="line">    <span class="keyword">if</span> (mFactory2 != <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="comment">//用工厂创建view</span></span><br><span class="line">        view = mFactory2.onCreateView(parent, name, context, attrs);</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (mFactory != <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="comment">//用工厂创建view</span></span><br><span class="line">        view = mFactory.onCreateView(name, context, attrs);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        view = <span class="keyword">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (view == <span class="keyword">null</span> &amp;&amp; mPrivateFactory != <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="comment">//用工厂创建view</span></span><br><span class="line">        view = mPrivateFactory.onCreateView(parent, name, context, attrs);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> view;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>整体流程图如下，</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gh045c14tvj317u0f8n00.jpg" alt=""></p>
+<p>需要注意的是，目前系统的<code>AppCompatActivity</code>有帮我们设置一个默认工厂，</p>
+<blockquote>
+<p>AppCompatActivity#onCreate -&gt;</p>
+<p>​        delegate.installViewFactory(); </p>
+<p>AppCompatDelegateImpl#installViewFactory -&gt;</p>
+<p>​        LayoutInflaterCompat.setFactory2(layoutInflater, this);</p>
+</blockquote>
+<p>在<code>AppCompatDelegateImpl</code>中，</p>
+<blockquote>
+<p>AppCompatDelegateImpl#createView -&gt;</p>
+<p>​        return mAppCompatViewInflater.createView(…);</p>
+</blockquote>
+<p>在<code>AppCompatViewInflater</code>中可见，我们常见的一些view都被转换成AppCompat的view了，他们的创建不需要走反射逻辑。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//AppCompatViewInflater.java</span></span><br><span class="line"><span class="function">View <span class="title">createView</span><span class="params">(...)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">switch</span> (name) &#123;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">"TextView"</span>:</span><br><span class="line">            view = createTextView(context, attrs);</span><br><span class="line">            verifyNotNull(view, name);</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">"ImageView"</span>:</span><br><span class="line">            view = createImageView(context, attrs);</span><br><span class="line">            verifyNotNull(view, name);</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">            <span class="comment">//...</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> view;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">protected</span> AppCompatTextView <span class="title">createTextView</span><span class="params">(Context context, AttributeSet attrs)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//TextView被替换成AppCompatTextView</span></span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> AppCompatTextView(context, attrs);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="native层"><a href="#native层" class="headerlink" title="native层"></a>native层</h3><p>那么java层的<code>parser</code>的具体实例是谁呢？跟进<code>XmlResourceParser parser = res.getLayout(resource)</code>，最终发现是<code>XmlBlock.Parser</code>，我们试着跟下<code>parser</code>的<code>getName</code>方法，他的实现交给了native层的<code>nativeGetName</code>，</p>
+<blockquote>
+<p>native源码基于Android 9.0</p>
+</blockquote>
+<p>native函数动态注册，<a href="https://www.androidos.net.cn/android/9.0.0_r8/xref//frameworks/base/core/jni/android_util_XmlBlock.cpp" target="_blank" rel="noopener">android_util_XmlBlock.cpp</a>：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//android_util_XmlBlock.cpp</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//需要动态注册的native函数数组</span></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">const</span> JNINativeMethod gXmlBlockMethods[] = &#123;</span><br><span class="line">    &#123; <span class="string">"nativeGetName"</span>,<span class="string">"(J)I"</span>,(<span class="keyword">void</span>*) android_content_XmlBlock_nativeGetName &#125;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> jint android_content_XmlBlock_nativeGetName(JNIEnv* env, jobject clazz,</span><br><span class="line">                                                   jlong token)&#123;</span><br><span class="line">    ResXMLParser* st = <span class="keyword">reinterpret_cast</span>&lt;ResXMLParser*&gt;(token);</span><br><span class="line">    <span class="keyword">if</span> (st == <span class="literal">NULL</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">static_cast</span>&lt;jint&gt;(st-&gt;getElementNameID());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>来看到<code>ResXMLParser</code>的<code>getElementNameID</code>方法，<a href="https://www.androidos.net.cn/android/9.0.0_r8/xref//frameworks/base/libs/androidfw/ResourceTypes.cpp" target="_blank" rel="noopener">ResourceTypes.cpp</a>：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//ResourceTypes.cpp</span></span><br><span class="line"><span class="function"><span class="keyword">int32_t</span> <span class="title">ResXMLParser::getElementNameID</span><span class="params">()</span> <span class="keyword">const</span></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (mEventCode == START_TAG) &#123;<span class="comment">//标签开始处，如&lt;View&gt;</span></span><br><span class="line">        <span class="comment">//dtohl是啥？todo1</span></span><br><span class="line">        <span class="keyword">return</span> dtohl(((<span class="keyword">const</span> ResXMLTree_attrExt*)mCurExt)-&gt;name.index);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (mEventCode == END_TAG) &#123;<span class="comment">//标签结束处，如&lt;/View&gt;</span></span><br><span class="line">        <span class="keyword">return</span> dtohl(((<span class="keyword">const</span> ResXMLTree_endElementExt*)mCurExt)-&gt;name.index);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>先看下<code>ResXMLTree_attrExt</code>是啥，在<a href="https://www.androidos.net.cn/android/9.0.0_r8/xref//frameworks/base/libs/androidfw/include/androidfw/ResourceTypes.h" target="_blank" rel="noopener">ResourceTypes.h</a>：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//ResourceTypes.h</span></span><br><span class="line"><span class="comment">//是一个结构体</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ResXMLTree_attrExt</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">    <span class="comment">//当前标签元素的命名空间</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">ResStringPool_ref</span> <span class="title">ns</span>;</span></span><br><span class="line">    <span class="comment">//当前标签元素的名称，如"View"，但并不是字符串类型，而是一个结构体，往下看</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">ResStringPool_ref</span> <span class="title">name</span>;</span></span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">//结构体，有个int字段，表示在字符串常量池中的索引</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ResStringPool_ref</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">    <span class="comment">//从ResStringPool_header（头部标识）之后开始索引，在该表中查找字符串在池子中的位置</span></span><br><span class="line">    <span class="keyword">uint32_t</span> index;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>可见，xml被二进制处理时，会把多个相同的字符串压缩成一份存进常量池里，如：</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gh3baeqyywj316y0s6dna.jpg" alt=""></p>
+<p>根据位置index字段，就可以知道标签名字是啥了，常量池的处理可以减小xml体积，</p>
+<p>文章前边留了个todo1：dtohl是啥，谷歌一下dtohl，发现这些函数被定义在<a href="https://www.androidos.net.cn/android/9.0.0_r8/xref/system/core/include/utils/ByteOrder.h" target="_blank" rel="noopener">ByteOrder.h</a>里，</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//ByteOrder.h</span></span><br><span class="line"><span class="comment">//跟设备架构有关的字节序，对于我们今天使用的ARM CPU，就是小字节序（不太懂）</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> DEVICE_BYTE_ORDER LITTLE_ENDIAN</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">if</span> BYTE_ORDER == DEVICE_BYTE_ORDER  <span class="comment">//不用进行字节转换，传x直接返回x</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span>	dtohl(x)	(x)</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span>	dtohs(x)	(x)</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span>	htodl(x)	(x)</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span>	htods(x)	(x)</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">else</span>  <span class="comment">//需要进行字节转换</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span>	dtohl(x)	(android_swap_long(x))</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span>	dtohs(x)	(android_swap_short(x))</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span>	htodl(x)	(android_swap_long(x))</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span>	htods(x)	(android_swap_short(x))</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">//转换操作，不太懂是拿来做啥的</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="keyword">uint32_t</span> <span class="title">android_swap_long</span><span class="params">(<span class="keyword">uint32_t</span> v)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> (v&lt;&lt;<span class="number">24</span>) | ((v&lt;&lt;<span class="number">8</span>)&amp;<span class="number">0x00FF0000</span>) | ((v&gt;&gt;<span class="number">8</span>)&amp;<span class="number">0x0000FF00</span>) | (v&gt;&gt;<span class="number">24</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="keyword">uint16_t</span> <span class="title">android_swap_short</span><span class="params">(<span class="keyword">uint16_t</span> v)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> (v&lt;&lt;<span class="number">8</span>) | (v&gt;&gt;<span class="number">8</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>哈迪能力有限，只能跟到这里了。我们知道运行时解析的xml是经过预处理的二进制文件（apk打包时做的），那我们可以大胆猜测一下，运行时的解析是不是在做一些流式、指针移位之类的读操作？比如，把xml二进制文件进行各种分区，如文件头、标签区、属性区、字符串常量池区，然后解析时则用如readShort、readLong之类的方式进行指针移位，从而读出相应的view标签、view属性，有点类似JVM解析字节码的过程。（能力有限，仅做猜测）</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gh0rpfpmtbj30z30u0q9m.jpg" alt=""></p>
+<h3 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h3><ol>
+<li>预编译<code>tryInflatePrecompiled</code>：谷歌正在做的事情，还没开放，敬请期待。</li>
+<li>xml文件的预处理：打包时将xml进行二进制编译，压缩xml体积、提升运行时的解析效率。（猜测：二进制的流式、指针移位操作，解析效率要比原始的xml高）</li>
+</ol>
+<h2 id="Butterknife"><a href="#Butterknife" class="headerlink" title="Butterknife"></a>Butterknife</h2><p><code>Butterknife</code>在编译期通过Apt（注解处理器）处理注解，JavaPoet（辅助生成Java文件的工具）创建类，来省去findViewById、setOnclickListener这些繁琐的操作。哈迪使用时还是在大学的时候，工作后也没接触过了，现在这个项目的作者已经不再维护了，他推荐我们去使用<code>ViewBinding</code>，不过我们还是简单回顾下吧~</p>
+<p>引入依赖：</p>
+<figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">implementation <span class="string">'com.jakewharton:butterknife:10.2.1'</span></span><br><span class="line">annotationProcessor <span class="string">'com.jakewharton:butterknife-compiler:10.2.1'</span></span><br></pre></td></tr></table></figure>
+
+<p>简单使用：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ButterknifeActivity</span> <span class="keyword">extends</span> <span class="title">AppCompatActivity</span> </span>&#123;</span><br><span class="line">    <span class="meta">@BindView</span>(R.id.tv_name)</span><br><span class="line">    TextView mTextView;</span><br><span class="line">    <span class="meta">@OnClick</span>(R.id.tv_name)</span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">submit</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        Toast.makeText(<span class="keyword">this</span>, <span class="string">"click"</span>, Toast.LENGTH_SHORT).show();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">onCreate</span><span class="params">(Bundle savedInstanceState)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">super</span>.onCreate(savedInstanceState);</span><br><span class="line">        setContentView(R.layout.activity_butterknife);</span><br><span class="line">        <span class="comment">//绑定</span></span><br><span class="line">        mUnbinder = ButterKnife.bind(<span class="keyword">this</span>);</span><br><span class="line">        <span class="comment">//直接访问</span></span><br><span class="line">        mTextView.setText(<span class="string">"butter knife"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>跟进<code>bind</code>方法，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//ButterKnife.java</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> Unbinder <span class="title">bind</span><span class="params">(Activity target)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//获取DecorView</span></span><br><span class="line">    View sourceView = target.getWindow().getDecorView();</span><br><span class="line">    <span class="keyword">return</span> bind(target, sourceView);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> Unbinder <span class="title">bind</span><span class="params">(Object target, View source)</span> </span>&#123;</span><br><span class="line">    Class&lt;?&gt; targetClass = target.getClass();</span><br><span class="line">    <span class="comment">//获取构造方法</span></span><br><span class="line">    Constructor&lt;? extends Unbinder&gt; constructor = findBindingConstructorForClass(targetClass);</span><br><span class="line">    <span class="keyword">if</span> (constructor == <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> Unbinder.EMPTY;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//反射创建Unbinder的实例</span></span><br><span class="line">    <span class="keyword">return</span> constructor.newInstance(target, source);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>跟进<code>findBindingConstructorForClass</code>，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> Constructor&lt;? extends Unbinder&gt; findBindingConstructorForClass(Class&lt;?&gt; cls) &#123;</span><br><span class="line">    <span class="comment">//从缓存获取构造方法</span></span><br><span class="line">    Constructor&lt;? extends Unbinder&gt; bindingCtor = BINDINGS.get(cls);</span><br><span class="line">    <span class="keyword">if</span> (bindingCtor != <span class="keyword">null</span> || BINDINGS.containsKey(cls)) &#123;</span><br><span class="line">        <span class="keyword">return</span> bindingCtor;</span><br><span class="line">    &#125;</span><br><span class="line">    String clsName = cls.getName();</span><br><span class="line">    <span class="comment">//不支持framework层的类</span></span><br><span class="line">    <span class="keyword">if</span> (clsName.startsWith(<span class="string">"android."</span>) || clsName.startsWith(<span class="string">"java."</span>)</span><br><span class="line">        || clsName.startsWith(<span class="string">"androidx."</span>)) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//加载ButterknifeActivity_ViewBinding类</span></span><br><span class="line">    Class&lt;?&gt; bindingClass = cls.getClassLoader().loadClass(clsName + <span class="string">"_ViewBinding"</span>);</span><br><span class="line">    <span class="comment">//获取两个参数的构造方法</span></span><br><span class="line">    bindingCtor = (Constructor&lt;? extends Unbinder&gt;) bindingClass.getConstructor(cls, View<span class="class">.<span class="keyword">class</span>)</span>;</span><br><span class="line">    <span class="comment">//把构造方法存入缓存</span></span><br><span class="line">    BINDINGS.put(cls, bindingCtor);</span><br><span class="line">    <span class="keyword">return</span> bindingCtor;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>ButterknifeActivity_ViewBinding</code>类是由<code>Butterknife</code>创建的，代码不多，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ButterknifeActivity_ViewBinding</span> <span class="keyword">implements</span> <span class="title">Unbinder</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> ButterknifeActivity target;</span><br><span class="line">    <span class="keyword">private</span> View view7f0700b7;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@UiThread</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">ButterknifeActivity_ViewBinding</span><span class="params">(<span class="keyword">final</span> ButterknifeActivity target, View source)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.target = target;</span><br><span class="line">        View view;</span><br><span class="line">        <span class="comment">//source是DecorView，这里边就是简单的source.findViewById(id)</span></span><br><span class="line">        view = Utils.findRequiredView(source, R.id.tv_name, <span class="string">"field 'mTextView' and method 'submit'"</span>);</span><br><span class="line">        <span class="comment">//强转，并赋值给ButterknifeActivity的mTextView</span></span><br><span class="line">        <span class="comment">//所以mTextView不能是private的，private意味着需要增加反射来实现，影响性能</span></span><br><span class="line">        target.mTextView = Utils.castView(view, R.id.tv_name, <span class="string">"field 'mTextView'"</span>, TextView<span class="class">.<span class="keyword">class</span>)</span>;</span><br><span class="line">        view7f0700b7 = view;</span><br><span class="line">        <span class="comment">//设置点击事件</span></span><br><span class="line">        view.setOnClickListener(<span class="keyword">new</span> DebouncingOnClickListener() &#123;</span><br><span class="line">            <span class="meta">@Override</span></span><br><span class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">doClick</span><span class="params">(View p0)</span> </span>&#123;</span><br><span class="line">                <span class="comment">//调用ButterknifeActivity里的submit方法</span></span><br><span class="line">                target.submit();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">unbind</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="comment">//解绑时的一些清理逻辑</span></span><br><span class="line">        <span class="keyword">this</span>.target = <span class="keyword">null</span>;</span><br><span class="line">        target.mTextView = <span class="keyword">null</span>;</span><br><span class="line">        view7f0700b7.setOnClickListener(<span class="keyword">null</span>);</span><br><span class="line">        view7f0700b7 = <span class="keyword">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>可见，<code>Butterknife</code>只有在创建<code>Unbinder</code>实例的时候用了反射，所以对运行时性能的影响是不大的。Apt处理注解和创建类的常规流程就不分析了哈~</p>
+<p>优势：</p>
+<ol>
+<li>省去findViewById、setOnclickListener这些繁琐的操作</li>
+<li>反射操作很少，对运行时性能影响不大</li>
+</ol>
+<p>缺点：</p>
+<ol>
+<li>apt创建类，增加io耗时，类编译耗时</li>
+<li>类的增多，意味着包体积增大</li>
+</ol>
+<h2 id="DataBinding-ViewBinding-kotlin扩展"><a href="#DataBinding-ViewBinding-kotlin扩展" class="headerlink" title="DataBinding/ViewBinding/kotlin扩展"></a>DataBinding/ViewBinding/kotlin扩展</h2><h3 id="DataBinding"><a href="#DataBinding" class="headerlink" title="DataBinding"></a>DataBinding</h3><p><code>DataBinding</code>可以通过binding对象直接访问到xml布局里的有id控件，而且他还能实现数据和UI的<code>双向绑定</code>，即数据驱动UI刷新，UI操作修改数据，<code>双向绑定</code>不是本文重点，本文主要讨论xml和view的事儿~</p>
+<p>简单使用：</p>
+<figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// app/build.gradle里android&#123;&#125;加上开关</span></span><br><span class="line">dataBinding &#123;</span><br><span class="line">    enabled = <span class="literal">true</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>xml布局转成data binding layout，也就是在布局外层包一层layout标签，然后多出一个data标签表示数据区，</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">layout</span> <span class="attr">xmlns:android</span>=<span class="string">"http://schemas.android.com/apk/res/android"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">xmlns:tools</span>=<span class="string">"http://schemas.android.com/tools"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">data</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">data</span>&gt;</span></span><br><span class="line"></span><br><span class="line">    <span class="tag">&lt;<span class="name">LinearLayout</span>&gt;</span></span><br><span class="line"></span><br><span class="line">        <span class="tag">&lt;<span class="name">TextView</span></span></span><br><span class="line"><span class="tag">                  <span class="attr">android:id</span>=<span class="string">"@+id/tv_name"</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">LinearLayout</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">layout</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>在activity中，通过<code>DataBindingUtil</code>得到binding对象，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">DBActivity</span> <span class="keyword">extends</span> <span class="title">AppCompatActivity</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">onCreate</span><span class="params">(Bundle savedInstanceState)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">super</span>.onCreate(savedInstanceState);</span><br><span class="line">        <span class="comment">//得到binding对象</span></span><br><span class="line">        ActivityDBBinding binding = DataBindingUtil.setContentView(<span class="keyword">this</span>, R.layout.activity_d_b);</span><br><span class="line">        <span class="comment">//直接访问控件</span></span><br><span class="line">        binding.tvName.setText(<span class="string">"data binding"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>那<code>DataBinding</code>是怎么做到的呢？也是通过生成额外的一些类来实现的，感兴趣可以看下哈迪之前写的<a href="https://juejin.im/post/5eabbcc15188256d473f32e3" target="_blank" rel="noopener">笔记-DataBinding</a>，我们直接看生成的类<code>app/build/generated/data_binding_base_class_source_out/debug/out/com/holiday/srccodestudy/databinding/ActivityDBBinding.java</code>，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">abstract</span> <span class="class"><span class="keyword">class</span> <span class="title">ActivityDBBinding</span> <span class="keyword">extends</span> <span class="title">ViewDataBinding</span> </span>&#123;</span><br><span class="line">    <span class="comment">//public的TextView，可以直接访问</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">final</span> TextView tvName;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">protected</span> <span class="title">ActivityDBBinding</span><span class="params">(Object _bindingComponent, View _root, </span></span></span><br><span class="line"><span class="function"><span class="params">                                <span class="keyword">int</span> _localFieldCount,TextView tvName)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">super</span>(_bindingComponent, _root, _localFieldCount);</span><br><span class="line">        <span class="keyword">this</span>.tvName = tvName;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//省略一些inflate、bind方法</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="ViewBinding"><a href="#ViewBinding" class="headerlink" title="ViewBinding"></a>ViewBinding</h3><p><code>ViewBinding</code>省去了双向绑定的逻辑，比<code>DataBinding</code>更轻量，用法差不多，不过需要Android studio 3.6开始才能使用，</p>
+<figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// app/build.gradle里android&#123;&#125;加上开关</span></span><br><span class="line">viewBinding &#123;</span><br><span class="line">    enabled = <span class="literal">true</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>打开开关后，默认会给所有布局生成java类，不像<code>DataBinding</code>需要包上一层layout标签。如果个别布局不需要开启<code>ViewBinding</code>，可以给布局的根标签加上<code>tools:viewBindingIgnore=&quot;true&quot;</code>。</p>
+<p>在activity中使用，有点不同，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">VBActivity</span> <span class="keyword">extends</span> <span class="title">AppCompatActivity</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">onCreate</span><span class="params">(Bundle savedInstanceState)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">super</span>.onCreate(savedInstanceState);</span><br><span class="line">        <span class="comment">//先inflate</span></span><br><span class="line">        ActivityVBBinding binding = ActivityVBBinding.inflate(LayoutInflater.from(<span class="keyword">this</span>));</span><br><span class="line">        <span class="comment">//getRoot获取rootView</span></span><br><span class="line">        setContentView(binding.getRoot());</span><br><span class="line">        <span class="comment">//直接访问控件</span></span><br><span class="line">        binding.tvVb.setText(<span class="string">"view binding"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>ViewBinding</code>的具体实现暂不关注，直接看他的生成类<code>app/build/generated/data_binding_base_class_source_out/debug/out/com/holiday/srccodestudy/databinding/ActivityVBBinding.java</code>，路径跟<code>DataBinding</code>一样的，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">ActivityVBBinding</span> <span class="keyword">implements</span> <span class="title">ViewBinding</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> LinearLayout rootView;</span><br><span class="line">    <span class="comment">//public的TextView，可以直接访问</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">final</span> TextView tvVb;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="title">ActivityVBBinding</span><span class="params">(LinearLayout rootView, TextView tvVb)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.rootView = rootView;</span><br><span class="line">        <span class="keyword">this</span>.tvVb = tvVb;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//比DataBinding多出一个getRoot方法</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> LinearLayout <span class="title">getRoot</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> rootView;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//省略一些inflate、bind方法</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>ViewBinding</code>省去了<code>DataBinding</code>的<code>双向绑定</code>功能（不用处理<code>DataBinding</code>的注解、表达式等），更专注于解决findViewById的问题，所以更轻量，编译更快。</p>
+<h3 id="kotlin扩展"><a href="#kotlin扩展" class="headerlink" title="kotlin扩展"></a>kotlin扩展</h3><p>如果项目有使用kotlin，还可以使用kotlin的扩展插件来免去findViewById操作。</p>
+<p>使用kotlin扩展插件，</p>
+<figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// app/build.gradle</span></span><br><span class="line">apply <span class="string">plugin:</span> <span class="string">'kotlin-android-extensions'</span></span><br></pre></td></tr></table></figure>
+
+<p>在activity中使用，</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">KotlinActivity</span> : <span class="type">AppCompatActivity</span></span>() &#123;</span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">onCreate</span><span class="params">(savedInstanceState: <span class="type">Bundle</span>?)</span></span> &#123;</span><br><span class="line">        <span class="keyword">super</span>.onCreate(savedInstanceState)</span><br><span class="line">        setContentView(R.layout.activity_kotlin)</span><br><span class="line">        <span class="comment">//直接访问控件</span></span><br><span class="line">        tv_kotlin.text = <span class="string">"kotlin 扩展插件"</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>使用kotlin扩展插件有个明显的问题，就是控件的“裸奔”问题，比如我在activity中输入tv，就会把其他页面的控件也提示出来，</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gh1unnmpz0j30v00du0wc.jpg" alt=""></p>
+<p>如果不小心导入了别的页面才有的控件，编译期没问题，运行的时候就才抛异常。也就是说，使用kotlin扩展插件，所有控件都处于不安全的裸奔状态。</p>
+<p>使用AS反编译一下KotlinActivity，<code>Tools -&gt; Kotlin -&gt; Show Kotlin Bytecode -&gt; Decompile</code>，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">KotlinActivity</span> <span class="keyword">extends</span> <span class="title">AppCompatActivity</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> HashMap _$_findViewCache;<span class="comment">//控件缓存</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">onCreate</span><span class="params">(Bundle savedInstanceState)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">super</span>.onCreate(savedInstanceState);</span><br><span class="line">        <span class="keyword">this</span>.setContentView(<span class="number">1300004</span>);</span><br><span class="line">        <span class="comment">//查找TextView</span></span><br><span class="line">        TextView var10000 = (TextView)<span class="keyword">this</span>._$_findCachedViewById(id.tv_kotlin);</span><br><span class="line">        <span class="comment">//运行时，合法性检测，如果导了别的页面的控件进来，会抛xxx must not be null异常</span></span><br><span class="line">        Intrinsics.checkExpressionValueIsNotNull(var10000, <span class="string">"tv_kotlin"</span>);</span><br><span class="line">        <span class="comment">//使用控件</span></span><br><span class="line">        var10000.setText((CharSequence)<span class="string">"kotlin 扩展插件"</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> View _$_findCachedViewById(<span class="keyword">int</span> var1) &#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">this</span>._$_findViewCache == <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="keyword">this</span>._$_findViewCache = <span class="keyword">new</span> HashMap();</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//在缓存中找控件</span></span><br><span class="line">        View var2 = (View)<span class="keyword">this</span>._$_findViewCache.get(var1);</span><br><span class="line">        <span class="keyword">if</span> (var2 == <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="comment">//第一次找不到，走findViewById（如果导了别的页面的控件进来，就只能返回null了）</span></span><br><span class="line">            var2 = <span class="keyword">this</span>.findViewById(var1);</span><br><span class="line">            <span class="keyword">this</span>._$_findViewCache.put(var1, var2);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> var2;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>至于kotlin如何插入这些代码的，能力有限，哈迪也不知道，有了解的朋友评论区聊起来~</p>
+<h3 id="小结-1"><a href="#小结-1" class="headerlink" title="小结"></a>小结</h3><p>如果不做数据和UI的<code>双向绑定</code>，只是为了避免findViewById，优先使用更轻量的<code>ViewBinding</code>，否则使用<code>DataBinding</code>。<code>DataBinding</code>和<code>ViewBinding</code>在避免了findViewById繁琐工作的同时，还确保了<code>空安全</code>和<code>类型安全</code>，即不会出现findViewById得到null、view cast exception的问题。当然，这两种方式也是避免不了生成类的编译耗时和包体积增大的问题的，得结合具体场景来使用。至于kotlin扩展，存在控件裸奔问题，不太推荐。</p>
+<p>至此，<code>提效</code>篇就介绍到这里了，下面让我们开始<code>性能优化</code>篇~</p>
+<h2 id="x2c"><a href="#x2c" class="headerlink" title="x2c"></a>x2c</h2><p><code>x2c</code>是使用Apt+JavaPoet技术，在编译期将xml布局转成view类，免去了运行时解析xml的耗时。</p>
+<p>引入依赖：</p>
+<figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">annotationProcessor <span class="string">'com.zhangyue.we:x2c-apt:1.1.2'</span></span><br><span class="line">implementation <span class="string">'com.zhangyue.we:x2c-lib:1.0.6'</span></span><br></pre></td></tr></table></figure>
+
+<p>简单使用：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//给布局文件声明一个注解</span></span><br><span class="line"><span class="meta">@Xml</span>(layouts = <span class="string">"layout_x2c_test"</span>)</span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">X2CActivity</span> <span class="keyword">extends</span> <span class="title">AppCompatActivity</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">onCreate</span><span class="params">(Bundle savedInstanceState)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">super</span>.onCreate(savedInstanceState);</span><br><span class="line">        setContentView(R.layout.activity_x2c);</span><br><span class="line">		<span class="comment">//通过X2C来获取view</span></span><br><span class="line">        View view = X2C.inflate(<span class="keyword">this</span>, R.layout.layout_x2c_test, <span class="keyword">null</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>跟进<code>X2C.inflate</code>，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//X2C.java</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> View <span class="title">inflate</span><span class="params">(Context context, <span class="keyword">int</span> layoutId, ViewGroup parent)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> inflate(context, layoutId, parent, <span class="keyword">true</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//加载xml文件，检测如果有对应的java类，使用java类，否则使用LayoutInflater</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> View <span class="title">inflate</span><span class="params">(Context context, <span class="keyword">int</span> layoutId, ViewGroup parent, <span class="keyword">boolean</span> attach)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//获取xml布局对应的java类</span></span><br><span class="line">    View view = getView(context, layoutId);</span><br><span class="line">    <span class="keyword">if</span> (view != <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">if</span> (parent != <span class="keyword">null</span>) &#123;</span><br><span class="line">            parent.addView(view);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> view;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">//没有java类，走LayoutInflater解析逻辑</span></span><br><span class="line">        <span class="keyword">return</span> LayoutInflater.from(context).inflate(layoutId, parent, attach);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> View <span class="title">getView</span><span class="params">(Context context, <span class="keyword">int</span> layoutId)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//获取缓存好的view创建器</span></span><br><span class="line">    IViewCreator creator = sSparseArray.get(layoutId);</span><br><span class="line">    <span class="keyword">if</span> (creator == <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="comment">//没有，则生成一个</span></span><br><span class="line">        <span class="keyword">int</span> group = generateGroupId(layoutId);</span><br><span class="line">        String layoutName = context.getResources().getResourceName(layoutId);</span><br><span class="line">        layoutName = layoutName.substring(layoutName.lastIndexOf(<span class="string">"/"</span>) + <span class="number">1</span>);</span><br><span class="line">        String clzName = <span class="string">"com.zhangyue.we.x2c.X2C"</span> + group + <span class="string">"_"</span> + layoutName;</span><br><span class="line">        <span class="comment">//加载Apt生成的X2C0_layout_x2c_test这个类，反射获得view创建器</span></span><br><span class="line">        creator = (IViewCreator) context.getClassLoader().loadClass(clzName).newInstance();</span><br><span class="line">		<span class="comment">//缓存起来</span></span><br><span class="line">        sSparseArray.put(layoutId, creator);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//使用view创建器来创建view</span></span><br><span class="line">    <span class="keyword">return</span> creator.createView(context);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>来看到view创建器<code>X2C0_layout_x2c_test</code>，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">X2C0_layout_x2c_test</span> <span class="keyword">implements</span> <span class="title">IViewCreator</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="function">View <span class="title">createView</span><span class="params">(Context context)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> com.zhangyue.we.x2c.layouts.X2C0_Layout_X2c_Test().createView(context);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>跟进<code>X2C0_Layout_X2c_Test</code>可见，xml的标签和属性，都被解析成了java类的相应设置，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">X2C0_Layout_X2c_Test</span> <span class="keyword">implements</span> <span class="title">IViewCreator</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="function">View <span class="title">createView</span><span class="params">(Context ctx)</span> </span>&#123;</span><br><span class="line">        Resources res = ctx.getResources();</span><br><span class="line">        LinearLayout linearLayout0 = <span class="keyword">new</span> LinearLayout(ctx);</span><br><span class="line">        linearLayout0.setGravity(Gravity.CENTER_HORIZONTAL);</span><br><span class="line">        linearLayout0.setOrientation(LinearLayout.VERTICAL);</span><br><span class="line">        <span class="comment">//...</span></span><br><span class="line">        TextView textView2 = <span class="keyword">new</span> TextView(ctx);</span><br><span class="line">        LinearLayout.LayoutParams layoutParam2 = <span class="keyword">new</span> LinearLayout.LayoutParams(</span><br><span class="line">            ViewGroup.LayoutParams.WRAP_CONTENT,ViewGroup.LayoutParams.WRAP_CONTENT);</span><br><span class="line">        textView2.setId(R.id.tv);</span><br><span class="line">        textView2.setText(<span class="string">"文案内容"</span>);</span><br><span class="line">        textView2.setLayoutParams(layoutParam2);</span><br><span class="line">        linearLayout0.addView(textView2);</span><br><span class="line">        <span class="keyword">return</span> linearLayout0;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>优势：</p>
+<ol>
+<li>将xml解析提前到编译期，免去了运行时解析的耗时和内存</li>
+<li>只在获取view创建器时用了反射，对运行时性能影响不大</li>
+</ol>
+<p>缺点：</p>
+<ol>
+<li>apt创建类，增加io耗时，类编译耗时</li>
+<li>类的增多，意味着包体积增大</li>
+</ol>
+<p>所以，通常只在个别复杂度较高，有性能瓶颈的页面才会使用。</p>
+<h2 id="ViewOpt"><a href="#ViewOpt" class="headerlink" title="ViewOpt"></a>ViewOpt</h2><p>鸿洋大佬的方案，是从避免反射创建view的角度去做优化的，即使用自定义工厂Factory来创建view，绕开反射逻辑。核心流程就是，先通过merge.xml来收集xml中用到的view集合，然后Apt生成一个类来处理集合，然后干预默认工厂Factory来插入自己的view创建逻辑。</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gh4bv3w8qpj31480jo77a.jpg" alt=""></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">BaseActivity</span> <span class="keyword">extends</span> <span class="title">AppCompatActivity</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> View <span class="title">onCreateView</span><span class="params">(View parent, String name, Context context, AttributeSet attrs)</span> </span>&#123;</span><br><span class="line">        <span class="comment">//插入自己的逻辑，将view的创建交给代理类</span></span><br><span class="line">        View view = ViewOpt.createView(name, context, attrs);</span><br><span class="line">        <span class="keyword">if</span> (view != <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span> view;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//走默认工厂</span></span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">super</span>.onCreateView(parent, name, context, attrs);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>更多细节，可前往<a href="https://juejin.im/post/5ed38aabf265da771169a625" target="_blank" rel="noopener">Android“退一步”的布局加载优化</a>阅读~</p>
+<h2 id="延伸：VirtualView"><a href="#延伸：VirtualView" class="headerlink" title="延伸：VirtualView"></a>延伸：VirtualView</h2><p><code>VirtualView</code>是在天猫重运营的电商业务场景下，产生的一套方案，他可以通过编写xml，然后编译成二进制文件（体积小，解析快），下发到客户端渲染，具备动态能力。感兴趣可以看哈迪之前写的系列文章<a href="https://juejin.im/post/5ec6832d51882542f71873b8" target="_blank" rel="noopener">硬核的Virtualview</a>。</p>
+<p>哈迪在<code>inflate</code>章节中猜测：Android中的xml的二进制解析是不是流式、指针移位的方式来操作？之所以这么想，是因为在<a href="http://pingguohe.net/2017/12/27/deep-into-virtualview-android-1.html" target="_blank" rel="noopener">VirtualView文件格式与模板编译</a>这篇文章看到了类似操作，所以做出了这个猜测。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>不管是<code>提效</code>篇还是<code>性能优化</code>篇，我们可以看到，针对不同的业务场景和需求，来选择不同的实现方案。没有完美的技术，只有合不合适~</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a href="https://www.jianshu.com/p/162f4efab172" target="_blank" rel="noopener">简书 - inflate的过程分析</a></li>
+<li><a href="https://blog.csdn.net/lmj623565791/article/details/51503977" target="_blank" rel="noopener">CSDN - Android 探究 LayoutInflater setFactory</a></li>
+<li><a href="https://github.com/JakeWharton/butterknife">GitHub - butterknife</a></li>
+<li><a href="https://juejin.im/post/5eabbcc15188256d473f32e3" target="_blank" rel="noopener">掘金 - Jetpack笔记-DataBinding</a></li>
+<li><a href="https://github.com/iReaderAndroid/X2C">GitHub - X2C</a></li>
+<li><a href="https://juejin.im/post/5ed38aabf265da771169a625" target="_blank" rel="noopener">掘金 - Android “退一步”的布局加载优化</a></li>
+<li><a href="https://github.com/alibaba/Virtualview-Android">GitHub - Virtualview</a> &amp; <a href="https://juejin.im/post/5ec6832d51882542f71873b8" target="_blank" rel="noopener">掘金 - 硬核的Virtualview</a></li>
+</ul>
+<hr>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gg3mnwsbshj308c0augmm.jpg" alt=""></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Android/" rel="tag"># Android</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/07/18/Android-Glide%E7%BB%86%E6%9E%9D%E7%AF%87/" rel="next" title="Android | Glide细枝篇">
+                <i class="fa fa-chevron-left"></i> Android | Glide细枝篇
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">哈利迪</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+
+              <div class="site-state-item site-state-posts">
+                <a href="/archives">
+                  <span class="site-state-item-count">24</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+
+
+
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">2</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#inflate"><span class="nav-number">1.</span> <span class="nav-text">inflate</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#java层"><span class="nav-number">1.1.</span> <span class="nav-text">java层</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#native层"><span class="nav-number">1.2.</span> <span class="nav-text">native层</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#小结"><span class="nav-number">1.3.</span> <span class="nav-text">小结</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Butterknife"><span class="nav-number">2.</span> <span class="nav-text">Butterknife</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#DataBinding-ViewBinding-kotlin扩展"><span class="nav-number">3.</span> <span class="nav-text">DataBinding&#x2F;ViewBinding&#x2F;kotlin扩展</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#DataBinding"><span class="nav-number">3.1.</span> <span class="nav-text">DataBinding</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ViewBinding"><span class="nav-number">3.2.</span> <span class="nav-text">ViewBinding</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#kotlin扩展"><span class="nav-number">3.3.</span> <span class="nav-text">kotlin扩展</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#小结-1"><span class="nav-number">3.4.</span> <span class="nav-text">小结</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#x2c"><span class="nav-number">4.</span> <span class="nav-text">x2c</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ViewOpt"><span class="nav-number">5.</span> <span class="nav-text">ViewOpt</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#延伸：VirtualView"><span class="nav-number">6.</span> <span class="nav-text">延伸：VirtualView</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">7.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料"><span class="nav-number">8.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">哈利迪</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
