@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Android," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="嗨，我是哈利迪~最近有个bug排查了好几天，就是有个老页面因业务复杂度，使用了NestedScrollView+tab+多Fragment的结构（各Fragment里有RecyclerView，即存在嵌套滑动），在新的班车中，出现了偶现的滑不动问题。在业务相关组件里排查了很久都没思路，哈迪便开始了万能的组件排除法，即在几十个变更组件里用二分法分批排查（没错就是这么骚），最后定位到一个Flutter">
+<meta property="og:type" content="article">
+<meta property="og:title" content="踩坑记 | Flutter升级影响了NestedScrollView？">
+<meta property="og:url" content="https://github.com/holidayei/2020/08/06/%E8%B8%A9%E5%9D%91%E8%AE%B0-Flutter%E5%8D%87%E7%BA%A7%E5%BD%B1%E5%93%8D%E4%BA%86NestedScrollView%EF%BC%9F/index.html">
+<meta property="og:site_name" content="Holiday">
+<meta property="og:description" content="嗨，我是哈利迪~最近有个bug排查了好几天，就是有个老页面因业务复杂度，使用了NestedScrollView+tab+多Fragment的结构（各Fragment里有RecyclerView，即存在嵌套滑动），在新的班车中，出现了偶现的滑不动问题。在业务相关组件里排查了很久都没思路，哈迪便开始了万能的组件排除法，即在几十个变更组件里用二分法分批排查（没错就是这么骚），最后定位到一个Flutter">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1ghey59d868j305u05uwee.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gheyy5mikfj30w602iq3j.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1ghfoik2l5dj315q0bm0vd.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gg2id8vsrig301c01z0so.gif">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1ghfvx5s9agj31le0nkgsb.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1ghfw2d8putj31fu0i8gqj.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1ghfw2snvloj31fs0d2417.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1ghf3b0k2voj316a0pedjc.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1ghf2ej40ryj306406aabd.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1ghh55eib6uj30y90u0183.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1ghh5xpf6l1j318u0lw40w.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1ghhc9k9kgmj31560po7fc.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1ghhe1dz6dwj30640420sy.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gg3mnwsbshj308c0augmm.jpg">
+<meta property="article:published_time" content="2020-08-06T14:05:27.000Z">
+<meta property="article:modified_time" content="2020-08-06T14:06:21.303Z">
+<meta property="article:author" content="哈利迪">
+<meta property="article:tag" content="Android">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1ghey59d868j305u05uwee.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://github.com/holidayei/2020/08/06/踩坑记-Flutter升级影响了NestedScrollView？/"/>
+
+
+
+
+
+  <title>踩坑记 | Flutter升级影响了NestedScrollView？ | Holiday</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Holiday</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://github.com/holidayei/2020/08/06/%E8%B8%A9%E5%9D%91%E8%AE%B0-Flutter%E5%8D%87%E7%BA%A7%E5%BD%B1%E5%93%8D%E4%BA%86NestedScrollView%EF%BC%9F/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="哈利迪">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Holiday">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">踩坑记 | Flutter升级影响了NestedScrollView？</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-08-06T22:05:27+08:00">
+                2020-08-06
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>嗨，我是哈利迪~最近有个bug排查了好几天，就是有个老页面因业务复杂度，使用了NestedScrollView+tab+多Fragment的结构（各Fragment里有RecyclerView，即存在嵌套滑动），在新的班车中，出现了偶现的滑不动问题。在业务相关组件里排查了很久都没思路，哈迪便开始了万能的<code>组件排除法</code>，即在几十个变更组件里用<code>二分法</code>分批排查（没错就是这么骚），最后定位到一个Flutter组件，只要把它回退就没问题了。。</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1ghey59d868j305u05uwee.jpg" alt=""></p>
+<p>不对啊，我这个页面是原生的啊，井水不犯河水的Flutter，还能影响到我的页面？找了组里的老哥一起看，才发现，竟然是Flutter升级<code>1.17</code>引起的！</p>
+<blockquote>
+<p>本文约3300字，阅读大约9分钟。如个别大图模糊，可前往<a href="https://imholiday.cn/" target="_blank" rel="noopener">个人站点</a>阅读。</p>
+</blockquote>
+<h2 id="Flutter-1-17有何魔力"><a href="#Flutter-1-17有何魔力" class="headerlink" title="Flutter 1.17有何魔力"></a>Flutter 1.17有何魔力</h2><p>Flutter<code>1.17</code>算是一个里程碑版本，做了很多性能、功能、工具上的优化，详见<a href="https://mp.weixin.qq.com/s/VXNbqxpoVDJeOPkBt5_88A" target="_blank" rel="noopener">Flutter 1.17 | 2020 首个稳定版发布</a>，里边有这么一段话：</p>
+<blockquote>
+<p>如果您的目标平台是 Android，您会注意到，现在创建新的 Flutter 项目时只提供 AndroidX 选项。AndroidX 库提供了被称为 Android Jetpack 的高级 Android 功能。在上一个版本中，我们不再支持原先的 Android Support Library，转而将 AndroidX 作为所有新项目的默认选项。在 Flutter 1.17 中，flutter create 命令只有 –androidx 这一个选项。虽然现有的不使用 AndroidX 的 Flutter 应用依然可以编译，但<a href="http://mp.weixin.qq.com/s?__biz=MzAwODY4OTk2Mg==&mid=2652053242&idx=1&sn=7c956b81beac9674ec0f7a2f8c96bba3&chksm=808cbebfb7fb37a9dc722e40e41d1d972a51b3fb6e0200a71082503a490f8a0bbd69800c352d&scene=21#wechat_redirect" target="_blank" rel="noopener">是时候迁移至 AndroidX 了</a>。</p>
+</blockquote>
+<p>官方没有提到androidx版本，我们把Flutter升到<code>1.17</code>后，在壳工程Sync一下，发现External Libraries里有两个core依赖，</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gheyy5mikfj30w602iq3j.jpg" alt=""></p>
+<p><code>./gradlew app:dependencies</code>，看下Flutter组件的依赖树：</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1ghfoik2l5dj315q0bm0vd.jpg" alt=""></p>
+<p>第1个是java类的jar包，后面3个jar包则用来依赖各个CPU架构的so库。</p>
+<p>从第1个jar包可以看出，就是<code>传递依赖</code>的锅！他把比较新的androidx.fragment、lifecycle和annotation给拉过来了，导致androidx.core也从<code>1.0.0</code>变成了<code>1.1.0</code>，查阅<a href="https://developer.android.google.cn/jetpack/androidx/releases/core?hl=zh_cn#version_110_3" target="_blank" rel="noopener">core版本发布</a>，在<code>1.1.0</code>的变更里有一行：</p>
+<blockquote>
+<p>添加了嵌套滚动改进；请参阅 <a href="https://developer.android.google.cn/reference/androidx/core/view/NestedScrollingChild3?hl=zh_cn" target="_blank" rel="noopener">NestedScrollingChild3</a> 和 <a href="https://developer.android.google.cn/reference/androidx/core/view/NestedScrollingParent3?hl=zh_cn" target="_blank" rel="noopener">NestedScrollingParent3</a>。</p>
+</blockquote>
+<p>果然对<a href="https://developer.android.google.cn/reference/androidx/core/widget/NestedScrollView?hl=zh_cn" target="_blank" rel="noopener">NestedScrollView</a>进行了改动，看一下这个类：</p>
+<p>1.0.0：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">NestedScrollView</span> <span class="keyword">extends</span> <span class="title">FrameLayout</span> <span class="keyword">implements</span></span></span><br><span class="line"><span class="class">    <span class="title">NestedScrollingParent2</span>,<span class="title">NestedScrollingChild2</span>, <span class="title">ScrollingView</span></span>&#123;&#125;</span><br></pre></td></tr></table></figure>
+
+<p>1.1.0：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">NestedScrollView</span> <span class="keyword">extends</span> <span class="title">FrameLayout</span> <span class="keyword">implements</span> </span></span><br><span class="line"><span class="class">    <span class="title">NestedScrollingParent3</span>,<span class="title">NestedScrollingChild3</span>, <span class="title">ScrollingView</span> </span>&#123;&#125;</span><br></pre></td></tr></table></figure>
+
+<p>可见，有两个接口从v2变成了v3，NestedScrollView类本身的实现也有一些改动。</p>
+<p><code>传递依赖</code>怎么解决，<code>exclude</code>一下就行了，（困扰了好几天的bug这么简单就修好了？）</p>
+<figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">compile(<span class="string">'xxx'</span>) &#123;</span><br><span class="line">    exclude(<span class="string">group:</span> <span class="string">'androidx.fragment'</span>)</span><br><span class="line">    exclude(<span class="string">group:</span> <span class="string">'androidx.lifecycle'</span>)</span><br><span class="line">    exclude(<span class="string">group:</span> <span class="string">'androidx.annotation'</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>那这里就有一个问题了，Flutter<code>1.17</code>（的<code>flutter_embedding_release-1.0.0-$hash</code>这个jar包）到底有没有用到AndroidX<code>1.1.0</code>版本的新代码？这样强行降级使用<code>1.0.0</code>有啥潜在风险？这个待会讨论。</p>
+<p>又或者，为啥不去改业务代码，真正的修掉bug？首先嵌套滑动场景可能不止一处业务在用，我的页面修了，其他地方可能还有没发现的bug呢~其次，单纯为了升Flutter而接受更新的AndroidX，本来就是高风险的事情（传递依赖），鬼知道哪天又被升了更高的版本？所以。。没错，哈迪把锅甩了，甩得理直气壮！</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gg2id8vsrig301c01z0so.gif" alt=""></p>
+<h2 id="降级有无潜在风险"><a href="#降级有无潜在风险" class="headerlink" title="降级有无潜在风险"></a>降级有无潜在风险</h2><p>首先阿里的<a href="https://github.com/alibaba/flutter_boost/blob/master/android/build.gradle#L40">flutter_boost</a>用的AndroidX也是<code>1.0.0</code>，所以不用关心，那我们重点看到<code>flutter_embedding_release-1.0.0-$hash</code>这个jar包，用<code>jadx-gui</code>反编译一下，搜androidx，</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1ghfvx5s9agj31le0nkgsb.jpg" alt=""></p>
+<p>可见fragment、lifecycle、annotation确实有被用上，annotation我们不用关心，关注另外两个，</p>
+<p>lifecycle：</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1ghfw2d8putj31fu0i8gqj.jpg" alt=""></p>
+<p>fragment：</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1ghfw2snvloj31fs0d2417.jpg" alt=""></p>
+<p>先看下<a href="https://developer.android.google.cn/jetpack/androidx/releases/lifecycle?hl=zh_cn#1.1.0" target="_blank" rel="noopener">lifecycle变更</a>，看起来就是弃用了一些东西和加了点ViewModel的功能，那降到<code>1.0.0</code>没啥影响；</p>
+<p>再看到<a href="https://developer.android.google.cn/jetpack/androidx/releases/fragment?hl=zh_cn#1.1.0" target="_blank" rel="noopener">fragment变更</a>，改动了FragmentFactory、ViewModel 的 Kotlin 属性委托、最大生命周期、FragmentActivity LayoutId 构造函数等，哈迪在<code>jadx-gui</code>里大致搜了一下，也没用上这些新东西，所以目前看下来，androidx强行降级使用<code>1.0.0</code>是安全的（如果有足够人力投入并验证，升上去当然更好）。</p>
+<h2 id="NestedScrollView"><a href="#NestedScrollView" class="headerlink" title="NestedScrollView"></a>NestedScrollView</h2><h3 id="简析"><a href="#简析" class="headerlink" title="简析"></a>简析</h3><p>那么接下来我们来看看<code>1.1.0</code>里NestedScrollView都改了写啥，先来捋下NestedScrollView的继承关系：</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1ghf3b0k2voj316a0pedjc.jpg" alt=""></p>
+<p>先分析<code>1.0.0</code>版本，然后再来看<code>1.1.0</code>的改动点。NestedScrollView继承FrameLayout，实现了NestedScrollingParent2、NestedScrollingChild2、ScrollingView接口，持有NestedScrollingParentHelper和NestedScrollingChildHelper两个辅助类来处理逻辑。</p>
+<p>直接看源码容易掉头发，还是先简单使用感受一下。</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1ghf2ej40ryj306406aabd.jpg" alt=""></p>
+<blockquote>
+<p>代码仅供演示，非必要情况下并不推荐NestedScrollView和RecyclerView的嵌套。</p>
+</blockquote>
+<p>相比NestedScrollView，RecyclerView只实现了NestedScrollingChild2，在嵌套滑动体系里只能作为子布局存在，所以下面以RecyclerView为子，NestedScrollView为父，</p>
+<p>布局很简单，就一个header和RecyclerView：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">MyNestedScrollView</span> </span></span><br><span class="line"><span class="tag">      <span class="attr">android:id</span>=<span class="string">"@+id/nsv_out"</span>&gt;</span></span><br><span class="line"></span><br><span class="line">    <span class="tag">&lt;<span class="name">LinearLayout</span></span></span><br><span class="line"><span class="tag">           <span class="attr">android:orientation</span>=<span class="string">"vertical"</span>&gt;</span></span><br><span class="line"></span><br><span class="line">        <span class="tag">&lt;<span class="name">ImageView</span></span></span><br><span class="line"><span class="tag">              <span class="attr">android:id</span>=<span class="string">"@+id/iv_header"</span></span></span><br><span class="line"><span class="tag">              <span class="attr">android:src</span>=<span class="string">"@mipmap/ic_launcher"</span> /&gt;</span></span><br><span class="line"></span><br><span class="line">        <span class="tag">&lt;<span class="name">MyRecyclerView</span></span></span><br><span class="line"><span class="tag">              <span class="attr">android:id</span>=<span class="string">"@+id/rv_list"</span></span></span><br><span class="line"><span class="tag">              <span class="attr">android:layout_width</span>=<span class="string">"match_parent"</span></span></span><br><span class="line"><span class="tag">              <span class="attr">android:layout_height</span>=<span class="string">"600dp"</span> /&gt;</span></span><br><span class="line"></span><br><span class="line">    <span class="tag">&lt;/<span class="name">LinearLayout</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;/<span class="name">MyNestedScrollView</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>给RecyclerView指定了高度，确保能正常复用。先加些日志观察下嵌套滑动机制，MyNestedScrollView：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">MyNestedScrollView</span> <span class="keyword">extends</span> <span class="title">NestedScrollView</span> </span>&#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onNestedPreScroll</span><span class="params">(View target, <span class="keyword">int</span> dx, <span class="keyword">int</span> dy, <span class="keyword">int</span>[] consumed, <span class="keyword">int</span> type)</span> </span>&#123;</span><br><span class="line">        <span class="comment">//上滑，如果getScrollY不足header高度，就先滑自己，隐藏header</span></span><br><span class="line">        <span class="keyword">boolean</span> hideHeader = dy &gt; <span class="number">0</span> &amp;&amp; getScrollY() &lt; mHeaderHeight;</span><br><span class="line">        <span class="comment">//下滑，如果RV已经滑到顶部，就滑自己，展示header</span></span><br><span class="line">        <span class="keyword">boolean</span> showHeader = dy &lt; <span class="number">0</span> &amp;&amp; getScrollY() &gt; <span class="number">0</span> &amp;&amp; !target.canScrollVertically(-<span class="number">1</span>);</span><br><span class="line">        <span class="keyword">if</span> (hideHeader || showHeader) &#123;</span><br><span class="line">            scrollBy(<span class="number">0</span>, dy);</span><br><span class="line">            <span class="comment">//告诉rv，我已经消费调了dy距离</span></span><br><span class="line">            consumed[<span class="number">1</span>] = dy;</span><br><span class="line">            HLog.e(<span class="string">"嵌套滑动"</span>, mName + <span class="string">" ：header可见，我先滑，待会给你滑"</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onNestedScroll</span><span class="params">(View target, <span class="keyword">int</span> dxConsumed, <span class="keyword">int</span> dyConsumed, </span></span></span><br><span class="line"><span class="function"><span class="params">                               <span class="keyword">int</span> dxUnconsumed, <span class="keyword">int</span> dyUnconsumed, <span class="keyword">int</span> type)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="number">0</span> != dyUnconsumed) &#123;</span><br><span class="line">            HLog.e(<span class="string">"嵌套滑动"</span>, mName + <span class="string">" ：你还有 "</span> + dyUnconsumed + <span class="string">" 没消费啊，我也不需要咯"</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">super</span>.onNestedScroll(target, dxConsumed, dyConsumed, dxUnconsumed, dyUnconsumed, type);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>MyRecyclerView：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">MyRecyclerView</span> <span class="keyword">extends</span> <span class="title">RecyclerView</span> </span>&#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">startNestedScroll</span><span class="params">(<span class="keyword">int</span> axes, <span class="keyword">int</span> type)</span> </span>&#123;</span><br><span class="line">        HLog.e(<span class="string">"嵌套滑动"</span>, mName + <span class="string">" ：你要不要滑动"</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">super</span>.startNestedScroll(axes, type);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">dispatchNestedPreScroll</span><span class="params">(<span class="keyword">int</span> dx, <span class="keyword">int</span> dy, <span class="keyword">int</span>[] consumed, <span class="keyword">int</span>[] offsetInWindow, <span class="keyword">int</span> type)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="number">0</span> != consumed[<span class="number">1</span>]) &#123;</span><br><span class="line">            mNsvConsume += consumed[<span class="number">1</span>];</span><br><span class="line">            HLog.e(<span class="string">"嵌套滑动"</span>, mName + <span class="string">" ：好的，我看着你滑，看你滑了多少 consumed = "</span> + mNsvConsume);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">super</span>.dispatchNestedPreScroll(dx, dy, consumed, offsetInWindow, type);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">dispatchNestedScroll</span><span class="params">(<span class="keyword">int</span> dxConsumed, <span class="keyword">int</span> dyConsumed, <span class="keyword">int</span> dxUnconsumed, <span class="keyword">int</span> dyUnconsumed,</span></span></span><br><span class="line"><span class="function"><span class="params">                                        <span class="keyword">int</span>[] offsetInWindow, <span class="keyword">int</span> type)</span> </span>&#123;</span><br><span class="line">        HLog.e(<span class="string">"嵌套滑动"</span>, mName + <span class="string">" ：那我滑动咯，我消费了 "</span> + dyConsumed+<span class="string">" , 还有 "</span>+dyUnconsumed+<span class="string">" 没消费，你看下需不需要"</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">super</span>.dispatchNestedScroll(dxConsumed, dyConsumed, dxUnconsumed, dyUnconsumed, offsetInWindow, type);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">stopNestedScroll</span><span class="params">(<span class="keyword">int</span> type)</span> </span>&#123;</span><br><span class="line">        HLog.e(<span class="string">"嵌套滑动"</span>, mName + <span class="string">" ：本次滑动结束"</span>);</span><br><span class="line">        <span class="keyword">super</span>.stopNestedScroll(type);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>运行如下：</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1ghh55eib6uj30y90u0183.jpg" alt=""></p>
+<p>大致流程：</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1ghh5xpf6l1j318u0lw40w.jpg" alt=""></p>
+<p>大家都知道，事件分发存在中断问题，嵌套滑动机制则可以解决，下面我们分析下源码。</p>
+<p>RecyclerView作为起点，从日志里看到，startNestedScroll会被调两次，一次是在onInterceptTouchEvent，一次是在onTouchEvent，（如果产生了惯性，fling也会调startNestedScroll，先忽略），以下MyRecyclerView简称rv，MyNestedScrollView简称nsv，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//RecyclerView.java</span></span><br><span class="line"><span class="function"><span class="keyword">boolean</span> <span class="title">onInterceptTouchEvent</span><span class="params">(MotionEvent e)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">switch</span> (action) &#123;</span><br><span class="line">        <span class="keyword">case</span> MotionEvent.ACTION_DOWN: <span class="comment">//down事件</span></span><br><span class="line">            <span class="comment">//纵轴、触摸中（非惯性）</span></span><br><span class="line">            startNestedScroll(nestedScrollAxis, TYPE_TOUCH);</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> mScrollState == SCROLL_STATE_DRAGGING;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">boolean</span> <span class="title">onTouchEvent</span><span class="params">(MotionEvent e)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">switch</span> (action) &#123;</span><br><span class="line">        <span class="keyword">case</span> MotionEvent.ACTION_DOWN: &#123;</span><br><span class="line">            <span class="comment">//纵轴、触摸中</span></span><br><span class="line">            startNestedScroll(nestedScrollAxis, TYPE_TOUCH);</span><br><span class="line">        &#125; <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">boolean</span> <span class="title">startNestedScroll</span><span class="params">(<span class="keyword">int</span> axes, <span class="keyword">int</span> type)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//会回调nsv的onNestedScrollAccepted</span></span><br><span class="line">    <span class="keyword">return</span> getScrollingChildHelper().startNestedScroll(axes, type);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>跟进startNestedScroll，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//NestedScrollingChildHelper.java</span></span><br><span class="line"><span class="function"><span class="keyword">boolean</span> <span class="title">startNestedScroll</span><span class="params">(<span class="keyword">int</span> axes, <span class="keyword">int</span> type)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (isNestedScrollingEnabled()) &#123; <span class="comment">//支持嵌套滑动</span></span><br><span class="line">        ViewParent p = mView.getParent();</span><br><span class="line">        View child = mView;</span><br><span class="line">        <span class="keyword">while</span> (p != <span class="keyword">null</span>) &#123; <span class="comment">//向上找到nsv</span></span><br><span class="line">            <span class="comment">//回调onStartNestedScroll，看是否支持嵌套滑动</span></span><br><span class="line">            <span class="comment">//return (axes &amp; ViewCompat.SCROLL_AXIS_VERTICAL) != 0;</span></span><br><span class="line">            <span class="comment">//nsv支持纵向滑动，返回true</span></span><br><span class="line">            <span class="keyword">if</span> (ViewParentCompat.onStartNestedScroll(p, child, mView, axes, type)) &#123;</span><br><span class="line">                setNestedScrollingParentForType(type, p);</span><br><span class="line">                <span class="comment">//回调nsv的onNestedScrollAccepted</span></span><br><span class="line">                ViewParentCompat.onNestedScrollAccepted(p, child, mView, axes, type);</span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> (p <span class="keyword">instanceof</span> View) &#123;</span><br><span class="line">                child = (View) p;</span><br><span class="line">            &#125;</span><br><span class="line">            p = p.getParent();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>接着看dispatchNestedPreScroll和onNestedPreScroll，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//RecyclerView.java</span></span><br><span class="line"><span class="function"><span class="keyword">boolean</span> <span class="title">onTouchEvent</span><span class="params">(MotionEvent e)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">switch</span> (action) &#123;</span><br><span class="line">        <span class="keyword">case</span> MotionEvent.ACTION_MOVE: &#123; <span class="comment">//move事件</span></span><br><span class="line">            <span class="comment">//分发预处理</span></span><br><span class="line">            <span class="keyword">if</span> (dispatchNestedPreScroll(dx, dy, mScrollConsumed, mScrollOffset, TYPE_TOUCH)) &#123;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">boolean</span> <span class="title">dispatchNestedPreScroll</span><span class="params">(<span class="keyword">int</span> dx, <span class="keyword">int</span> dy, <span class="keyword">int</span>[] consumed, <span class="keyword">int</span>[] offsetInWindow,<span class="keyword">int</span> type)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> getScrollingChildHelper().dispatchNestedPreScroll(dx, dy, consumed, offsetInWindow,type);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>跟进dispatchNestedPreScroll，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//NestedScrollingChildHelper.java</span></span><br><span class="line"><span class="function"><span class="keyword">boolean</span> <span class="title">dispatchNestedPreScroll</span><span class="params">(<span class="keyword">int</span> dx, <span class="keyword">int</span> dy, <span class="keyword">int</span>[] consumed,</span></span></span><br><span class="line"><span class="function"><span class="params">                                <span class="keyword">int</span>[] offsetInWindow, <span class="keyword">int</span> type)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//找到nsv</span></span><br><span class="line">    ViewParent parent = getNestedScrollingParentForType(type);</span><br><span class="line">    <span class="comment">//会回调nsv的onNestedPreScroll，同时rv作为target传入</span></span><br><span class="line">    ViewParentCompat.onNestedPreScroll(parent, mView, dx, dy, consumed, type);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后看dispatchNestedScroll，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//RecyclerView.java</span></span><br><span class="line"><span class="function"><span class="keyword">boolean</span> <span class="title">onTouchEvent</span><span class="params">(MotionEvent e)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">switch</span> (action) &#123;</span><br><span class="line">        <span class="keyword">case</span> MotionEvent.ACTION_MOVE: &#123; <span class="comment">//move事件</span></span><br><span class="line">            <span class="keyword">if</span> (mScrollState == SCROLL_STATE_DRAGGING) &#123;</span><br><span class="line">                <span class="comment">//进行一些计算...</span></span><br><span class="line">                <span class="comment">//调scrollByInternal</span></span><br><span class="line">                <span class="keyword">if</span> (scrollByInternal(</span><br><span class="line">                    canScrollHorizontally ? dx : <span class="number">0</span>,</span><br><span class="line">                    canScrollVertically ? dy : <span class="number">0</span>,</span><br><span class="line">                    vtev)) &#123;</span><br><span class="line">                    getParent().requestDisallowInterceptTouchEvent(<span class="keyword">true</span>);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">boolean</span> <span class="title">scrollByInternal</span><span class="params">(<span class="keyword">int</span> x, <span class="keyword">int</span> y, MotionEvent ev)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//进行一些计算...</span></span><br><span class="line">    <span class="comment">//调用dispatchNestedScroll分发，会回调nsv的onNestedScroll</span></span><br><span class="line">    <span class="keyword">if</span> (dispatchNestedScroll(consumedX, consumedY, unconsumedX, </span><br><span class="line">                             unconsumedY, mScrollOffset,TYPE_TOUCH)) &#123;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>最后再看下stopNestedScroll，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//RecyclerView.java</span></span><br><span class="line"><span class="function"><span class="keyword">boolean</span> <span class="title">onTouchEvent</span><span class="params">(MotionEvent e)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">switch</span> (action) &#123;</span><br><span class="line">        <span class="keyword">case</span> MotionEvent.ACTION_UP: &#123; <span class="comment">//up事件</span></span><br><span class="line">            resetTouch();</span><br><span class="line">        &#125; <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">resetTouch</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">//最终回调nsv的onStopNestedScroll</span></span><br><span class="line">    stopNestedScroll(TYPE_TOUCH);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>好了，梳理一下思路，</p>
+<ol>
+<li>rv在onTouch的down事件，开启了嵌套滑动，startNestedScroll，先调父view的onStartNestedScroll看他是否支持嵌套滑动，一层层往上找到了nsv，回调nsv的onNestedScrollAccepted</li>
+<li>rv在onTouch的move事件，开始分发预处理，dispatchNestedPreScroll，回调nsv的onNestedPreScroll</li>
+<li>rv在onTouch的move事件，开始分发滑动，dispatchNestedScroll，回调nsv的onNestedScroll</li>
+<li>rv在onTouch的up事件，结束分发，stopNestedScroll，回调nsv的onStopNestedScroll</li>
+</ol>
+<p>可见，rv作为儿子，是主动方。同时，引入了unConsumed值可以向彼此传递剩余距离，rv未消费完的距离，还可以交给nsv继续消费。</p>
+<h3 id="v3变更内容"><a href="#v3变更内容" class="headerlink" title="v3变更内容"></a>v3变更内容</h3><p><code>1.1.0</code>中NestedScrollView实现的接口从v2变成了v3，v3接口又加了一个方法，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">interface</span> <span class="title">NestedScrollingChild3</span> <span class="keyword">extends</span> <span class="title">NestedScrollingChild2</span> </span>&#123;</span><br><span class="line">    <span class="comment">//扩展v2的1个方法，但是最后面多了个参数，int[] consumed</span></span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">dispatchNestedScroll</span><span class="params">(<span class="keyword">int</span> dxConsumed, <span class="keyword">int</span> dyConsumed, <span class="keyword">int</span> dxUnconsumed, <span class="keyword">int</span> dyUnconsumed,</span></span></span><br><span class="line"><span class="function"><span class="params">                              <span class="keyword">int</span>[] offsetInWindow, <span class="keyword">int</span> type,<span class="keyword">int</span>[] consumed)</span></span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">interface</span> <span class="title">NestedScrollingParent3</span> <span class="keyword">extends</span> <span class="title">NestedScrollingParent2</span> </span>&#123;</span><br><span class="line">    <span class="comment">//扩展v2的1个方法，但是最后面多了个参数，int[] consumed</span></span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">onNestedScroll</span><span class="params">(View target, <span class="keyword">int</span> dxConsumed, <span class="keyword">int</span> dyConsumed, <span class="keyword">int</span> dxUnconsumed,</span></span></span><br><span class="line"><span class="function"><span class="params">                        <span class="keyword">int</span> dyUnconsumed, <span class="keyword">int</span> type, <span class="keyword">int</span>[] consumed)</span></span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后我们再跑一次刚刚写的demo，不过我们这次将手指从上往下滑（下拉），让rv产生未消费距离，</p>
+<p>AndroidX<code>1.0.0</code>日志：nsv能正常收到rv未消费的距离，</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1ghhc9k9kgmj31560po7fc.jpg" alt=""></p>
+<p>AndroidX<code>1.1.0</code>日志：nsv没有收到rv未消费的距离（回调没被执行）</p>
+<p>![image-20200806195942508](/Users/chenhao/Library/Application Support/typora-user-images/image-20200806195942508.png)</p>
+<p>可见，老的dispatchNestedScroll还是能正常调用，但是老的onNestedScroll却没被正常回调了，难道是被换成了新加的方法？下面让我们一起解开谜团~</p>
+<p>dispatchNestedScroll为啥能被正常调用？前面分析过的，他是在RecyclerView里被调的，当然没受影响。跟进dispatchNestedScroll，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//NestedScrollingChildHelper.java</span></span><br><span class="line"><span class="function"><span class="keyword">boolean</span> <span class="title">dispatchNestedScrollInternal</span><span class="params">(<span class="keyword">int</span> dxConsumed, <span class="keyword">int</span> dyConsumed,</span></span></span><br><span class="line"><span class="function"><span class="params">                                     <span class="keyword">int</span> dxUnconsumed, <span class="keyword">int</span> dyUnconsumed,<span class="keyword">int</span>[] offsetInWindow,</span></span></span><br><span class="line"><span class="function"><span class="params">                                     <span class="keyword">int</span> type, <span class="keyword">int</span>[] consumed)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//兼容处理类</span></span><br><span class="line">    ViewParentCompat.onNestedScroll(parent, mView,dxConsumed, dyConsumed, </span><br><span class="line">                                    dxUnconsumed, dyUnconsumed, type, consumed);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//ViewParentCompat.java</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">onNestedScroll</span><span class="params">(ViewParent parent, View target, <span class="keyword">int</span> dxConsumed,</span></span></span><br><span class="line"><span class="function"><span class="params">                           <span class="keyword">int</span> dyConsumed, <span class="keyword">int</span> dxUnconsumed, <span class="keyword">int</span> dyUnconsumed, <span class="keyword">int</span> type,</span></span></span><br><span class="line"><span class="function"><span class="params">                           <span class="keyword">int</span>[] consumed)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (parent <span class="keyword">instanceof</span> NestedScrollingParent3) &#123;</span><br><span class="line">        <span class="comment">//回调v3</span></span><br><span class="line">        ((NestedScrollingParent3) parent).onNestedScroll(xxx);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> (parent <span class="keyword">instanceof</span> NestedScrollingParent2) &#123;</span><br><span class="line">            <span class="comment">//回调v2</span></span><br><span class="line">            ((NestedScrollingParent2) parent).onNestedScroll(xxx);</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (type == ViewCompat.TYPE_TOUCH) &#123;</span><br><span class="line">            <span class="comment">//v2以下，只支持触摸TYPE_TOUCH，不支持惯性TYPE_NON_TOUCH</span></span><br><span class="line">            <span class="keyword">if</span> (Build.VERSION.SDK_INT &gt;= <span class="number">21</span>) &#123;</span><br><span class="line">                <span class="comment">//5.0开始，ViewParent接口加了onNestedScroll方法</span></span><br><span class="line">                parent.onNestedScroll(xxx);</span><br><span class="line">            &#125; <span class="keyword">else</span> <span class="keyword">if</span> (parent <span class="keyword">instanceof</span> NestedScrollingParent) &#123;</span><br><span class="line">                <span class="comment">//5.0以下，回调v1</span></span><br><span class="line">                ((NestedScrollingParent) parent).onNestedScroll(xxx);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>SDK21开始支持了嵌套滑动，在View和ViewGroup里直接加了nest相关方法，但为了向前兼容，在android.support.v4兼容包中提供了两个接口NestedScrollingChild和NestedScrollingParent，即要实现嵌套滑动，既可以使用SDK21的View，也可以自己实现那两个接口。我们看回AndroidX，以xxxParent接口为例（xxxChild类似），</p>
+<ol>
+<li>NestedScrollingParent：定义了一些nest方法</li>
+<li>NestedScrollingParent2：扩展了这些nest方法，都加上了type参数，表示是<code>触摸滑动</code>还是<code>惯性滑动</code>fling</li>
+<li>NestedScrollingParent3：扩展了1个nest方法onNestedScroll，加上了1个参数int[] consumed</li>
+</ol>
+<p>谷歌做了很好的兼容处理，但由于我写的demo是继承自NestedScrollView的，NestedScrollView随着AndroidX的升级，实现的接口自动变成了v3，在回调onNestedScroll时命中了v3条件，走了最多参数的回调onNestedScroll（老的回调没走），所以demo代码就翻车了（哈迪实际遇到的问题不是这个，demo仅做演示）。</p>
+<h2 id="尾声"><a href="#尾声" class="headerlink" title="尾声"></a>尾声</h2><p>就，总结两个心得吧，</p>
+<ol>
+<li><p>注意<code>传递依赖</code>带来的问题。阻断依赖可能造成类丢失，但编译期能及时发现（如果有人用反射去调一个野生类，是不是就发现不了了）；而不阻断呢，又可能引入一些高版本的库，导致无法预测的问题。</p>
+</li>
+<li><p>即便文档很完善、做了很好的兼容，任何升级，都需要充分验证稳定性。</p>
+</li>
+</ol>
+<p>好了，我要继续去修bug了。</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1ghhe1dz6dwj30640420sy.jpg" alt=""></p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a href="https://mp.weixin.qq.com/s/VXNbqxpoVDJeOPkBt5_88A" target="_blank" rel="noopener">谷歌开发者 - Flutter 1.17 | 2020 首个稳定版发布！</a></li>
+<li><a href="https://developer.android.google.cn/jetpack/androidx/versions?hl=zh_cn" target="_blank" rel="noopener">AndroidX 版本</a> &amp; <a href="https://developer.android.google.cn/jetpack/androidx/releases/core?hl=zh_cn" target="_blank" rel="noopener">Core版本</a></li>
+<li><a href="https://blog.csdn.net/lmj623565791/article/details/52204039" target="_blank" rel="noopener">csdn - NestedScrolling机制完全解析 带你玩转嵌套滑动</a></li>
+<li><a href="https://mp.weixin.qq.com/s/jD2zuLth197tBiVbYfjP8w" target="_blank" rel="noopener">Android嵌套滑动和NestedScrollView</a></li>
+<li><a href="https://www.jianshu.com/p/cb3779d36118" target="_blank" rel="noopener">简书 - Android 源码分析 - 嵌套滑动机制的实现原理</a></li>
+<li><a href="https://juejin.im/post/6844903925934620680" target="_blank" rel="noopener">掘金 - 从一次真实经历中说说使用嵌套滑动过程中常见的坑</a></li>
+</ul>
+<hr>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gg3mnwsbshj308c0augmm.jpg" alt=""></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Android/" rel="tag"># Android</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/08/02/Android-%E3%80%8A%E7%9C%8B%E5%AE%8C%E4%B8%8D%E5%BF%98%E7%B3%BB%E5%88%97%E3%80%8B%E4%B9%8Bokhttp/" rel="next" title="Android |《看完不忘系列》之okhttp">
+                <i class="fa fa-chevron-left"></i> Android |《看完不忘系列》之okhttp
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">哈利迪</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+
+              <div class="site-state-item site-state-posts">
+                <a href="/archives">
+                  <span class="site-state-item-count">26</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+
+
+
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">2</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Flutter-1-17有何魔力"><span class="nav-number">1.</span> <span class="nav-text">Flutter 1.17有何魔力</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#降级有无潜在风险"><span class="nav-number">2.</span> <span class="nav-text">降级有无潜在风险</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#NestedScrollView"><span class="nav-number">3.</span> <span class="nav-text">NestedScrollView</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#简析"><span class="nav-number">3.1.</span> <span class="nav-text">简析</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#v3变更内容"><span class="nav-number">3.2.</span> <span class="nav-text">v3变更内容</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#尾声"><span class="nav-number">4.</span> <span class="nav-text">尾声</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料"><span class="nav-number">5.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">哈利迪</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
