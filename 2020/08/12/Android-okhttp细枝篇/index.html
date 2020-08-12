@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Android," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="嗨，我是哈利迪~《看完不忘系列》之okhttp（树干篇）一文对okhttp的请求流程做了初步介绍，本文将对他的一些实现细节和相关网络知识进行补充。  本文约2000字，阅读大约5分钟。 源码基于3.14.9，即java版本的最新版  推荐阅读「查缺补漏」巩固你的HTTP知识体系，常用的概念都在了，由于目前用的比较多的还是http 1.1，所以下面分析会跳过http2，以http 1.1为主。 ca">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android | okhttp细枝篇">
+<meta property="og:url" content="https://github.com/holidayei/2020/08/12/Android-okhttp%E7%BB%86%E6%9E%9D%E7%AF%87/index.html">
+<meta property="og:site_name" content="Holiday">
+<meta property="og:description" content="嗨，我是哈利迪~《看完不忘系列》之okhttp（树干篇）一文对okhttp的请求流程做了初步介绍，本文将对他的一些实现细节和相关网络知识进行补充。  本文约2000字，阅读大约5分钟。 源码基于3.14.9，即java版本的最新版  推荐阅读「查缺补漏」巩固你的HTTP知识体系，常用的概念都在了，由于目前用的比较多的还是http 1.1，所以下面分析会跳过http2，以http 1.1为主。 ca">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1ghn97vgg8jj31680dmjtz.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1ghmmbec1nyj313k0pg43a.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1ghmnh1oqg0j30x60iwdid.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1ghmn4899q3j30hg06ejs9.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1ghmpxttvxfj305i04uwea.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1ghna3vjkwij315c0jiadj.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gho6q7m6jcj30vm0mkdmv.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1ghoa1zaiy3j30m80m876u.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1ghoau6hoekj30vi0ggjul.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gg3mnwsbshj308c0augmm.jpg">
+<meta property="article:published_time" content="2020-08-12T14:10:16.000Z">
+<meta property="article:modified_time" content="2020-08-12T14:11:15.951Z">
+<meta property="article:author" content="哈利迪">
+<meta property="article:tag" content="Android">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1ghn97vgg8jj31680dmjtz.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://github.com/holidayei/2020/08/12/Android-okhttp细枝篇/"/>
+
+
+
+
+
+  <title>Android | okhttp细枝篇 | Holiday</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Holiday</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://github.com/holidayei/2020/08/12/Android-okhttp%E7%BB%86%E6%9E%9D%E7%AF%87/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="哈利迪">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Holiday">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Android | okhttp细枝篇</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-08-12T22:10:16+08:00">
+                2020-08-12
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>嗨，我是哈利迪~<a href="https://juejin.im/post/6856966817844625415" target="_blank" rel="noopener">《看完不忘系列》之okhttp</a>（树干篇）一文对okhttp的请求流程做了初步介绍，本文将对他的一些实现细节和相关网络知识进行补充。</p>
+<blockquote>
+<p>本文约2000字，阅读大约5分钟。</p>
+<p>源码基于3.14.9，即java版本的最新版</p>
+</blockquote>
+<p>推荐阅读<a href="https://juejin.im/post/6857287743966281736" target="_blank" rel="noopener">「查缺补漏」巩固你的HTTP知识体系</a>，常用的概念都在了，由于目前用的比较多的还是http 1.1，所以下面分析会跳过http2，以http 1.1为主。</p>
+<h2 id="cache"><a href="#cache" class="headerlink" title="cache"></a>cache</h2><p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1ghn97vgg8jj31680dmjtz.jpg" alt=""></p>
+<p>强缓存：Cache-Control（maxAge过期时长）、Expires（过期时间）；</p>
+<p>协商缓存：etag（唯一标识）、lastModified（最后修改时间）。</p>
+<p>缓存优先级：Cache-Control &gt; Expires &gt; etag &gt; lastModified，从树干篇中可知，在<code>CacheInterceptor</code>拦截器中会从磁盘取出缓存的Response（如果有），然后在<code>CacheStrategy.Factory</code>中，解析缓存的Response来得到缓存策略<code>CacheStrategy</code>，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//CacheStrategy.Factory.java</span></span><br><span class="line"><span class="function">CacheStrategy <span class="title">getCandidate</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">//1.强缓存</span></span><br><span class="line">    <span class="comment">//计算Age</span></span><br><span class="line">    <span class="keyword">long</span> ageMillis = cacheResponseAge();</span><br><span class="line">    <span class="comment">//根据Response的Date和Age，计算新鲜度</span></span><br><span class="line">    <span class="keyword">long</span> freshMillis = computeFreshnessLifetime();</span><br><span class="line">    <span class="comment">//新鲜度符合要求，返回策略，走强缓存</span></span><br><span class="line">    <span class="keyword">if</span> (!responseCaching.noCache() &amp;&amp; ageMillis + minFreshMillis &lt; freshMillis + maxStaleMillis) &#123;</span><br><span class="line">        Response.Builder builder = cacheResponse.newBuilder();</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> CacheStrategy(<span class="keyword">null</span>, builder.build());</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//2.协商缓存</span></span><br><span class="line">    String conditionName;</span><br><span class="line">    String conditionValue;</span><br><span class="line">    <span class="keyword">if</span> (etag != <span class="keyword">null</span>) &#123;</span><br><span class="line">        conditionName = <span class="string">"If-None-Match"</span>;</span><br><span class="line">        <span class="comment">//etag唯一标识</span></span><br><span class="line">        conditionValue = etag;</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (lastModified != <span class="keyword">null</span>) &#123;</span><br><span class="line">        conditionName = <span class="string">"If-Modified-Since"</span>;</span><br><span class="line">        <span class="comment">//最后修改时间</span></span><br><span class="line">        conditionValue = lastModifiedString;</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (servedDate != <span class="keyword">null</span>) &#123;</span><br><span class="line">        conditionName = <span class="string">"If-Modified-Since"</span>;</span><br><span class="line">        <span class="comment">//特殊处理：把Response接收时间设置为最后修改时间</span></span><br><span class="line">        conditionValue = servedDateString;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">//啥参数都没有，返回策略，cacheResponse为null</span></span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> CacheStrategy(request, <span class="keyword">null</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    Headers.Builder conditionalRequestHeaders = request.headers().newBuilder();</span><br><span class="line">    <span class="comment">//header添加行</span></span><br><span class="line">    Internal.instance.addLenient(conditionalRequestHeaders, conditionName, conditionValue);</span><br><span class="line">	<span class="comment">//Request设置该header</span></span><br><span class="line">    Request conditionalRequest = request.newBuilder()</span><br><span class="line">        .headers(conditionalRequestHeaders.build())</span><br><span class="line">        .build();</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> CacheStrategy(conditionalRequest, cacheResponse);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>强缓存内部细节，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//CacheStrategy.Factory.java</span></span><br><span class="line"><span class="comment">//强缓存</span></span><br><span class="line"><span class="function"><span class="keyword">long</span> <span class="title">computeFreshnessLifetime</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    CacheControl responseCaching = cacheResponse.cacheControl();</span><br><span class="line">    <span class="keyword">if</span> (responseCaching.maxAgeSeconds() != -<span class="number">1</span>) &#123;</span><br><span class="line">        <span class="comment">//返回CacheControl的maxAge，即过期时长</span></span><br><span class="line">        <span class="keyword">return</span> SECONDS.toMillis(responseCaching.maxAgeSeconds());</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (expires != <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="comment">//返回过期时间expires减接收时间served的差值</span></span><br><span class="line">        <span class="keyword">long</span> servedMillis = servedDate != <span class="keyword">null</span></span><br><span class="line">            ? servedDate.getTime()</span><br><span class="line">            : receivedResponseMillis;</span><br><span class="line">        <span class="keyword">long</span> delta = expires.getTime() - servedMillis;</span><br><span class="line">        <span class="keyword">return</span> delta &gt; <span class="number">0</span> ? delta : <span class="number">0</span>;</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (lastModified != <span class="keyword">null</span></span><br><span class="line">               &amp;&amp; cacheResponse.request().url().query() == <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="comment">//特殊处理：RFC建议：文档的最长期限应默认为提供文档时的期限的10％</span></span><br><span class="line">        <span class="keyword">long</span> servedMillis = servedDate != <span class="keyword">null</span></span><br><span class="line">            ? servedDate.getTime()</span><br><span class="line">            : sentRequestMillis;</span><br><span class="line">        <span class="keyword">long</span> delta = servedMillis - lastModified.getTime();</span><br><span class="line">        <span class="keyword">return</span> delta &gt; <span class="number">0</span> ? (delta / <span class="number">10</span>) : <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>本地磁盘缓存了Response的头信息文件和data文件，头信息如下（借玩安卓API一用~），</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1ghmmbec1nyj313k0pg43a.jpg" alt=""></p>
+<p>看看抓包数据，请求可见okhttp自动帮我们加上了gzip压缩（具体支不支持还得看后端接口），</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1ghmnh1oqg0j30x60iwdid.jpg" alt=""></p>
+<p>响应可见Cache-Control是private（不是max-age=xxx），Expires是1970年（没做支持），所以这个get请求不走强缓存；</p>
+<p>然后etag和lastModified也没有，getCandidate方法会尝试<code>把Response接收时间设置为最后修改时间</code>即If-Modified-Since=servedDateString，再抓一次可见时间被带上了，</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1ghmn4899q3j30hg06ejs9.jpg" alt=""></p>
+<p>不过由于这个接口没做支持，带上If-Modified-Since也没用，接口直接返回200（整个Response）而不是304（缓存可用），所以协商缓存也没走，即其实每次请求都会返回完整的Response，磁盘缓存Response的data并没有被用上。</p>
+<blockquote>
+<p>要是在面试官前吹：“我做的玩安卓App，用了okhttp，他强大的缓存机制可以为用户提速、节省流量”，是会被吊打的！</p>
+</blockquote>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1ghmpxttvxfj305i04uwea.jpg" alt=""></p>
+<p>缓存体系需要客户端和后端共建，不然okhttp也有心无力。（当然，客户端也可以在okhttp外自行实现一层缓存，那就另说了）</p>
+<h2 id="connection"><a href="#connection" class="headerlink" title="connection"></a>connection</h2><p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1ghna3vjkwij315c0jiadj.jpg" alt=""></p>
+<p><code>ConnectInterceptor</code>拦截器中会获取和建立连接，</p>
+<ol>
+<li>发射器创建交换器：transmitter.newExchange、</li>
+<li>交换寻找器find连接：exchangeFinder.find、findHealthyConnection、findConnection、</li>
+<li><ol>
+<li>有分配好的连接可用，return</li>
+<li>从连接池里找到池化的连接，return</li>
+<li>创建连接，进行socket连接</li>
+</ol>
+</li>
+</ol>
+<p>一个连接池有多个连接，一个连接可以同时处理多个发射器，下面看建立连接，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//RealConnection.java</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">connect</span><span class="params">(...)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (route.requiresTunnel()) &#123;</span><br><span class="line">        <span class="comment">//如果此路由通过HTTP代理隧道HTTPS，忽略</span></span><br><span class="line">        connectTunnel(connectTimeout, readTimeout, writeTimeout, call, eventListener);</span><br><span class="line">        <span class="keyword">if</span> (rawSocket == <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">//默认没代理，走这里</span></span><br><span class="line">        connectSocket(connectTimeout, readTimeout, call, eventListener);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//建立协议</span></span><br><span class="line">    establishProtocol(connectionSpecSelector, pingIntervalMillis, call, eventListener);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">connectSocket</span><span class="params">(...)</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">    <span class="comment">//判断android平台或java平台，进行连接，最终调了socket.connect</span></span><br><span class="line">    Platform.get().connectSocket(rawSocket, route.socketAddress(), connectTimeout);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">establishProtocol</span><span class="params">(...)</span></span>&#123;</span><br><span class="line">    <span class="comment">//...忽略了一些http2相关内容</span></span><br><span class="line">    <span class="comment">//创建SSLSocket、进行tls握手</span></span><br><span class="line">    connectTls(connectionSpecSelector);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>socket连上后，会创建SSLSocket进行tls握手，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//RealConnection.java</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">connectTls</span><span class="params">(...)</span></span>&#123;</span><br><span class="line">    SSLSocketFactory sslSocketFactory = address.sslSocketFactory();</span><br><span class="line">    SSLSocket sslSocket = <span class="keyword">null</span>;</span><br><span class="line">    <span class="comment">//创建SSLSocket</span></span><br><span class="line">    sslSocket = (SSLSocket) sslSocketFactory.createSocket(</span><br><span class="line">        rawSocket, address.url().host(), address.url().port(), <span class="keyword">true</span>);</span><br><span class="line">    <span class="comment">//进行tls握手</span></span><br><span class="line">    sslSocket.startHandshake();</span><br><span class="line">    socket = sslSocket;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="route和dns"><a href="#route和dns" class="headerlink" title="route和dns"></a>route和dns</h2><p>在<code>ConnectInterceptor</code>创建连接时，会用<code>RouteSelector</code>来选择路线，</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gho6q7m6jcj30vm0mkdmv.jpg" alt=""></p>
+<p>连接池维护了一个<code>RouteDatabase</code>来记录ip黑名单，可以记录最近连接失败过的ip地址，在<code>RouteSelector</code>中则会优先选择不在黑名单中的ip，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//RouteSelector.java</span></span><br><span class="line"><span class="function">Selection <span class="title">next</span><span class="params">()</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">    List&lt;Route&gt; routes = <span class="keyword">new</span> ArrayList&lt;&gt;();</span><br><span class="line">    <span class="comment">//遍历代理，默认有一个代理是DIRECT，即不代理</span></span><br><span class="line">    <span class="keyword">while</span> (hasNextProxy()) &#123;</span><br><span class="line">        Proxy proxy = nextProxy();</span><br><span class="line">        <span class="comment">//遍历ip</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>, size = inetSocketAddresses.size(); i &lt; size; i++) &#123;</span><br><span class="line">            Route route = <span class="keyword">new</span> Route(address, proxy, inetSocketAddresses.get(i));</span><br><span class="line">            <span class="keyword">if</span> (routeDatabase.shouldPostpone(route)) &#123;</span><br><span class="line">				<span class="comment">//如果该ip在黑名单中，放进推迟使用的列表</span></span><br><span class="line">                postponedRoutes.add(route);</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="comment">//不在黑名单的ip</span></span><br><span class="line">                routes.add(route);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (!routes.isEmpty()) &#123;</span><br><span class="line">            <span class="comment">//找到可用的ip就跳出</span></span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (routes.isEmpty()) &#123;</span><br><span class="line">        <span class="comment">//没找到可用ip，才把黑名单的ip拿来用</span></span><br><span class="line">        routes.addAll(postponedRoutes);</span><br><span class="line">        postponedRoutes.clear();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> Selection(routes);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>可见，如果一个域名配了多个ip，当某个ip不稳定时（连接失败过），之后就会跳过而优先使用更稳定的ip。（不过<code>RouteDatabase</code>只是简单地基于内存实现，用Set记录，App重启黑名单就没了）</p>
+<p>nextProxy中，dns把域名解析成对应ip，默认实现走的是<code>InetAddress.getAllByName(hostname)</code>，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">interface</span> <span class="title">Dns</span> </span>&#123;</span><br><span class="line">    Dns SYSTEM = hostname -&gt; &#123;</span><br><span class="line">        <span class="keyword">if</span> (hostname == <span class="keyword">null</span>) <span class="keyword">throw</span> <span class="keyword">new</span> UnknownHostException(<span class="string">"hostname == null"</span>);</span><br><span class="line">        <span class="comment">//默认实现</span></span><br><span class="line">        <span class="keyword">return</span> Arrays.asList(InetAddress.getAllByName(hostname));</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="function">List&lt;InetAddress&gt; <span class="title">lookup</span><span class="params">(String hostname)</span> <span class="keyword">throws</span> UnknownHostException</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>有时有些数据对安全性要求不高（不需要https），或者我们要在内网调试，可以直接换成ip访问来省去域名解析的时间，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">builder.dns(<span class="keyword">new</span> MyDns());</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">MyDns</span> <span class="keyword">implements</span> <span class="title">Dns</span> </span>&#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> List&lt;InetAddress&gt; <span class="title">lookup</span><span class="params">(String hostname)</span> <span class="keyword">throws</span> UnknownHostException </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (hostname == <span class="keyword">null</span>) <span class="keyword">throw</span> <span class="keyword">new</span> UnknownHostException(<span class="string">"hostname == null"</span>);</span><br><span class="line">        <span class="keyword">if</span> (mUseDebugIp) &#123;<span class="comment">//使用内网ip进行调试</span></span><br><span class="line">            <span class="keyword">return</span> getDebugIp();</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (useConfigIp(hostname)) &#123;<span class="comment">//使用服务端下发的ip表，跳过域名解析</span></span><br><span class="line">            <span class="keyword">return</span> getIpByConfig(hostname);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//走默认实现，老老实实的进行域名解析</span></span><br><span class="line">        <span class="keyword">return</span> Dns.SYSTEM.lookup(hostname);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="cookie"><a href="#cookie" class="headerlink" title="cookie"></a>cookie</h2><p>在<code>BridgeInterceptor</code>拦截器中会自动从<code>CookieJar</code>里存取<code>Cookie</code>、默认的<code>CookieJar</code>是空实现，需要用OkHttpClient自行配置，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">builder.cookieJar(<span class="keyword">new</span> MyCookieJar());</span><br><span class="line"></span><br><span class="line"><span class="comment">//基于内存实现的cookieJar（通常是基于磁盘）</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">MyCookieJar</span> <span class="keyword">implements</span> <span class="title">CookieJar</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> Map&lt;String, List&lt;Cookie&gt;&gt; mCookieMap = <span class="keyword">new</span> HashMap&lt;&gt;();</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">saveFromResponse</span><span class="params">(HttpUrl url, List&lt;Cookie&gt; cookies)</span> </span>&#123;</span><br><span class="line">        mCookieMap.put(url.host(), cookies);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> List&lt;Cookie&gt; <span class="title">loadForRequest</span><span class="params">(HttpUrl url)</span> </span>&#123;</span><br><span class="line">        List&lt;Cookie&gt; cookies = mCookieMap.get(url.host());</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">null</span> == cookies ? Collections.emptyList() : cookies;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="tls"><a href="#tls" class="headerlink" title="tls"></a>tls</h2><p>默认支持不加密、tls 1.2、tls 1.3，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//OkHttpClient.java</span></span><br><span class="line"><span class="keyword">final</span> List&lt;ConnectionSpec&gt; DEFAULT_CONNECTION_SPECS = Util.immutableList(</span><br><span class="line">    ConnectionSpec.MODERN_TLS, ConnectionSpec.CLEARTEXT);<span class="comment">//tls、不加密</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//ConnectionSpec.java</span></span><br><span class="line"><span class="keyword">final</span> ConnectionSpec MODERN_TLS = <span class="keyword">new</span> Builder(<span class="keyword">true</span>)</span><br><span class="line">    .cipherSuites(APPROVED_CIPHER_SUITES)</span><br><span class="line">    <span class="comment">//1.2和1.3</span></span><br><span class="line">    .tlsVersions(TlsVersion.TLS_1_3, TlsVersion.TLS_1_2)</span><br><span class="line">    .supportsTlsExtensions(<span class="keyword">true</span>)</span><br><span class="line">    .build();</span><br></pre></td></tr></table></figure>
+
+<h2 id="eventListener"><a href="#eventListener" class="headerlink" title="eventListener"></a>eventListener</h2><p>在树干篇提到，<code>EventListener</code>是航班状态监听，因为他跟踪了整个请求流程，通过他可以看到每个环节的数据和耗时，引用官方图片，</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1ghoa1zaiy3j30m80m876u.jpg" alt=""></p>
+<p>打印日志，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">PrintingEventListener</span> <span class="keyword">extends</span> <span class="title">EventListener</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">long</span> callStartNanos;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String TAG = <span class="string">"PrintingEventListener"</span>;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">printEvent</span><span class="params">(String name)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">long</span> nowNanos = System.nanoTime();</span><br><span class="line">        <span class="keyword">if</span> (name.contains(<span class="string">"callStart"</span>)) &#123;</span><br><span class="line">            callStartNanos = nowNanos;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">long</span> elapsedNanos = nowNanos - callStartNanos;</span><br><span class="line">        Log.e(TAG, String.format(<span class="string">"%.3f %s%n"</span>, elapsedNanos / <span class="number">1000000000</span>d, name));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">callStart</span><span class="params">(Call call)</span> </span>&#123;</span><br><span class="line">        printEvent(<span class="string">"callStart url = "</span> + call.request().url());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">callEnd</span><span class="params">(Call call)</span> </span>&#123;</span><br><span class="line">        printEvent(<span class="string">"callEnd"</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">dnsStart</span><span class="params">(Call call, String domainName)</span> </span>&#123;</span><br><span class="line">        printEvent(<span class="string">"dnsStart domainName = "</span> + domainName);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">dnsEnd</span><span class="params">(Call call, String domainName, List&lt;InetAddress&gt; inetAddressList)</span> </span>&#123;</span><br><span class="line">        printEvent(<span class="string">"dnsEnd"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">	<span class="comment">//...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>可见第二次请求省去了域名解析、建立连接、tls握手的环节，</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1ghoau6hoekj30vi0ggjul.jpg" alt=""></p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a href="https://square.github.io/okhttp/" target="_blank" rel="noopener">官网</a> &amp; <a href="https://github.com/square/okhttp">GitHub</a> &amp; <a href="https://square.github.io/okhttp/3.x/okhttp/" target="_blank" rel="noopener">3.x文档</a></li>
+<li><a href="https://juejin.im/post/6857287743966281736" target="_blank" rel="noopener">掘金 - 「查缺补漏」巩固你的HTTP知识体系</a></li>
+<li><a href="https://juejin.im/post/6844904200241938445" target="_blank" rel="noopener">掘金 - Okhttp如何开启的Http2.0</a> &amp; <a href="https://juejin.im/post/6844903785232498696" target="_blank" rel="noopener">掘金 - HTTP 2.0与OkHttp</a></li>
+<li><a href="https://www.jianshu.com/p/07a1e362e1ba" target="_blank" rel="noopener">简书 - SSL/TLS 握手协议Handshake Protocol全过程解析</a></li>
+</ul>
+<hr>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gg3mnwsbshj308c0augmm.jpg" alt=""></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Android/" rel="tag"># Android</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/08/06/%E8%B8%A9%E5%9D%91%E8%AE%B0-Flutter%E5%8D%87%E7%BA%A7%E5%BD%B1%E5%93%8D%E4%BA%86NestedScrollView%EF%BC%9F/" rel="next" title="踩坑记 | Flutter升级影响了NestedScrollView？">
+                <i class="fa fa-chevron-left"></i> 踩坑记 | Flutter升级影响了NestedScrollView？
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">哈利迪</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+
+              <div class="site-state-item site-state-posts">
+                <a href="/archives">
+                  <span class="site-state-item-count">27</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+
+
+
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">2</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#cache"><span class="nav-number">1.</span> <span class="nav-text">cache</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#connection"><span class="nav-number">2.</span> <span class="nav-text">connection</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#route和dns"><span class="nav-number">3.</span> <span class="nav-text">route和dns</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#cookie"><span class="nav-number">4.</span> <span class="nav-text">cookie</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#tls"><span class="nav-number">5.</span> <span class="nav-text">tls</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#eventListener"><span class="nav-number">6.</span> <span class="nav-text">eventListener</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料"><span class="nav-number">7.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">哈利迪</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
