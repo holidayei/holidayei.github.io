@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Android," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="嗨，我是哈利迪~《看完不忘系列》将以从树干到细枝的思路分析一些技术框架，本文将对开源项目dagger进行介绍。  本文约3800字，阅读大约10分钟。 Dagger源码基于最新版本2.28.3   背景依赖注入（Dependency Injection，DI）遵循控制反转（Inversion of Control，IoC）原则，简单来说就是创建对象时给对象传入依赖，通过传入不同实例来实现不同行为（">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android |《看完不忘系列》之dagger">
+<meta property="og:url" content="https://github.com/holidayei/2020/08/27/Android-%E3%80%8A%E7%9C%8B%E5%AE%8C%E4%B8%8D%E5%BF%98%E7%B3%BB%E5%88%97%E3%80%8B%E4%B9%8Bdagger/index.html">
+<meta property="og:site_name" content="Holiday">
+<meta property="og:description" content="嗨，我是哈利迪~《看完不忘系列》将以从树干到细枝的思路分析一些技术框架，本文将对开源项目dagger进行介绍。  本文约3800字，阅读大约10分钟。 Dagger源码基于最新版本2.28.3   背景依赖注入（Dependency Injection，DI）遵循控制反转（Inversion of Control，IoC）原则，简单来说就是创建对象时给对象传入依赖，通过传入不同实例来实现不同行为（">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gi5ojttfcaj30li0dntaw.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gi0ywclduuj30me0c2js1.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gi4lk8t9zkj30xs0cidhi.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gi4ibhneplj31lc0cwtbu.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gi4lmlkbs7j310s0h4got.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gi4niotkypj30lu082q4j.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gi552p451ij31760qywif.jpg">
+<meta property="og:image" content="https://developer.android.google.cn/images/training/dependency-injection/4-application-graph.png">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gi589i6g22j306o06o749.jpg">
+<meta property="article:published_time" content="2020-08-27T15:18:03.000Z">
+<meta property="article:modified_time" content="2020-08-27T15:18:27.136Z">
+<meta property="article:author" content="哈利迪">
+<meta property="article:tag" content="Android">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gi5ojttfcaj30li0dntaw.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://github.com/holidayei/2020/08/27/Android-《看完不忘系列》之dagger/"/>
+
+
+
+
+
+  <title>Android |《看完不忘系列》之dagger | Holiday</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Holiday</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://github.com/holidayei/2020/08/27/Android-%E3%80%8A%E7%9C%8B%E5%AE%8C%E4%B8%8D%E5%BF%98%E7%B3%BB%E5%88%97%E3%80%8B%E4%B9%8Bdagger/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="哈利迪">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Holiday">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Android |《看完不忘系列》之dagger</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-08-27T23:18:03+08:00">
+                2020-08-27
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>嗨，我是哈利迪~《看完不忘系列》将以<code>从树干到细枝</code>的思路分析一些技术框架，本文将对开源项目<code>dagger</code>进行介绍。</p>
+<blockquote>
+<p>本文约3800字，阅读大约10分钟。</p>
+<p>Dagger源码基于最新版本2.28.3</p>
+</blockquote>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gi5ojttfcaj30li0dntaw.jpg" alt=""></p>
+<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>依赖注入（Dependency Injection，DI）遵循控制反转（Inversion of Control，IoC）原则，简单来说就是<code>创建对象时给对象传入依赖</code>，通过传入不同实例来实现不同行为（控制），比如常见的构造方法和setter都叫注入。</p>
+<p>简单概括一下谷歌的<a href="https://developer.android.google.cn/training/dependency-injection" target="_blank" rel="noopener">造车栗子</a>，</p>
+<p>一、不注入，由Car类自己创建依赖的Engine实例，当需要替换汽车引擎时，需要修改Car类，违背了开放封闭原则，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Car</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> Engine engine = <span class="keyword">new</span> Engine();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>二、手动依赖注入，如构造方法和setter，当需要替换汽车引擎时，传入不同的引擎实现（如ElectricEngine extends Engine）即可，无需修改Car类，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//1.构造方法注入</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Car</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> Engine engine;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">Car</span><span class="params">(Engine engine)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.engine = engine;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//2.setter注入</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Car</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> Engine engine;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setEngine</span><span class="params">(Engine engine)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.engine = engine;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>三、随着汽车配件变多，依赖注入的代码也会越来越多，如汽车需要引擎、轮胎，引擎又需要气缸和火花塞，这样一层层下去注入代码成指数级上升，出现了大量创建对象的样板代码，</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gi0ywclduuj30me0c2js1.jpg" alt=""></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Car</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> Engine engine;<span class="comment">//引擎</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> Wheel wheel;<span class="comment">//轮胎</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">Car</span><span class="params">(Engine engine,Wheel wheel)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.engine = engine;</span><br><span class="line">        <span class="keyword">this</span>.wheel = wheel;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Engine</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> Cylinder cylinder;<span class="comment">//气缸</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> SparkPlug sparkPlug;<span class="comment">//火花塞</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">Car</span><span class="params">(Cylinder cylinder,SparkPlug sparkPlug)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.cylinder = cylinder;</span><br><span class="line">        <span class="keyword">this</span>.sparkPlug = sparkPlug;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="comment">//为了造辆车，要new出一堆对象，还要构造方法注入，套娃既视感</span></span><br><span class="line">    Cylinder cylinder = <span class="keyword">new</span> Cylinder();</span><br><span class="line">    SparkPlug sparkPlug = <span class="keyword">new</span> SparkPlug();</span><br><span class="line">    Engine engine = <span class="keyword">new</span> Engine(cylinder,sparkPlug);</span><br><span class="line">    Wheel wheel = <span class="keyword">new</span> Wheel();</span><br><span class="line">    Car car = <span class="keyword">new</span> Car(engine,wheel);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>从代码可以看出有两大痛点，一是要创建<code>很多对象</code>，二是对象的创建过程还需<code>有序</code>，即要先有气缸和火花塞才能造引擎，先有引擎和轮胎才能造车，这样使用方还需<code>花时间了解配件间的依赖关系</code>，很是不便。</p>
+<p>于是就有了一些库来实现自动依赖注入，有两个实现思路（koin的实现以后再聊~），</p>
+<ol>
+<li>一是运行期反射连接依赖项，编译影响小，但运行慢</li>
+<li>二是编译期就连接依赖项，创建辅助类需要额外的io和编译耗时，会拖慢编译速度，但运行快</li>
+</ol>
+<p>像Android内存和算力都有限的终端设备，dagger当然是选择思路2啦。dagger通过<code>注解</code>标记<code>对象创建姿势</code>、<code>依赖关系</code>、<code>作用域</code>等信息，在编译期创建辅助类，从而实现自动依赖注入。不过dagger的上手成本略高，谷歌后来又推出了Hilt，旨在让我们用得<del>舒心</del>，</p>
+<blockquote>
+<p><a href="https://developer.android.google.cn/training/dependency-injection/hilt-android" target="_blank" rel="noopener">Hilt</a> 是推荐用于在 Android 中实现依赖项注入的 Jetpack 库。Hilt 通过为项目中的每个 Android 类提供容器并自动为您管理其生命周期，定义了一种在应用中执行 DI 的标准方法。</p>
+<p>Hilt 在热门 DI 库 <a href="https://developer.android.google.cn/training/dependency-injection/dagger-basics" target="_blank" rel="noopener">Dagger</a> 的基础上构建而成，因而能够受益于 Dagger 提供的编译时正确性、运行时性能、可伸缩性和 Android Studio 支持。</p>
+<p>– 谷歌</p>
+</blockquote>
+<p>Hilt就先放一放，下面我们先开始dagger之旅吧~</p>
+<blockquote>
+<p>补：关于手动注入的痛点，可以看下谷歌的<a href="https://developer.android.google.cn/training/dependency-injection/manual" target="_blank" rel="noopener">手动依赖项注入</a>（看完或许能更好的理解dagger的设计）。</p>
+</blockquote>
+<h2 id="树干"><a href="#树干" class="headerlink" title="树干"></a>树干</h2><h3 id="简单使用"><a href="#简单使用" class="headerlink" title="简单使用"></a>简单使用</h3><p>依赖，</p>
+<figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">implementation <span class="string">'com.google.dagger:dagger:2.28.3'</span></span><br><span class="line">annotationProcessor <span class="string">'com.google.dagger:dagger-compiler:2.28.3'</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="Inject和-Component"><a href="#Inject和-Component" class="headerlink" title="@Inject和@Component"></a>@Inject和@Component</h4><p>@Inject标记实例的创建姿势，汽车和引擎类，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Car</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> Engine mEngine;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Inject</span> <span class="comment">//告诉dagger如何创建Car</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">Car</span><span class="params">(Engine engine)</span> </span>&#123;</span><br><span class="line">        mEngine = engine;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">start</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        mEngine.start();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Engine</span> </span>&#123;</span><br><span class="line">    <span class="meta">@Inject</span> <span class="comment">//告诉dagger如何创建Engine</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">Engine</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">start</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        Log.e(<span class="string">"哈利迪"</span>, <span class="string">"引擎发动，前往秋名山"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这样dagger就能生成类似 new Car(new Engine()) 的代码来创建实例，</p>
+<p>@Component标记所要创建的实例有哪些，如在造车图纸（接口）里声明要造车，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Component</span> <span class="comment">//告诉dagger要造啥</span></span><br><span class="line"><span class="class"><span class="keyword">interface</span> <span class="title">CarGraph</span> </span>&#123;</span><br><span class="line">    <span class="comment">//造车</span></span><br><span class="line">    <span class="function">Car <span class="title">makeCar</span><span class="params">()</span></span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>make一下项目，生成Car_Factory、Engine_Factory和DaggerCarGraph三个类，在Activity中使用，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">DaggerActivity</span> <span class="keyword">extends</span> <span class="title">AppCompatActivity</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">onCreate</span><span class="params">(Bundle savedInstanceState)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">super</span>.onCreate(savedInstanceState);</span><br><span class="line">        setContentView(R.layout.activity_dagger);</span><br><span class="line">        <span class="comment">//得到造车图纸</span></span><br><span class="line">        CarGraph carGraph = DaggerCarGraph.create();</span><br><span class="line">        <span class="comment">//造出一辆汽车</span></span><br><span class="line">        Car car = carGraph.makeCar();</span><br><span class="line">        <span class="comment">//引擎发动</span></span><br><span class="line">        car.start();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>注入姿势二，还可以直接把汽车注入给Activity，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Component</span> <span class="comment">//告诉dagger要造啥</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">CarGraph</span> </span>&#123;</span><br><span class="line">    <span class="comment">//造车</span></span><br><span class="line">    <span class="function">Car <span class="title">makeCar</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//新增：告诉dagger有个Activity要注入</span></span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">inject</span><span class="params">(DaggerActivity activity)</span></span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>make一下，这时会多出一个类DaggerActivity_MembersInjector（成员注入器），我们后面再看，在Activity中，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">DaggerActivity</span> <span class="keyword">extends</span> <span class="title">AppCompatActivity</span> </span>&#123;</span><br><span class="line">    <span class="comment">//向Activity注入汽车</span></span><br><span class="line">    <span class="meta">@Inject</span></span><br><span class="line">    Car mCar;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">onCreate</span><span class="params">(Bundle savedInstanceState)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">super</span>.onCreate(savedInstanceState);</span><br><span class="line">        setContentView(R.layout.activity_dagger);</span><br><span class="line">        <span class="comment">//得到造车图纸</span></span><br><span class="line">        CarGraph carGraph = DaggerCarGraph.create();</span><br><span class="line">        <span class="comment">//告诉dagger有个Activity要注入</span></span><br><span class="line">        carGraph.inject(<span class="keyword">this</span>);</span><br><span class="line">        <span class="comment">//此时，mCar已被dagger自动赋值，我们可以直接发动引擎</span></span><br><span class="line">        mCar.start();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>不管是哪种姿势，都可以看出，Activity只管提车，无需关心造车内部的细节（用了什么引擎），这样以后要换引擎了，Activity和Car也不用改动代码。</p>
+<h4 id="Module和-Binds"><a href="#Module和-Binds" class="headerlink" title="@Module和@Binds"></a>@Module和@Binds</h4><p>那么问题来了，通常我们都是面向接口编程，现在想把Engine换成IEngine接口咋整呢？因为我有两种引擎，分别是汽油车的GasEngine，和电动车的ElectricEngine，接口没有构造方法怎么注入？此时@Module和@Binds注解就派上用场了。</p>
+<p>定义引擎接口和实现类，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">interface</span> <span class="title">IEngine</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">start</span><span class="params">()</span></span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">GasEngine</span> <span class="keyword">implements</span> <span class="title">IEngine</span> </span>&#123;<span class="comment">//汽油引擎</span></span><br><span class="line">    <span class="meta">@Inject</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">GasEngine</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">start</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        Log.e(<span class="string">"哈利迪"</span>, <span class="string">"汽油 引擎发动，前往秋名山"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ElectricEngine</span> <span class="keyword">implements</span> <span class="title">IEngine</span> </span>&#123;<span class="comment">//电动引擎</span></span><br><span class="line">    <span class="meta">@Inject</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">ElectricEngine</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">start</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        Log.e(<span class="string">"哈利迪"</span>, <span class="string">"电动 引擎发动，前往秋名山"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后Car我们不要了，新写一个汽车类NewCar，让他依赖于接口IEngine而非类，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">NewCar</span> </span>&#123;</span><br><span class="line">    <span class="comment">//依赖于接口</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> IEngine mEngine;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Inject</span> <span class="comment">//告诉dagger如何创建NewCar</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">NewCar</span><span class="params">(IEngine engine)</span> </span>&#123;</span><br><span class="line">        mEngine = engine;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">start</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        mEngine.start();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>下面有请@Module和@Binds登场！建一个抽象类GasEngineModule，表示汽油引擎模块，用于提供汽油引擎，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Module</span></span><br><span class="line"><span class="keyword">abstract</span> <span class="class"><span class="keyword">class</span> <span class="title">GasEngineModule</span> </span>&#123;<span class="comment">//汽油引擎模块</span></span><br><span class="line">    <span class="meta">@Binds</span></span><br><span class="line">    <span class="function"><span class="keyword">abstract</span> IEngine <span class="title">makeGasEngine</span><span class="params">(GasEngine engine)</span></span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后在造车图纸CarGraph里支持一下NewCar的创建，把Module引入Component，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Component</span>(modules = &#123;GasEngineModule<span class="class">.<span class="keyword">class</span>&#125;)</span></span><br><span class="line"><span class="class">//引入汽油引擎模块</span></span><br><span class="line"><span class="class"><span class="title">public</span> <span class="title">interface</span> <span class="title">CarGraph</span> </span>&#123;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">//造新车</span></span><br><span class="line">    <span class="function">NewCar <span class="title">makeNewCar</span><span class="params">()</span></span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>Activity使用，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//DaggerActivity.java</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">onCreate</span><span class="params">(Bundle savedInstanceState)</span> </span>&#123;</span><br><span class="line">    CarGraph carGraph = DaggerCarGraph.create();</span><br><span class="line">    NewCar newCar = carGraph.makeNewCar();</span><br><span class="line">    newCar.start();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>搞定~</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gi4lk8t9zkj30xs0cidhi.jpg" alt=""></p>
+<p>这时如果想要把NewCar换成电动引擎，直接依赖新的模块即可，新增模块ElectricEngineModule，用于提供电动引擎，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Module</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="class"><span class="keyword">class</span> <span class="title">ElectricEngineModule</span> </span>&#123;<span class="comment">//电动引擎模块</span></span><br><span class="line">    <span class="meta">@Binds</span></span><br><span class="line">    <span class="function"><span class="keyword">abstract</span> IEngine <span class="title">makeElectricEngine</span><span class="params">(ElectricEngine engine)</span></span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>GasEngineModule模块换成ElectricEngineModule，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Component</span>(modules = &#123;ElectricEngineModule<span class="class">.<span class="keyword">class</span>&#125;)//替换</span></span><br><span class="line"><span class="class"><span class="title">public</span> <span class="title">interface</span> <span class="title">CarGraph</span> </span>&#123;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>运行就能得到电动车了，可见这个过程我们不需要修改NewCar就能换掉引擎（偷梁换柱）。</p>
+<h4 id="IntoMap和-StringKey"><a href="#IntoMap和-StringKey" class="headerlink" title="@IntoMap和@StringKey"></a>@IntoMap和@StringKey</h4><p>又有一天，突然想开双混动汽车了咋整，就是说汽油引擎和电动引擎我全都要，我们发现@Component的modules可以传入数组，那试试把两个引擎模块都传进去，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Component</span>(modules = &#123;GasEngineModule<span class="class">.<span class="keyword">class</span>, <span class="title">ElectricEngineModule</span>.<span class="title">class</span>&#125;)</span></span><br><span class="line"><span class="class"><span class="title">public</span> <span class="title">interface</span> <span class="title">CarGraph</span> </span>&#123;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>make一下，不用想也知道会出错，NewCar只有一个依赖IEngine接口，这时dagger已经不知道，造NewCar到底要传入哪个引擎了，</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gi4ibhneplj31lc0cwtbu.jpg" alt=""></p>
+<p>那怎么办？支持多绑定的@IntoMap和@StringKey登场了。</p>
+<p>IntoMap表示会把这个Module存进map里，StringKey表示Module名字，这个名字也会作为map的key，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Module</span></span><br><span class="line"><span class="keyword">abstract</span> <span class="class"><span class="keyword">class</span> <span class="title">GasEngineModule</span> </span>&#123;<span class="comment">//汽油引擎模块</span></span><br><span class="line">    <span class="meta">@Binds</span></span><br><span class="line">    <span class="meta">@IntoMap</span></span><br><span class="line">    <span class="meta">@StringKey</span>(<span class="string">"Gas"</span>)</span><br><span class="line">    <span class="function"><span class="keyword">abstract</span> IEngine <span class="title">makeGasEngine</span><span class="params">(GasEngine engine)</span></span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Module</span></span><br><span class="line"><span class="keyword">abstract</span> <span class="class"><span class="keyword">class</span> <span class="title">ElectricEngineModule</span> </span>&#123;<span class="comment">//电动引擎模块</span></span><br><span class="line">    <span class="meta">@Binds</span></span><br><span class="line">    <span class="meta">@IntoMap</span></span><br><span class="line">    <span class="meta">@StringKey</span>(<span class="string">"Electric"</span>)</span><br><span class="line">    <span class="function"><span class="keyword">abstract</span> IEngine <span class="title">makeElectricEngine</span><span class="params">(ElectricEngine engine)</span></span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后修改一下NewCar，此时不再只是依赖一个引擎接口IEngine了，而是一组引擎，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">NewCar</span> </span>&#123;</span><br><span class="line">    <span class="comment">//我现在是混动车了，要用map接收引擎</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> Map&lt;String, IEngine&gt; mEngineMap;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Inject</span> <span class="comment">//告诉dagger如何创建NewCar</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">NewCar</span><span class="params">(Map&lt;String, IEngine&gt; engineMap)</span> </span>&#123;</span><br><span class="line">        mEngineMap = engineMap;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">start</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="comment">//双混动走起~</span></span><br><span class="line">        <span class="keyword">for</span> (Map.Entry&lt;String, IEngine&gt; entry : mEngineMap.entrySet()) &#123;</span><br><span class="line">            entry.getValue().start();</span><br><span class="line">            <span class="comment">//汽油 引擎发动，前往秋名山</span></span><br><span class="line">            <span class="comment">//电动 引擎发动，前往秋名山</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>Activity代码不用改动，双混动车就造好了。</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gi4lmlkbs7j310s0h4got.jpg" alt=""></p>
+<h4 id="Singleton"><a href="#Singleton" class="headerlink" title="@Singleton"></a>@Singleton</h4><p>如果想要给双混动NewCar限量全球一款，可以用@Singleton指定为单例，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Singleton</span> <span class="comment">//单例，我现在是限量款混动车</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">NewCar</span> </span>&#123;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Singleton</span> <span class="comment">//造车图纸也需跟着单例</span></span><br><span class="line"><span class="meta">@Component</span>(modules = &#123;GasEngineModule<span class="class">.<span class="keyword">class</span>, <span class="title">ElectricEngineModule</span>.<span class="title">class</span>&#125;)</span></span><br><span class="line"><span class="class"><span class="title">public</span> <span class="title">interface</span> <span class="title">CarGraph</span> </span>&#123;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>Activity运行，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//DaggerActivity.java</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">onCreate</span><span class="params">(Bundle savedInstanceState)</span> </span>&#123;</span><br><span class="line">    CarGraph carGraph = DaggerCarGraph.create();</span><br><span class="line">    NewCar newCar = carGraph.makeNewCar();</span><br><span class="line">    newCar.start();</span><br><span class="line">    NewCar newCar2 = carGraph.makeNewCar();</span><br><span class="line">    newCar2.start();</span><br><span class="line">    <span class="comment">//newCar和newCar2是同一个实例</span></span><br><span class="line">    Log.e(<span class="string">"哈利迪"</span>, newCar.hashCode() + <span class="string">","</span> + newCar2.hashCode());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>dagger的使用就先聊到这啦，相信对dagger也已经有了初步认识，还有些注解没讲到，比如：</p>
+<p>@Provides：当我们没法用@Inject来标记实例的创建姿势时，可以用@Module和@Provides来提供实例，比如Retrofit是三方库的类我们没法标记其构造方法，则可以用Provides提供，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Module</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">NetworkModule</span> </span>&#123;</span><br><span class="line">    <span class="meta">@Provides</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Retrofit <span class="title">provideRetrofit</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> Retrofit.Builder()</span><br><span class="line">            .baseUrl(<span class="string">"xxx"</span>)</span><br><span class="line">            .build();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>@Scope：作用域 …</p>
+<p>@Subcomponent：子组件…</p>
+<p>注解还有很多，准备放到细枝篇来写了…🤣</p>
+<h3 id="实现原理"><a href="#实现原理" class="headerlink" title="实现原理"></a>实现原理</h3><p>dagger编译期解析注解创建辅助类的过程就不分析了，我们直接看他生成的辅助类，</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gi4niotkypj30lu082q4j.jpg" alt=""></p>
+<blockquote>
+<p>注：一开始写接口名字时，用造车图纸CarGraph而不是造车厂CarFactory，是为了避免和dagger的生成类搞混，用CarGraph有几何图的寓意，可以理解成造车蓝图（PPT），让我们一起，为梦想窒息…</p>
+</blockquote>
+<p>我们看到DaggerCarGraph，他实现了我们的CarGraph接口，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">DaggerCarGraph</span> <span class="keyword">implements</span> <span class="title">CarGraph</span> </span>&#123;</span><br><span class="line">    <span class="comment">//Provider，提供多引擎map，&lt;引擎名字、引擎实例&gt;</span></span><br><span class="line">    <span class="keyword">private</span> Provider&lt;Map&lt;String, IEngine&gt;&gt; mapOfStringAndIEngineProvider;</span><br><span class="line">    <span class="comment">//Provider，提供NewCar</span></span><br><span class="line">    <span class="keyword">private</span> Provider&lt;NewCar&gt; newCarProvider;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="title">DaggerCarGraph</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        initialize();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Builder <span class="title">builder</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> Builder();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> CarGraph <span class="title">create</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="comment">//用builder创建DaggerCarGraph实例</span></span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> Builder().build();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">initialize</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="comment">//创建提供汽油引擎的Provider和电动引擎的Provider</span></span><br><span class="line">        <span class="comment">//用put将他们存起来，合并成一个提供多引擎map的Provider</span></span><br><span class="line">        <span class="keyword">this</span>.mapOfStringAndIEngineProvider = MapFactory.&lt;String, IEngine&gt;builder(<span class="number">2</span>)</span><br><span class="line">            .put(<span class="string">"Gas"</span>, (Provider) GasEngine_Factory.create())</span><br><span class="line">            .put(<span class="string">"Electric"</span>, (Provider) ElectricEngine_Factory.create())</span><br><span class="line">            .build();</span><br><span class="line">        <span class="comment">//把提供多引擎map的Provider传入NewCar_Factory，</span></span><br><span class="line">        <span class="comment">//然后用DoubleCheck包一层，他会加锁、处理单例逻辑</span></span><br><span class="line">        <span class="keyword">this</span>.newCarProvider = DoubleCheck.provider(</span><br><span class="line">            NewCar_Factory.create(mapOfStringAndIEngineProvider));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Car <span class="title">makeCar</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="comment">//1. 老的造车：姿势一，用makeCar直接造</span></span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> Car(<span class="keyword">new</span> Engine());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">inject</span><span class="params">(DaggerActivity activity)</span> </span>&#123;</span><br><span class="line">        <span class="comment">//2. 老的造车：姿势二，用@Inject注入 ↓</span></span><br><span class="line">        injectDaggerActivity(activity);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> DaggerActivity <span class="title">injectDaggerActivity</span><span class="params">(DaggerActivity instance)</span> </span>&#123;</span><br><span class="line">        <span class="comment">//2. 老的造车：姿势二，先创建后注入</span></span><br><span class="line">        <span class="comment">//实例的创建也用makeCar，如果我们接口没有定义这个方法，dagger会生成一个功能一样的getCar</span></span><br><span class="line">        DaggerActivity_MembersInjector.injectMCar(instance, makeCar());</span><br><span class="line">        <span class="keyword">return</span> instance;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> NewCar <span class="title">makeNewCar</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="comment">//3. 新的造车，从Provider获取</span></span><br><span class="line">        <span class="keyword">return</span> newCarProvider.get();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">Builder</span> </span>&#123;</span><br><span class="line">        <span class="function"><span class="keyword">private</span> <span class="title">Builder</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="function"><span class="keyword">public</span> CarGraph <span class="title">build</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">new</span> DaggerCarGraph();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<ol>
+<li>老的造车：姿势一，用makeCar直接造</li>
+</ol>
+</blockquote>
+<p>在造老车Car时，姿势一是直接调接口的makeCar方法来造，实现就是简单的new出实例。</p>
+<blockquote>
+<ol start="2">
+<li>老的造车：姿势二，用@Inject注入</li>
+</ol>
+</blockquote>
+<p>姿势二用@Inject注入实例，可见他也是先调makeCar()得到实例，然后调DaggerActivity_MembersInjector.injectMCar进行注入，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//DaggerActivity_MembersInjector.java</span></span><br><span class="line"><span class="meta">@InjectedFieldSignature</span>(<span class="string">"com.holiday.srccodestudy.dagger.DaggerActivity.mCar"</span>)</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">injectMCar</span><span class="params">(DaggerActivity instance, Car mCar)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//引用DaggerActivity的成员，为其赋值，可见mCar不能声明为private</span></span><br><span class="line">    instance.mCar = mCar;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<ol start="3">
+<li>新的造车，从Provider获取</li>
+</ol>
+</blockquote>
+<p>在造新车NewCar时，是从Provider获取的，跟进newCarProvider.get()，如果使用了单例@Singleton，NewCar_Factory会被DoubleCheck包一层，DoubleCheck会加锁和处理单例逻辑，我们直接看NewCar_Factory的get就行了，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//Factory&lt;T&gt; extends Provider&lt;T&gt;</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">NewCar_Factory</span> <span class="keyword">implements</span> <span class="title">Factory</span>&lt;<span class="title">NewCar</span>&gt; </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> Provider&lt;Map&lt;String, IEngine&gt;&gt; engineMapProvider;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">NewCar_Factory</span><span class="params">(Provider&lt;Map&lt;String, IEngine&gt;&gt; engineMapProvider)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.engineMapProvider = engineMapProvider;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> NewCar <span class="title">get</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="comment">//通过engineMapProvider获取多引擎map</span></span><br><span class="line">        <span class="keyword">return</span> newInstance(engineMapProvider.get());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> NewCar_Factory <span class="title">create</span><span class="params">(Provider&lt;Map&lt;String, IEngine&gt;&gt; engineMapProvider)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> NewCar_Factory(engineMapProvider);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> NewCar <span class="title">newInstance</span><span class="params">(Map&lt;String, IEngine&gt; engineMap)</span> </span>&#123;</span><br><span class="line">        <span class="comment">//new出新车实例</span></span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> NewCar(engineMap);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>看下多引擎map又是如何获取的，engineMapProvider.get()，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//MapFactory.java</span></span><br><span class="line"><span class="comment">//MapFactory extends AbstractMapFactory implements Factory</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> Map&lt;K, V&gt; <span class="title">get</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">//创建新的LinkedHashMap</span></span><br><span class="line">    Map&lt;K, V&gt; result = newLinkedHashMapWithExpectedSize(contributingMap().size());</span><br><span class="line">    <span class="comment">//遍历已存入的引擎，存进新map</span></span><br><span class="line">    <span class="keyword">for</span> (Entry&lt;K, Provider&lt;V&gt;&gt; entry : contributingMap().entrySet()) &#123;</span><br><span class="line">        result.put(entry.getKey(), entry.getValue().get());</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//返回不可修改的map</span></span><br><span class="line">    <span class="keyword">return</span> unmodifiableMap(result);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>至此，dagger的各生产线流程就分析完了，</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gi552p451ij31760qywif.jpg" alt=""></p>
+<h2 id="细枝"><a href="#细枝" class="headerlink" title="细枝"></a>细枝</h2><p>@Scope作用域、@Subcomponent子组件、还有SPI（Service Provider Interface）、grpc（谷歌的远程过程调用框架）等，都留到细枝篇来写啦。</p>
+<h2 id="使用场景"><a href="#使用场景" class="headerlink" title="使用场景"></a>使用场景</h2><p>那dagger在Android中有哪些用武之地？首先是从<code>架构角度</code>，在<a href="https://developer.android.google.cn/training/dependency-injection/dagger-android" target="_blank" rel="noopener">谷歌示例</a>中，结合了Activity、伪ViewModel、Repository、DataSource和Retrofit来使用dagger，（还没用过，不知道香不香、坑多不多，靠屏幕前的大佬们反馈了~）</p>
+<p><img src="https://developer.android.google.cn/images/training/dependency-injection/4-application-graph.png" alt=""></p>
+<p>然后我们在项目中的一些场景，是从<code>业务角度</code>切入，在个别复杂度较高的业务线上单独使用dagger。例如钱包业务，有<code>大量实例</code>和<code>大量页面/视图</code>存在多对多关系，比如钱包Act需要钱包Api、钱包用户信息Manager；充值Act需要支付Api、充值Service；银行卡列表View需要银行Service…像这种多对多、对象依赖关系杂乱无章的场景，很适合用dagger来帮我们注入。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@PurseScope</span> <span class="comment">//钱包作用域</span></span><br><span class="line"><span class="meta">@Component</span>(modules = PurseModule<span class="class">.<span class="keyword">class</span>) //由<span class="title">PurseModule</span>提供实例</span></span><br><span class="line"><span class="class"><span class="title">public</span> <span class="title">interface</span> <span class="title">PurseComponent</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//为act注入</span></span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">inject</span><span class="params">(退款详情Act xxxAct)</span></span>;</span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">inject</span><span class="params">(银行卡首页Act xxxAct)</span></span>;</span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">inject</span><span class="params">(钱包首页Act xxxAct)</span></span>;</span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">inject</span><span class="params">(钱包设置Act xxxAct)</span></span>;</span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">inject</span><span class="params">(余额首页Act xxxAct)</span></span>;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">//为view注入</span></span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">inject</span><span class="params">(钱包首页GridContainer xxxGridContainer)</span></span>;</span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">inject</span><span class="params">(银行卡列表View xxxView)</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//提供网络调用</span></span><br><span class="line">    支付<span class="function">Api <span class="title">xxxApi</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//提供钱包用户信息</span></span><br><span class="line">    钱包用户信息<span class="function">Manager <span class="title">xxxManager</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后看到PurseModule，用于提供各种实例，可以new、手动单例、工厂生产…</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Module</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">PurseModule</span> </span>&#123;</span><br><span class="line">    <span class="meta">@Provides</span></span><br><span class="line">    <span class="meta">@PurseScope</span></span><br><span class="line">    <span class="keyword">public</span> 支付Api provide支付Api(...) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> 支付Api(...);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Provides</span></span><br><span class="line">    <span class="meta">@PurseScope</span></span><br><span class="line">    <span class="keyword">public</span> 用户信息Manager provide用户信息Manager(...) &#123;</span><br><span class="line">        <span class="keyword">return</span> 用户信息Manager.get(...);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Provides</span></span><br><span class="line">    <span class="meta">@PurseScope</span></span><br><span class="line">    <span class="keyword">public</span> 充值Service provide充值Service(...) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> 充值ServiceFactory.create(...);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="尾声"><a href="#尾声" class="headerlink" title="尾声"></a>尾声</h2><p>简单总结下dagger的优缺点~</p>
+<ul>
+<li>优势：无反射、支持增量编译</li>
+<li>缺点：构建过程需要而外的io和编译时间、生成类会增大包体积、不够好用、</li>
+</ul>
+<p>后续计划：dagger细枝、hilt、koin、顺便看看spring上的注入@Autowired是怎么做的…学海无涯啊~</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gi589i6g22j306o06o749.jpg" alt=""></p>
+<p>系列文章：</p>
+<ul>
+<li><a href="https://juejin.im/post/6862368973888061453" target="_blank" rel="noopener">《看完不忘系列》之Retrofit</a></li>
+<li><a href="https://juejin.im/post/6856966817844625415" target="_blank" rel="noopener">《看完不忘系列》之okhttp</a></li>
+<li><a href="https://juejin.im/post/6850037281349173261" target="_blank" rel="noopener">《看完不忘系列》之Glide</a></li>
+</ul>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a href="https://github.com/google/dagger">GitHub</a> &amp; <a href="https://dagger.dev/" target="_blank" rel="noopener">文档</a> &amp; <a href="https://dagger.dev/api/latest/" target="_blank" rel="noopener">API</a></li>
+<li><a href="https://developer.android.google.cn/training/dependency-injection" target="_blank" rel="noopener">谷歌 - Android 中的依赖项注入</a></li>
+<li><a href="https://mp.weixin.qq.com/s/rizpnU3jgm_aZ2-8m9zp6Q" target="_blank" rel="noopener">谷歌 - 在 Kotlin 中使用 Dagger 会遇到的陷阱和优化方法</a></li>
+<li><a href="https://juejin.im/post/6854828407960633352" target="_blank" rel="noopener">掘金 - 从Dagger到Hilt，谷歌为何执着于让我们用依赖注入</a></li>
+</ul>
+<hr>
+<p><a href="https://tva1.sinaimg.cn/large/007S8ZIlly1ghzod486q7j30b40b4wen.jpg" target="_blank" rel="noopener">欢迎关注原创技术公众号：哈利迪ei</a></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Android/" rel="tag"># Android</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/08/19/Android-%E3%80%8A%E7%9C%8B%E5%AE%8C%E4%B8%8D%E5%BF%98%E7%B3%BB%E5%88%97%E3%80%8B%E4%B9%8BRetrofit/" rel="next" title="Android |《看完不忘系列》之Retrofit">
+                <i class="fa fa-chevron-left"></i> Android |《看完不忘系列》之Retrofit
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">哈利迪</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+
+              <div class="site-state-item site-state-posts">
+                <a href="/archives">
+                  <span class="site-state-item-count">29</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+
+
+
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">2</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#背景"><span class="nav-number">1.</span> <span class="nav-text">背景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#树干"><span class="nav-number">2.</span> <span class="nav-text">树干</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#简单使用"><span class="nav-number">2.1.</span> <span class="nav-text">简单使用</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Inject和-Component"><span class="nav-number">2.1.1.</span> <span class="nav-text">@Inject和@Component</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Module和-Binds"><span class="nav-number">2.1.2.</span> <span class="nav-text">@Module和@Binds</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#IntoMap和-StringKey"><span class="nav-number">2.1.3.</span> <span class="nav-text">@IntoMap和@StringKey</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Singleton"><span class="nav-number">2.1.4.</span> <span class="nav-text">@Singleton</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#实现原理"><span class="nav-number">2.2.</span> <span class="nav-text">实现原理</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#细枝"><span class="nav-number">3.</span> <span class="nav-text">细枝</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#使用场景"><span class="nav-number">4.</span> <span class="nav-text">使用场景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#尾声"><span class="nav-number">5.</span> <span class="nav-text">尾声</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料"><span class="nav-number">6.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">哈利迪</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
