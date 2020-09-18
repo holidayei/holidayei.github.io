@@ -68,7 +68,7 @@
 
 
 
-  <meta name="keywords" content="Hexo, NexT" />
+  <meta name="keywords" content="Android," />
 
 
 
@@ -79,16 +79,27 @@
 
 
 
-<meta name="description" content="Welcome to Hexo! This is your very first post. Check documentation for more info. If you get any problems when using Hexo, you can find the answer in troubleshooting or you can ask me on GitHub. Quick">
+<meta name="description" content="嗨，我是哈利迪~好久不见，最近大促比较忙，没啥时间写文章肝源码…本文做个小记，记录一个多aar下修改常量引起的问题，希望能给大家避避坑  本文约0.9k字，阅读大约3分钟。  问题简述App结构大致如下，各工程以aar形式进行依赖，壳工程以打平的形式依赖所有业务工程和基础工程的aar，避开依赖传递的问题，还可以加快开发过程的构建速度，  因业务需要，哈迪把基础工程1的1.0版本的一个常量TYPE_">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Hello World">
-<meta property="og:url" content="https://github.com/holidayei/2020/05/03/hello-world/index.html">
+<meta property="og:title" content="踩坑记 | 多aar下修改常量的一个小坑">
+<meta property="og:url" content="https://github.com/holidayei/2020/09/18/%E8%B8%A9%E5%9D%91%E8%AE%B0-%E5%A4%9Aaar%E4%B8%8B%E4%BF%AE%E6%94%B9%E5%B8%B8%E9%87%8F%E7%9A%84%E4%B8%80%E4%B8%AA%E5%B0%8F%E5%9D%91/index.html">
 <meta property="og:site_name" content="Holiday">
-<meta property="og:description" content="Welcome to Hexo! This is your very first post. Check documentation for more info. If you get any problems when using Hexo, you can find the answer in troubleshooting or you can ask me on GitHub. Quick">
-<meta property="article:published_time" content="2020-05-03T15:22:03.400Z">
-<meta property="article:modified_time" content="2020-05-03T15:22:03.400Z">
+<meta property="og:description" content="嗨，我是哈利迪~好久不见，最近大促比较忙，没啥时间写文章肝源码…本文做个小记，记录一个多aar下修改常量引起的问题，希望能给大家避避坑  本文约0.9k字，阅读大约3分钟。  问题简述App结构大致如下，各工程以aar形式进行依赖，壳工程以打平的形式依赖所有业务工程和基础工程的aar，避开依赖传递的问题，还可以加快开发过程的构建速度，  因业务需要，哈迪把基础工程1的1.0版本的一个常量TYPE_">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1giu06jmlucj30ke0byq3i.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gityh0p01ej310a0iswii.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1giu1endc1ej306o06owfs.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gitymx7l40j30mg03it97.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gitz2pijtcj30gy08k3yu.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gitz5w3e6pj311k08yjs5.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gitzc7kzgwj30um08sjrz.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gitymx7l40j30mg03it97.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gitziu2kjqj30ha08uaal.jpg">
+<meta property="article:published_time" content="2020-09-18T13:39:20.000Z">
+<meta property="article:modified_time" content="2020-09-18T13:42:26.208Z">
 <meta property="article:author" content="哈利迪">
+<meta property="article:tag" content="Android">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1giu06jmlucj30ke0byq3i.jpg">
 
 
 
@@ -118,13 +129,13 @@
 
 
 
-  <link rel="canonical" href="https://github.com/holidayei/2020/05/03/hello-world/"/>
+  <link rel="canonical" href="https://github.com/holidayei/2020/09/18/踩坑记-多aar下修改常量的一个小坑/"/>
 
 
 
 
 
-  <title>Hello World | Holiday</title>
+  <title>踩坑记 | 多aar下修改常量的一个小坑 | Holiday</title>
   
 
 
@@ -251,7 +262,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://github.com/holidayei/2020/05/03/hello-world/">
+    <link itemprop="mainEntityOfPage" href="https://github.com/holidayei/2020/09/18/%E8%B8%A9%E5%9D%91%E8%AE%B0-%E5%A4%9Aaar%E4%B8%8B%E4%BF%AE%E6%94%B9%E5%B8%B8%E9%87%8F%E7%9A%84%E4%B8%80%E4%B8%AA%E5%B0%8F%E5%9D%91/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="哈利迪">
@@ -268,7 +279,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">Hello World</h1>
+          <h1 class="post-title" itemprop="name headline">踩坑记 | 多aar下修改常量的一个小坑</h1>
         
 
         <div class="post-meta">
@@ -280,8 +291,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-05-03T23:22:03+08:00">
-                2020-05-03
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-09-18T21:39:20+08:00">
+                2020-09-18
               </time>
             
 
@@ -318,19 +329,43 @@
       
 
       
-        <p>Welcome to <a href="https://hexo.io/" target="_blank" rel="noopener">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/" target="_blank" rel="noopener">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html" target="_blank" rel="noopener">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo new <span class="string">"My New Post"</span></span><br></pre></td></tr></table></figure>
+        <p>嗨，我是哈利迪~好久不见，最近大促比较忙，没啥时间写文章肝源码…本文做个小记，记录一个多aar下修改常量引起的问题，希望能给大家避避坑</p>
+<blockquote>
+<p>本文约0.9k字，阅读大约3分钟。</p>
+</blockquote>
+<h2 id="问题简述"><a href="#问题简述" class="headerlink" title="问题简述"></a>问题简述</h2><p>App结构大致如下，各工程以aar形式进行依赖，壳工程以<strong>打平</strong>的形式依赖所有业务工程和基础工程的aar，避开依赖传递的问题，还可以加快开发过程的构建速度，</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1giu06jmlucj30ke0byq3i.jpg" alt=""></p>
+<p>因业务需要，哈迪把<code>基础工程1</code>的1.0版本的一个常量<code>TYPE_RECOMMEND_TAB</code>从106改成了306，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">DATA_TYPE</span> </span>&#123;</span><br><span class="line">    <span class="comment">//public static final int TYPE_RECOMMEND_TAB = 106;</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> TYPE_RECOMMEND_TAB = <span class="number">306</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<p>More info: <a href="https://hexo.io/docs/writing.html" target="_blank" rel="noopener">Writing</a></p>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/server.html" target="_blank" rel="noopener">Server</a></p>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/generating.html" target="_blank" rel="noopener">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/one-command-deployment.html" target="_blank" rel="noopener">Deployment</a></p>
+<p>然后推代码，打出一个新的aar，版本为1.1，壳工程使用1.1版本，运行后debug如下，</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gityh0p01ej310a0iswii.jpg" alt=""></p>
+<p>在debug一个<code>业务工程1</code>的类<code>SearchResultListAdapter</code>时，发生了神奇的一幕，alt键点击<code>TYPE_RECOMMEND_TAB</code>可见他的值是新的306，然而把他赋值给type后，type的值居然是106，这是什么鬼！</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1giu1endc1ej306o06owfs.jpg" alt=""></p>
+<p>马上联想到，是不是编译期常量自动替换的问题呢，在壳工程搜一下<code>SearchResultListAdapter.class</code>（注意是class文件），</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gitymx7l40j30mg03it97.jpg" alt=""></p>
+<p>果然，前面debug看到的只是表象，实际上我们就是给type赋值了106，那么问题来了，这个106是哪里来的，我明明已经改掉了啊？</p>
+<h2 id="揭开真相"><a href="#揭开真相" class="headerlink" title="揭开真相"></a>揭开真相</h2><p>其实问题并不难找，前边提到了壳工程会以<strong>打平</strong>的形式依赖业务工程和基础工程的aar，如下，</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gitz2pijtcj30gy08k3yu.jpg" alt=""></p>
+<p>当我们修改了<code>基础工程1</code>的常量后，进行aar升级，壳工程更新依赖版本，从1.0变成1.1，</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gitz5w3e6pj311k08yjs5.jpg" alt=""></p>
+<p>这时在壳工程不管搜<code>DATA_TYPE.java</code>还是<code>DATA_TYPE.class</code>，毋庸置疑常量<code>TYPE_RECOMMEND_TAB</code>的值都是新的306，那问题出在哪呢？出在依赖了<code>基础工程1</code>的<code>业务工程1</code>，即306只对壳工程可见，对于<code>业务工程1</code>来说，<code>TYPE_RECOMMEND_TAB</code>仍然是106，我去怎么越说越绕…上图！</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gitzc7kzgwj30um08sjrz.jpg" alt=""></p>
+<p>壳工程把<code>基础工程1</code>升级到1.1，看见了306；但是在<code>业务工程1</code>里，他依赖的还是<code>基础工程1</code>的旧的1.0版本，所以对他来说，他看到的<code>TYPE_RECOMMEND_TAB</code>仍然是106，因此，他的类<code>SearchResultListAdapter</code>被编译成class后，由于编译期常量自动替换的设计，class文件里就会写死106，</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gitymx7l40j30mg03it97.jpg" alt=""></p>
+<p>然后，他向壳工程提供的class文件<code>SearchResultListAdapter.class</code>就是106，</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gitziu2kjqj30ha08uaal.jpg" alt=""></p>
+<p>这样子上线，估计又要P1故障警告⚠️了！到此我们可以先得出结论，</p>
+<blockquote>
+<p>谨慎修改常量值，一旦修改了一个常量，依赖了当前aar的所有项目，都要把当前aar升到最新版本，确保向壳工程提供的class文件是正确的。</p>
+</blockquote>
+<p>哈迪在壳工程看了下，依赖了<code>基础工程1</code>并且用到了常量<code>TYPE_RECOMMEND_TAB</code>的上层工程，还有四五个，涉及了六七个类，这要是忘了改，就真的是大型翻车现场了…</p>
+<h2 id="解决"><a href="#解决" class="headerlink" title="解决"></a>解决</h2><p>sorry，哈迪也还没想到很好的工程化的方式去避免，只能先小记一下加深印象，恳请大佬们一起出谋划策！</p>
+<blockquote>
+<p>ps：最近入秋了，大伙注意温差！身边好多同事感冒了😷</p>
+</blockquote>
+<hr>
+<p><a href="https://tva1.sinaimg.cn/large/007S8ZIlly1ghzod486q7j30b40b4wen.jpg" target="_blank" rel="noopener">欢迎关注原创技术公众号：哈利迪ei</a></p>
 
       
     </div>
@@ -346,6 +381,12 @@
 
     <footer class="post-footer">
       
+        <div class="post-tags">
+          
+            <a href="/tags/Android/" rel="tag"># Android</a>
+          
+        </div>
+      
 
       
       
@@ -355,15 +396,15 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
+              <a href="/2020/08/30/Android-dagger%E7%BB%86%E6%9E%9D%E7%AF%87/" rel="next" title="Android | dagger细枝篇">
+                <i class="fa fa-chevron-left"></i> Android | dagger细枝篇
+              </a>
+            
           </div>
 
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2020/05/03/Android-Jetpack%E7%AC%94%E8%AE%B0-DataBinding/" rel="prev" title="Android-Jetpack笔记-DataBinding">
-                Android-Jetpack笔记-DataBinding <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -485,7 +526,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Quick-Start"><span class="nav-number">1.</span> <span class="nav-text">Quick Start</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Create-a-new-post"><span class="nav-number">1.1.</span> <span class="nav-text">Create a new post</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Run-server"><span class="nav-number">1.2.</span> <span class="nav-text">Run server</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Generate-static-files"><span class="nav-number">1.3.</span> <span class="nav-text">Generate static files</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Deploy-to-remote-sites"><span class="nav-number">1.4.</span> <span class="nav-text">Deploy to remote sites</span></a></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#问题简述"><span class="nav-number">1.</span> <span class="nav-text">问题简述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#揭开真相"><span class="nav-number">2.</span> <span class="nav-text">揭开真相</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#解决"><span class="nav-number">3.</span> <span class="nav-text">解决</span></a></li></ol></div>
             
 
           </div>
