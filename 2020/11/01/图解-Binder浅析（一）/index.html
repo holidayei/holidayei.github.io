@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="图解," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="Framework和Binder的内容挺深的，本文还是站在应用层开发者的角度来建立基本认知，能在遇到问题的时候有思路和方向即可。（本文将带着关键问题和核心流程展开，不会面面俱到） 大纲：  背景 为什么要多进程 为什么要Binder Binder简单架构   简单示例 源码分析 客户端与驱动交互 服务端与驱动交互   总结 细节补充 Binder为什么高效 Binder为什么不用shm   提问">
+<meta property="og:type" content="article">
+<meta property="og:title" content="图解 | Binder浅析（一）">
+<meta property="og:url" content="https://github.com/holidayei/2020/11/01/%E5%9B%BE%E8%A7%A3-Binder%E6%B5%85%E6%9E%90%EF%BC%88%E4%B8%80%EF%BC%89/index.html">
+<meta property="og:site_name" content="Holiday">
+<meta property="og:description" content="Framework和Binder的内容挺深的，本文还是站在应用层开发者的角度来建立基本认知，能在遇到问题的时候有思路和方向即可。（本文将带着关键问题和核心流程展开，不会面面俱到） 大纲：  背景 为什么要多进程 为什么要Binder Binder简单架构   简单示例 源码分析 客户端与驱动交互 服务端与驱动交互   总结 细节补充 Binder为什么高效 Binder为什么不用shm   提问">
+<meta property="og:image" content="https://gitee.com/imholiday/u-pic-image/raw/master/uPic/2020-11-01-16-10-30-binder8.jpg">
+<meta property="og:image" content="https://gitee.com/imholiday/u-pic-image/raw/master/uPic/2020-10-27-22-32-59-binder3.png">
+<meta property="og:image" content="https://gitee.com/imholiday/u-pic-image/raw/master/uPic/2020-10-27-20-56-07-binder2.png">
+<meta property="og:image" content="https://gitee.com/imholiday/u-pic-image/raw/master/uPic/2020-10-27-18-43-06-binder1.png">
+<meta property="og:image" content="https://gitee.com/imholiday/u-pic-image/raw/master/uPic/2020-10-28-22-05-19-binder4.png">
+<meta property="og:image" content="https://gitee.com/imholiday/u-pic-image/raw/master/uPic/2020-10-31-15-50-53-binder5.png">
+<meta property="og:image" content="https://gitee.com/imholiday/u-pic-image/raw/master/uPic/2020-10-31-16-06-58-binder6.png">
+<meta property="og:image" content="https://gitee.com/imholiday/u-pic-image/raw/master/uPic/2020-11-01-15-40-12-binder7.jpg">
+<meta property="article:published_time" content="2020-11-01T08:59:06.000Z">
+<meta property="article:modified_time" content="2020-11-01T08:59:42.543Z">
+<meta property="article:author" content="哈利迪">
+<meta property="article:tag" content="图解">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://gitee.com/imholiday/u-pic-image/raw/master/uPic/2020-11-01-16-10-30-binder8.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://github.com/holidayei/2020/11/01/图解-Binder浅析（一）/"/>
+
+
+
+
+
+  <title>图解 | Binder浅析（一） | Holiday</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Holiday</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://github.com/holidayei/2020/11/01/%E5%9B%BE%E8%A7%A3-Binder%E6%B5%85%E6%9E%90%EF%BC%88%E4%B8%80%EF%BC%89/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="哈利迪">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Holiday">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">图解 | Binder浅析（一）</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-11-01T16:59:06+08:00">
+                2020-11-01
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>Framework和Binder的内容挺深的，本文还是站在<strong>应用层开发者</strong>的角度来建立基本认知，能在遇到问题的时候有思路和方向即可。（本文将带着关键问题和核心流程展开，不会面面俱到）</p>
+<p><strong>大纲：</strong></p>
+<ul>
+<li>背景<ul>
+<li>为什么要多进程</li>
+<li>为什么要Binder</li>
+<li>Binder简单架构</li>
+</ul>
+</li>
+<li>简单示例</li>
+<li>源码分析<ul>
+<li>客户端与驱动交互</li>
+<li>服务端与驱动交互</li>
+</ul>
+</li>
+<li>总结</li>
+<li>细节补充<ul>
+<li>Binder为什么高效</li>
+<li>Binder为什么不用shm</li>
+</ul>
+</li>
+<li>提问</li>
+<li>参考资料</li>
+</ul>
+<blockquote>
+<p>本文约4.0k字，阅读大约17分钟。</p>
+<p><a href="https://www.androidos.net.cn/android/8.0.0_r4/xref" target="_blank" rel="noopener">Android源码</a>基于8.0。</p>
+</blockquote>
+<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><h3 id="为什么要多进程"><a href="#为什么要多进程" class="headerlink" title="为什么要多进程"></a>为什么要多进程</h3><p>Binder是Android系统的一种跨进程通信（IPC）机制。</p>
+<p>在Android系统中，单个进程被分配了<strong>有限的内存</strong>，多进程可以<strong>使用更多内存</strong>、<strong>隔离崩溃风险</strong>等。</p>
+<p>多进程在Android中常见的使用场景有独立进程的WebView、推送、保活、系统服务等，既然是多进程场景，那么就需要跨进程通信了。</p>
+<h3 id="为什么要Binder"><a href="#为什么要Binder" class="headerlink" title="为什么要Binder"></a>为什么要Binder</h3><p>Linux自带了一些跨进程通信方式：</p>
+<ul>
+<li><p>管道（pipe）：管道描述符是半双工，单向的，数据只能往一个方向流，想要读写需要两个管道描述符。Linux提供了pipe(fds)来获取一对描述符，一个读一个写。匿名管道只能用在具有亲缘关系的父子进程间的通信，有名管道无此限制。</p>
+</li>
+<li><p>Socket：全双工，可读可写。如Zygote进程等待AMS系统服务发起socket请求来创建应用进程。</p>
+</li>
+<li><p>共享内存（shm，Shared Memory）：会映射一段能被多个进程访问的内存，是最高效的IPC方式，他通常需要结合其他跨进程方式如<strong>信号量</strong>来同步信息。Android基于shm改进得到匿名共享内存Ashmem（Anonymous Shared Memory），因高效而适合处理较大的数据，如应用进程通过共享内存来读取SurfaceFlinger进程合成的视图数据，进行展示。</p>
+</li>
+<li><p>内存映射（mmap）：Linux通过将一个虚拟内存区域与一个磁盘上的文件关联起来，以初始化这个虚拟内存区域的内容。通过指针的方式读写内存，系统会同步进对应的磁盘文件。<strong>Binder用到了mmap</strong>。</p>
+</li>
+<li><p>信号（signal）：单向的，发个信号就完事，无返回结果。只能发信号，带不了参数。如子进程被杀掉后系统会发出SIGCHLD信号，父进程会清理子进程在进程表的描述信息防止<code>僵尸进程</code>的发生。</p>
+</li>
+</ul>
+<p>另外还有文件共享、消息队列（Message）等跨进程通信方式…</p>
+<p>这些跨进程通信方式都各有优劣，Android最终选择了自建一套兼顾<strong>好用、高效、安全</strong>的Binder。</p>
+<ul>
+<li>好用：易用的C/S架构（借助AIDL后只需编写业务逻辑）</li>
+<li>高效：用mmap进行内存映射，只需一次拷贝</li>
+<li>安全：内核态管理身份标记，每个App有UID来校验权限，同时支持实名（系统服务）和匿名（自己创建的服务）</li>
+</ul>
+<h3 id="Binder简单架构"><a href="#Binder简单架构" class="headerlink" title="Binder简单架构"></a>Binder简单架构</h3><p>Linux内存被分为<strong>用户空间</strong>和<strong>内核空间</strong>，用户空间需要经过<strong>系统调用</strong>才能访问到内核空间。</p>
+<p><img src="https://gitee.com/imholiday/u-pic-image/raw/master/uPic/2020-11-01-16-10-30-binder8.jpg" alt=""></p>
+<p>（图片来源：「<a href="https://zhuanlan.zhihu.com/p/35519585" target="_blank" rel="noopener">写给Android应用工程师的Binder原理剖析</a>」）</p>
+<p>Binder整体基于C/S架构。运行在内核空间的Binder驱动程序，会为用户空间暴露出一个设备文件<code>/dev/binder</code>，进程间通过该文件来建立通信通道。</p>
+<p><img src="https://gitee.com/imholiday/u-pic-image/raw/master/uPic/2020-10-27-22-32-59-binder3.png" alt=""></p>
+<p>Binder的启动过程：</p>
+<ol>
+<li>打开binder驱动（open）</li>
+<li>将驱动文件的描述符（mDriverFD）进行内存映射（mmap），分配缓冲区</li>
+<li>服务端运行binder线程，把线程注册到binder驱动，进入循环等待客户端的指令（两端通过ioctl与驱动交互）</li>
+</ol>
+<h2 id="简单示例"><a href="#简单示例" class="headerlink" title="简单示例"></a>简单示例</h2><p>AIDL（Android接口定义语言）可以辅助生成Binder的Java类，减少重复工作，使用姿势网上有很多，这里就直接手写吧，方便理解。</p>
+<p>示例调用流程如下：</p>
+<p><img src="https://gitee.com/imholiday/u-pic-image/raw/master/uPic/2020-10-27-20-56-07-binder2.png" alt=""></p>
+<p>代码不多，大部分是log，重点看注释就行。</p>
+<p>客户端Activity：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//NoAidlActivity.java</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">onCreate</span><span class="params">(Bundle savedInstanceState)</span> </span>&#123;</span><br><span class="line">    Intent intent = <span class="keyword">new</span> Intent(<span class="keyword">this</span>, MyService<span class="class">.<span class="keyword">class</span>)</span>;</span><br><span class="line"></span><br><span class="line">    bindService(intent, <span class="keyword">new</span> ServiceConnection() &#123;</span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onServiceConnected</span><span class="params">(ComponentName name, IBinder service)</span> </span>&#123;</span><br><span class="line">            <span class="comment">//1. 从对象池拿到可复用的对象（享元模式）</span></span><br><span class="line">            Parcel data = Parcel.obtain();</span><br><span class="line">            Parcel reply = Parcel.obtain();</span><br><span class="line"></span><br><span class="line">            Log.e(<span class="string">"哈利迪"</span>, <span class="string">"--- 我是客户端 NoAidlActivity , pid = "</span></span><br><span class="line">                  + Process.myPid() + <span class="string">", thread = "</span></span><br><span class="line">                  + Thread.currentThread().getName());</span><br><span class="line"></span><br><span class="line">            String str = <span class="string">"666"</span>;</span><br><span class="line">            Log.e(<span class="string">"哈利迪"</span>, <span class="string">"客户端向服务端发送："</span> + str);</span><br><span class="line">            <span class="comment">//2. 往data写数据，作为请求参数</span></span><br><span class="line">            data.writeString(str);</span><br><span class="line"></span><br><span class="line">            <span class="comment">//3. 拿到服务端的IBinder句柄，调用transact</span></span><br><span class="line">            <span class="comment">//约定行为码是1；需要服务端的返回值，所以flags传0表示同步调用</span></span><br><span class="line">            service.transact(<span class="number">1</span>, data, reply, <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">            Log.e(<span class="string">"哈利迪"</span>, <span class="string">"--- 我是客户端 NoAidlActivity , pid = "</span></span><br><span class="line">                  + Process.myPid() + <span class="string">", thread = "</span></span><br><span class="line">                  + Thread.currentThread().getName());</span><br><span class="line"></span><br><span class="line">            <span class="comment">//4. 从reply读取服务端的返回值</span></span><br><span class="line">            Log.e(<span class="string">"哈利迪"</span>, <span class="string">"客户端接收服务端返回："</span> + reply.readString());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;, Context.BIND_AUTO_CREATE);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>service.transact传入了flags为<code>0</code>，表示<strong>同步调用</strong>，会<strong>阻塞等待</strong>服务端的返回值。如果服务端进行了耗时操作，此时用户操作UI则会引起ANR。</p>
+<p>flags的另一个值是<code>1</code>，表示<strong>异步调用的one way</strong>，<strong>不需要等待服务端的返回结果</strong>，先忽略。</p>
+<p>来看服务端运行的Service，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">MyService</span> <span class="keyword">extends</span> <span class="title">Service</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> IBinder <span class="title">onBind</span><span class="params">(Intent intent)</span> </span>&#123;</span><br><span class="line">        <span class="comment">//返回服务端的IBinder句柄</span></span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> MyBinder();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>注册服务，让服务端Service运行在<code>:remote</code>进程，来实现跨进程，</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">service</span></span></span><br><span class="line"><span class="tag">         <span class="attr">android:name</span>=<span class="string">".binder.no_aidl.MyService"</span></span></span><br><span class="line"><span class="tag">         <span class="attr">android:process</span>=<span class="string">":remote"</span> /&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>运行在服务端的Binder对象，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">MyBinder</span> <span class="keyword">extends</span> <span class="title">Binder</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">boolean</span> <span class="title">onTransact</span><span class="params">(<span class="keyword">int</span> code, Parcel data, Parcel reply, <span class="keyword">int</span> flags)</span></span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (code == <span class="number">1</span>) &#123;<span class="comment">//如果是约定好的行为码1</span></span><br><span class="line">            Log.e(<span class="string">"哈利迪"</span>, <span class="string">"--- 我是服务端 MyBinder , pid = "</span></span><br><span class="line">                  + Process.myPid() + <span class="string">", thread = "</span></span><br><span class="line">                  + Thread.currentThread().getName());</span><br><span class="line">            <span class="comment">//1. 从data读取客户端参数</span></span><br><span class="line">            Log.e(<span class="string">"哈利迪"</span>, <span class="string">"服务端收到："</span> + data.readString());</span><br><span class="line"></span><br><span class="line">            String str = <span class="string">"777"</span>;</span><br><span class="line">            Log.e(<span class="string">"哈利迪"</span>, <span class="string">"服务端返回："</span> + str);</span><br><span class="line">            <span class="comment">//2. 从reply向客户端写返回值</span></span><br><span class="line">            reply.writeString(str);</span><br><span class="line"></span><br><span class="line">            <span class="comment">//3. 处理完成</span></span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">super</span>.onTransact(code, data, reply, flags);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>运行如下，7行日志：</p>
+<p><img src="https://gitee.com/imholiday/u-pic-image/raw/master/uPic/2020-10-27-18-43-06-binder1.png" alt=""></p>
+<p>由于我们的flags传入的是<code>0</code>同步调用，可以试着在服务端onTransact里sleep几秒，会发现客户端需要几秒后才能打印出返回值。所以如果服务端需要进行耗时操作，客户端则需要在子线程里进行binder调用。</p>
+<blockquote>
+<p>延伸：从 <code>IT互联网大叔</code> 的「<a href="https://juejin.im/post/6877127949452050446" target="_blank" rel="noopener">android获取进程名函数，如何优化到极致</a>」一文可见，在使用系统API时，如果有更好的方案，还是建议将跨进程方案getSystemService放到最后作为兜底，因为他需要的binder调用本身有开销，而且作为<strong>应用层开发者</strong>也很少会去关注远方进程的内部实现，万一对方有<strong>潜在的</strong>耗时操作呢？</p>
+</blockquote>
+<p>通过这个例子，我们可以看出，Binder机制使用了<strong>Parcel来序列化数据</strong>，客户端在主线程调用了<strong>transact来请求</strong>（Parcel data传参），服务端在<strong>Binder线程</strong>调用<strong>onTransact来响应</strong>（Parcel reply回传结果）。</p>
+<h2 id="源码分析"><a href="#源码分析" class="headerlink" title="源码分析"></a>源码分析</h2><p>Binder的调用流程大致如下，native层BpBinder的<code>Bp</code>指的是<code>Binder proxy</code>，</p>
+<p><img src="https://gitee.com/imholiday/u-pic-image/raw/master/uPic/2020-10-28-22-05-19-binder4.png" alt=""></p>
+<p>可见，需要经过如下调用才能完成一次通信：</p>
+<ol>
+<li>请求：客户端Java层-&gt;客户端native层-&gt;<strong>Binder驱动层</strong>-&gt;服务端native层-&gt;服务端Java层</li>
+<li>响应：服务端Java层-&gt;服务端native层-&gt;<strong>Binder驱动层</strong>-&gt;客户端native层-&gt;客户端Java层</li>
+</ol>
+<p>即Binder驱动层充当着一个<strong>中转站</strong>的作用，有点像网络分层模型。</p>
+<h3 id="客户端与驱动交互"><a href="#客户端与驱动交互" class="headerlink" title="客户端与驱动交互"></a>客户端与驱动交互</h3><p>先来看客户端与驱动的交互。因为是跨进程调用（指定了<code>:remote</code>），示例里onServiceConnected回调回来的service对象是个BinderProxy代理实例（不跨进程的话会发生<code>远程转本地</code>，后面讲），我们以service.transact(1, data, reply, 0)这行调用作为入口跟进。</p>
+<p>BinderProxy类写在Binder类文件里面：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//BinderProxy.java</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">transact</span><span class="params">(<span class="keyword">int</span> code, Parcel data, Parcel reply, <span class="keyword">int</span> flags)</span></span>&#123;</span><br><span class="line">    <span class="comment">//调用了native方法</span></span><br><span class="line">    <span class="keyword">return</span> transactNative(code, data, reply, flags);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这个native方法在<a href="https://www.androidos.net.cn/android/8.0.0_r4/xref/frameworks/base/core/jni/android_util_Binder.cpp" target="_blank" rel="noopener">android_util_Binder.cpp</a>里注册，</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//android_util_Binder.cpp</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//JNI注册</span></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">const</span> JNINativeMethod gBinderProxyMethods[] = &#123;</span><br><span class="line">    &#123; <span class="string">"transactNative"</span>,</span><br><span class="line">     <span class="string">"(ILandroid/os/Parcel;Landroid/os/Parcel;I)Z"</span>,</span><br><span class="line">     (<span class="keyword">void</span>*)android_os_BinderProxy_transact&#125;,</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">//native方法具体实现</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> jboolean <span class="title">android_os_BinderProxy_transact</span><span class="params">(JNIEnv* env, jobject obj,</span></span></span><br><span class="line"><span class="function"><span class="params">        jint code, jobject dataObj, jobject replyObj, jint flags)</span></span>&#123;</span><br><span class="line">    <span class="comment">//转成native层的Parcel</span></span><br><span class="line">    Parcel* data = parcelForJavaObject(env, dataObj);</span><br><span class="line">    Parcel* reply = parcelForJavaObject(env, replyObj);</span><br><span class="line">    <span class="comment">//拿到native层的句柄BpBinder</span></span><br><span class="line">    IBinder* target = (IBinder*)</span><br><span class="line">        env-&gt;GetLongField(obj, gBinderProxyOffsets.mObject);</span><br><span class="line">    <span class="comment">//调用BpBinder的transact</span></span><br><span class="line">    <span class="keyword">status_t</span> err = target-&gt;transact(code, *data, reply, flags);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>继续跟<a href="https://www.androidos.net.cn/android/8.0.0_r4/xref/frameworks/native/libs/binder/BpBinder.cpp" target="_blank" rel="noopener">BpBinder.cpp</a>，</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//BpBinder.cpp</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">status_t</span> <span class="title">BpBinder::transact</span><span class="params">(...)</span></span>&#123;</span><br><span class="line">    <span class="comment">//交给线程单例处理，驱动会根据mHandle值来找到对应的binder句柄</span></span><br><span class="line">    <span class="keyword">status_t</span> status = IPCThreadState::self()-&gt;transact(</span><br><span class="line">        mHandle, code, data, reply, flags);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>IPCThreadState是一个<strong>线程单例</strong>，负责与binder驱动进行具体的指令通信，跟进<a href="https://www.androidos.net.cn/android/8.0.0_r4/xref/frameworks/native/libs/binder/IPCThreadState.cpp" target="_blank" rel="noopener">IPCThreadState.cpp</a>，</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//IPCThreadState.cpp</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">status_t</span> <span class="title">IPCThreadState::transact</span><span class="params">(...)</span></span>&#123;</span><br><span class="line">    <span class="comment">//将数据写入mOut，见1.1</span></span><br><span class="line">    err = writeTransactionData(BC_TRANSACTION, flags, handle, code, data, <span class="literal">NULL</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">//...先忽略one way异步调用的代码，只看有返回值的同步调用</span></span><br><span class="line">    <span class="comment">//跟binder驱动交互，传入reply接收返回数据，见1.2</span></span><br><span class="line">    err = waitForResponse(reply);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//1.1 将数据写入mOut</span></span><br><span class="line"><span class="function"><span class="keyword">status_t</span> <span class="title">IPCThreadState::writeTransactionData</span><span class="params">(...)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    binder_transaction_data tr;</span><br><span class="line">    <span class="comment">//...打包各种数据（data size、buffer、offsets）</span></span><br><span class="line">    tr.sender_euid = <span class="number">0</span>;</span><br><span class="line">    <span class="comment">//将BC_TRANSACTION指令写入mOut</span></span><br><span class="line">    mOut.writeInt32(cmd);</span><br><span class="line">    <span class="comment">//将打包好的binder_transaction_data写入mOut</span></span><br><span class="line">    mOut.<span class="built_in">write</span>(&amp;tr, <span class="keyword">sizeof</span>(tr));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//1.2 跟binder驱动交互，传入reply接收返回数据</span></span><br><span class="line"><span class="function"><span class="keyword">status_t</span> <span class="title">IPCThreadState::waitForResponse</span><span class="params">(...)</span></span>&#123;</span><br><span class="line">    <span class="comment">//这个循环很重要，客户端就是在这里休眠等待服务端返回结果的</span></span><br><span class="line">    <span class="keyword">while</span> (<span class="number">1</span>) &#123;</span><br><span class="line">        <span class="comment">//跟驱动进行数据交互，往驱动写mOut，从驱动读mIn，见1.3</span></span><br><span class="line">        talkWithDriver();</span><br><span class="line">        <span class="comment">//读取驱动回复的指令</span></span><br><span class="line">        cmd = (<span class="keyword">uint32_t</span>)mIn.readInt32();</span><br><span class="line">        <span class="keyword">switch</span> (cmd) &#123;</span><br><span class="line">            <span class="keyword">case</span> BR_TRANSACTION_COMPLETE:</span><br><span class="line">                <span class="comment">//表示驱动已经收到客户端的transact请求</span></span><br><span class="line">                <span class="comment">//如果是one way异步调用，到这就可以结束了</span></span><br><span class="line">                <span class="keyword">if</span> (!reply &amp;&amp; !acquireResult) <span class="keyword">goto</span> finish;</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            <span class="keyword">case</span> BR_REPLY:</span><br><span class="line">                <span class="comment">//表示客户端收到服务端的返回结果</span></span><br><span class="line">                binder_transaction_data tr;</span><br><span class="line">                <span class="comment">//把服务端的数据读出来，打包进tr</span></span><br><span class="line">                err = mIn.<span class="built_in">read</span>(&amp;tr, <span class="keyword">sizeof</span>(tr));</span><br><span class="line">                <span class="comment">//再把tr的数据透传进reply</span></span><br><span class="line">                reply-&gt;ipcSetDataReference(...);</span><br><span class="line">                <span class="comment">//结束</span></span><br><span class="line">                <span class="keyword">goto</span> finish;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//1.3 跟驱动进行数据交互，往驱动写mOut，从驱动读mIn</span></span><br><span class="line"><span class="function"><span class="keyword">status_t</span> <span class="title">IPCThreadState::talkWithDriver</span><span class="params">(<span class="keyword">bool</span> doReceive)</span></span>&#123;</span><br><span class="line">    binder_write_read bwr;</span><br><span class="line">    <span class="comment">//指定写数据大小和写缓冲区</span></span><br><span class="line">    bwr.write_size = outAvail;</span><br><span class="line">    bwr.write_buffer = (<span class="keyword">uintptr_t</span>)mOut.data();</span><br><span class="line"></span><br><span class="line">    <span class="comment">//指定读数据大小和读缓冲区</span></span><br><span class="line">    <span class="keyword">if</span> (doReceive &amp;&amp; needRead) &#123;</span><br><span class="line">        bwr.read_size = mIn.dataCapacity();</span><br><span class="line">        bwr.read_buffer = (<span class="keyword">uintptr_t</span>)mIn.data();</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        bwr.read_size = <span class="number">0</span>;</span><br><span class="line">        bwr.read_buffer = <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//ioctl的调用进入了binder驱动层的binder_ioctl</span></span><br><span class="line">    ioctl(mProcess-&gt;mDriverFD, BINDER_WRITE_READ, &amp;bwr);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (bwr.write_consumed &gt; <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="comment">//数据已经写入驱动，从mOut移除</span></span><br><span class="line">        <span class="keyword">if</span> (bwr.write_consumed &lt; mOut.dataSize())</span><br><span class="line">            mOut.<span class="built_in">remove</span>(<span class="number">0</span>, bwr.write_consumed);</span><br><span class="line">        <span class="keyword">else</span></span><br><span class="line">            mOut.setDataSize(<span class="number">0</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (bwr.read_consumed &gt; <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="comment">//从驱动读出数据存入mIn</span></span><br><span class="line">        mIn.setDataSize(bwr.read_consumed);</span><br><span class="line">        mIn.setDataPosition(<span class="number">0</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>ioctl的调用进入了<strong>binder驱动层的binder_ioctl</strong>，驱动层的代码先不跟。</p>
+<h3 id="服务端与驱动交互"><a href="#服务端与驱动交互" class="headerlink" title="服务端与驱动交互"></a>服务端与驱动交互</h3><p>从「<a href="https://mp.weixin.qq.com/s/UZjrIVWAiTcRJhnlUNLY3A" target="_blank" rel="noopener">一图摸清Android应用进程的启动</a>」一文可知，服务端创建了一个线程注册进binder驱动，即binder线程，在<a href="https://www.androidos.net.cn/android/8.0.0_r4/xref/frameworks/native/libs/binder/ProcessState.cpp" target="_blank" rel="noopener">ProcessState.cpp</a>，</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//ProcessState.cpp</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">virtual</span> <span class="keyword">bool</span> <span class="title">threadLoop</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;	<span class="comment">//把binder线程注册进binder驱动程序的线程池中</span></span><br><span class="line">    IPCThreadState::self()-&gt;joinThreadPool(mIsMain);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>跟进<a href="https://www.androidos.net.cn/android/8.0.0_r4/xref/frameworks/native/libs/binder/IPCThreadState.cpp" target="_blank" rel="noopener">IPCThreadState.cpp</a>，</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//IPCThreadState.cpp</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">IPCThreadState::joinThreadPool</span><span class="params">(<span class="keyword">bool</span> isMain)</span></span>&#123;</span><br><span class="line">    <span class="comment">//向binder驱动写数据，表示当前线程需要注册进binder驱动</span></span><br><span class="line">    mOut.writeInt32(isMain ? BC_ENTER_LOOPER : BC_REGISTER_LOOPER);</span><br><span class="line">    <span class="keyword">status_t</span> result;</span><br><span class="line">    <span class="keyword">do</span> &#123;</span><br><span class="line">        <span class="comment">//进入死循环，等待指令的到来，见1.1</span></span><br><span class="line">        result = getAndExecuteCommand();</span><br><span class="line">    &#125; <span class="keyword">while</span> (result != -ECONNREFUSED &amp;&amp; result != -EBADF);</span><br><span class="line">    <span class="comment">//向binder驱动写数据（退出循环，线程结束）</span></span><br><span class="line">    mOut.writeInt32(BC_EXIT_LOOPER);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//1.1 等待指令的到来</span></span><br><span class="line"><span class="function"><span class="keyword">status_t</span> <span class="title">IPCThreadState::getAndExecuteCommand</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="comment">//跟驱动进行数据交互，驱动会把指令写进mIn</span></span><br><span class="line">    talkWithDriver();</span><br><span class="line">    <span class="comment">//从mIn读出指令</span></span><br><span class="line">    cmd = mIn.readInt32();</span><br><span class="line">    <span class="comment">//执行指令，见1.2</span></span><br><span class="line">    result = executeCommand(cmd);</span><br><span class="line">    <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//1.2 执行指令</span></span><br><span class="line"><span class="function"><span class="keyword">status_t</span> <span class="title">IPCThreadState::executeCommand</span><span class="params">(<span class="keyword">int32_t</span> cmd)</span></span>&#123;</span><br><span class="line">    <span class="comment">//客户端发请求到驱动，驱动转发到服务端</span></span><br><span class="line">    <span class="keyword">switch</span> ((<span class="keyword">uint32_t</span>)cmd) &#123;</span><br><span class="line">        <span class="keyword">case</span> BR_TRANSACTION:&#123;</span><br><span class="line">            <span class="comment">//服务端收到BR_TRANSACTION指令</span></span><br><span class="line">            binder_transaction_data tr;</span><br><span class="line">            <span class="comment">//读出客户端请求的参数</span></span><br><span class="line">            result = mIn.<span class="built_in">read</span>(&amp;tr, <span class="keyword">sizeof</span>(tr));</span><br><span class="line"></span><br><span class="line">            <span class="comment">//准备数据，向上传给Java层</span></span><br><span class="line">            Parcel <span class="built_in">buffer</span>; Parcel reply;</span><br><span class="line">            <span class="built_in">buffer</span>.ipcSetDataReference(...);</span><br><span class="line"></span><br><span class="line">            <span class="comment">//cookie保存的是binder实体，对应服务端的native层对象就是BBinder</span></span><br><span class="line">            <span class="keyword">reinterpret_cast</span>&lt;BBinder*&gt;(tr.cookie)-&gt;transact(tr.code, <span class="built_in">buffer</span>,</span><br><span class="line">                                                            &amp;reply, tr.flags);</span><br><span class="line">            <span class="comment">//服务端向驱动写返回值，让驱动转发给客户端</span></span><br><span class="line">            sendReply(reply, <span class="number">0</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//1.3 服务端向驱动写返回值，让驱动转发给客户端</span></span><br><span class="line"><span class="function"><span class="keyword">status_t</span> <span class="title">IPCThreadState::sendReply</span><span class="params">(<span class="keyword">const</span> Parcel&amp; reply, <span class="keyword">uint32_t</span> flags)</span></span>&#123;</span><br><span class="line">    err = writeTransactionData(BC_REPLY, flags, <span class="number">-1</span>, <span class="number">0</span>, reply, &amp;statusBuffer);</span><br><span class="line">    <span class="comment">//服务端返回结果给客户端就行，不用等待客户端，所以传NULL</span></span><br><span class="line">    <span class="keyword">return</span> waitForResponse(<span class="literal">NULL</span>, <span class="literal">NULL</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后看下BBinder的transact是怎么向上传递到Java层的，在<a href="https://www.androidos.net.cn/android/8.0.0_r4/xref/frameworks/native/libs/binder/Binder.cpp" target="_blank" rel="noopener">Binder.cpp</a>中，</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//Binder.cpp</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">status_t</span> <span class="title">BBinder::transact</span><span class="params">(<span class="keyword">uint32_t</span> code, <span class="keyword">const</span> Parcel&amp; data, </span></span></span><br><span class="line"><span class="function"><span class="params">                           Parcel* reply, <span class="keyword">uint32_t</span> flags)</span></span>&#123;</span><br><span class="line">    <span class="keyword">switch</span> (code) &#123;</span><br><span class="line">            <span class="comment">//ping指令用来判断连通性，即binder句柄是否还活着</span></span><br><span class="line">        <span class="keyword">case</span> PING_TRANSACTION:</span><br><span class="line">            reply-&gt;writeInt32(pingBinder());</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">default</span>:</span><br><span class="line">            <span class="comment">//看这，通过JNI调用到Java层的execTransact，见1.1</span></span><br><span class="line">            err = onTransact(code, data, reply, flags);</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> err;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//android_util_Binder.cpp</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//1.1 通过JNI调用到Java层的execTransact</span></span><br><span class="line"><span class="function"><span class="keyword">virtual</span> <span class="keyword">status_t</span> <span class="title">onTransact</span><span class="params">(...)</span></span>&#123;</span><br><span class="line">    JNIEnv* env = javavm_to_jnienv(mVM);</span><br><span class="line">    jboolean res = env-&gt;CallBooleanMethod(mObject, gBinderOffsets.mExecTransact, ...);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>回到Java层，execTransact如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//android.os.Binder.java</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">boolean</span> <span class="title">execTransact</span><span class="params">(...)</span> </span>&#123;</span><br><span class="line">    res = onTransact(code, data, reply, flags);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>至此就回调到了示例代码中服务端MyBinder的onTransact了，我们在示例中处理请求参数data和返回值reply，最后由native层的sendReply(reply, 0)真正向驱动写返回值，让驱动转发给客户端。</p>
+<p>将调用代码和流程图结合起来：</p>
+<p><img src="https://gitee.com/imholiday/u-pic-image/raw/master/uPic/2020-10-31-15-50-53-binder5.png" alt=""></p>
+<p>然后是指令交互图（非one way模式）：</p>
+<p><img src="https://gitee.com/imholiday/u-pic-image/raw/master/uPic/2020-10-31-16-06-58-binder6.png" alt=""></p>
+<p>binder同步调用等到服务端的<code>BR_REPLY</code>指令后就真正结束，服务端则继续循环，等待下一次请求。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>本文主要介绍了Binder的背景和调用流程，将留下3个疑问继续探讨。</p>
+<ol>
+<li>binder句柄是怎么传输和管理的（binder驱动和ServiceManager进程）</li>
+<li>binder句柄的<code>远程转本地</code></li>
+<li>one way异步模式和他的串行调用（async_todo）、同步模式的并行调用</li>
+</ol>
+<p><strong>系列文章：</strong></p>
+<ul>
+<li><a href="https://mp.weixin.qq.com/s/xsoc9omtu-gGAFG1pCsCsQ" target="_blank" rel="noopener">图解 | Android系统的启动</a></li>
+<li><a href="https://mp.weixin.qq.com/s/0xwYJeLKkUN0HnTpW0HtNw" target="_blank" rel="noopener">图解 | 一图摸清Android系统服务</a></li>
+<li><a href="https://mp.weixin.qq.com/s/UZjrIVWAiTcRJhnlUNLY3A" target="_blank" rel="noopener">图解 | 一图摸清Android应用进程的启动</a></li>
+</ul>
+<h2 id="细节补充"><a href="#细节补充" class="headerlink" title="细节补充"></a>细节补充</h2><h3 id="Binder为什么高效"><a href="#Binder为什么高效" class="headerlink" title="Binder为什么高效"></a>Binder为什么高效</h3><p>Linux用户空间是无法直接读写磁盘的，系统所有的<strong>资源管理</strong>（读写磁盘文件、分配回收内存、从网络接口读写数据）都是<strong>在内核空间完成</strong>的，用户空间需要通过系统调用让内核空间完成这些功能。</p>
+<p>传统IPC传输数据：发送进程需要<code>copy_from_user</code>从用户到内核，接收进程再<code>copy_to_uer</code>从内核到用户，两次拷贝。</p>
+<p>而Binder传输数据：用mmap将binder<strong>内核空间</strong>的虚拟内存和<strong>用户空间</strong>的虚拟内存<strong>映射到同一块物理内存</strong>。<code>copy_from_user</code>将数据从<strong>发送进程的用户空间</strong>拷贝到<strong>接收进程的内核空间</strong>（一次拷贝），接收进程通过映射关系能直接<strong>在用户空间读取内核空间的数据</strong>。</p>
+<p><img src="https://gitee.com/imholiday/u-pic-image/raw/master/uPic/2020-11-01-15-40-12-binder7.jpg" alt=""></p>
+<p>（图片来源：「<a href="https://zhuanlan.zhihu.com/p/35519585" target="_blank" rel="noopener">写给Android应用工程师的Binder原理剖析</a>」）</p>
+<h3 id="Binder为什么不用shm"><a href="#Binder为什么不用shm" class="headerlink" title="Binder为什么不用shm"></a>Binder为什么不用shm</h3><p>shm通常需要结合其他跨进程方式如<strong>信号量</strong>来同步信息，使用没有mmap方便。</p>
+<h2 id="提问"><a href="#提问" class="headerlink" title="提问"></a>提问</h2><ul>
+<li>上期提问： SurfaceFlinger进程为什么不是通过Zygote进程的fork创建，而是由init进程创建？</li>
+</ul>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li>书籍 - Android系统源代码情景分析</li>
+<li><a href="https://www.jianshu.com/p/42cf0c14f081" target="_blank" rel="noopener">博客 - 王小二的Android站</a></li>
+<li><a href="https://zhuanlan.zhihu.com/p/35519585" target="_blank" rel="noopener">博客 - 写给Android应用工程师的Binder原理剖析</a></li>
+<li><a href="https://my.oschina.net/youranhongcha/blog/152963" target="_blank" rel="noopener">博客 - Binder传输机制篇_中</a></li>
+<li><a href="https://zhuanlan.zhihu.com/p/149277008" target="_blank" rel="noopener">博客 - 共享内存和文件内存映射的区别</a></li>
+</ul>
+<hr>
+<p><a href="https://tva1.sinaimg.cn/large/007S8ZIlly1ghzod486q7j30b40b4wen.jpg" target="_blank" rel="noopener">更多性感文章，关注原创技术公众号：哈利迪ei</a></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/%E5%9B%BE%E8%A7%A3/" rel="tag"># 图解</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/10/24/%E5%9B%BE%E8%A7%A3-%E4%B8%80%E5%9B%BE%E6%91%B8%E6%B8%85Android%E5%BA%94%E7%94%A8%E8%BF%9B%E7%A8%8B%E7%9A%84%E5%90%AF%E5%8A%A8/" rel="next" title="图解 | 一图摸清Android应用进程的启动">
+                <i class="fa fa-chevron-left"></i> 图解 | 一图摸清Android应用进程的启动
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">哈利迪</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+
+              <div class="site-state-item site-state-posts">
+                <a href="/archives">
+                  <span class="site-state-item-count">35</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+
+
+
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">3</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#背景"><span class="nav-number">1.</span> <span class="nav-text">背景</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#为什么要多进程"><span class="nav-number">1.1.</span> <span class="nav-text">为什么要多进程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#为什么要Binder"><span class="nav-number">1.2.</span> <span class="nav-text">为什么要Binder</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Binder简单架构"><span class="nav-number">1.3.</span> <span class="nav-text">Binder简单架构</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#简单示例"><span class="nav-number">2.</span> <span class="nav-text">简单示例</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#源码分析"><span class="nav-number">3.</span> <span class="nav-text">源码分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#客户端与驱动交互"><span class="nav-number">3.1.</span> <span class="nav-text">客户端与驱动交互</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#服务端与驱动交互"><span class="nav-number">3.2.</span> <span class="nav-text">服务端与驱动交互</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#细节补充"><span class="nav-number">5.</span> <span class="nav-text">细节补充</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Binder为什么高效"><span class="nav-number">5.1.</span> <span class="nav-text">Binder为什么高效</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Binder为什么不用shm"><span class="nav-number">5.2.</span> <span class="nav-text">Binder为什么不用shm</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#提问"><span class="nav-number">6.</span> <span class="nav-text">提问</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料"><span class="nav-number">7.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">哈利迪</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
