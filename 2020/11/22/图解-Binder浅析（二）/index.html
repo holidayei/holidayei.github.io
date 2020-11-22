@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="图解," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="本文主要分析ServiceManager系统服务管理进程对binder的管理流程。 大纲：  揭开Binder面纱 Binder的管理 1 打开binder驱动 2 成为系统唯一的上下文 3 进入binder循环 4 系统服务的注册和获取   总结 参考资料   本文约3.7k字，阅读大约15分钟。 Android源码基于8.0。  揭开Binder面纱Binder跟键盘、显示器一样属于一种外设（">
+<meta property="og:type" content="article">
+<meta property="og:title" content="图解 | Binder浅析（二）">
+<meta property="og:url" content="https://github.com/holidayei/2020/11/22/%E5%9B%BE%E8%A7%A3-Binder%E6%B5%85%E6%9E%90%EF%BC%88%E4%BA%8C%EF%BC%89/index.html">
+<meta property="og:site_name" content="Holiday">
+<meta property="og:description" content="本文主要分析ServiceManager系统服务管理进程对binder的管理流程。 大纲：  揭开Binder面纱 Binder的管理 1 打开binder驱动 2 成为系统唯一的上下文 3 进入binder循环 4 系统服务的注册和获取   总结 参考资料   本文约3.7k字，阅读大约15分钟。 Android源码基于8.0。  揭开Binder面纱Binder跟键盘、显示器一样属于一种外设（">
+<meta property="og:image" content="https://gitee.com/imholiday/u-pic-image/raw/master/uPic/2020-11-21-16-52-27-binder%E6%B5%85%E6%9E%902-3.png">
+<meta property="og:image" content="https://gitee.com/imholiday/u-pic-image/raw/master/uPic/2020-11-21-15-45-45-binder%E6%B5%85%E6%9E%902-1.png">
+<meta property="og:image" content="https://gitee.com/imholiday/u-pic-image/raw/master/uPic/2020-11-21-16-02-50-binder%E6%B5%85%E6%9E%902-2.png">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gjtxvoyo79j315a0qcaee.jpg">
+<meta property="og:image" content="https://gitee.com/imholiday/u-pic-image/raw/master/uPic/2020-11-22-14-12-47-binder%E6%B5%85%E6%9E%902-5.png">
+<meta property="og:image" content="https://gitee.com/imholiday/u-pic-image/raw/master/uPic/2020-11-21-23-56-12-binder%E6%B5%85%E6%9E%902-4.png">
+<meta property="og:image" content="https://gitee.com/imholiday/u-pic-image/raw/master/uPic/2020-11-22-15-00-08-binder%E6%B5%85%E6%9E%902-6.png">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlly1gjtxvoyo79j315a0qcaee.jpg">
+<meta property="article:published_time" content="2020-11-22T08:34:44.000Z">
+<meta property="article:modified_time" content="2020-11-22T08:37:19.131Z">
+<meta property="article:author" content="哈利迪">
+<meta property="article:tag" content="图解">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://gitee.com/imholiday/u-pic-image/raw/master/uPic/2020-11-21-16-52-27-binder%E6%B5%85%E6%9E%902-3.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://github.com/holidayei/2020/11/22/图解-Binder浅析（二）/"/>
+
+
+
+
+
+  <title>图解 | Binder浅析（二） | Holiday</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Holiday</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://github.com/holidayei/2020/11/22/%E5%9B%BE%E8%A7%A3-Binder%E6%B5%85%E6%9E%90%EF%BC%88%E4%BA%8C%EF%BC%89/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="哈利迪">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Holiday">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">图解 | Binder浅析（二）</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-11-22T16:34:44+08:00">
+                2020-11-22
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>本文主要分析<code>ServiceManager</code>系统服务管理进程对binder的管理流程。</p>
+<p><strong>大纲：</strong></p>
+<ul>
+<li>揭开Binder面纱</li>
+<li>Binder的管理<ul>
+<li>1 打开binder驱动</li>
+<li>2 成为系统唯一的上下文</li>
+<li>3 进入binder循环</li>
+<li>4 系统服务的注册和获取</li>
+</ul>
+</li>
+<li>总结</li>
+<li>参考资料</li>
+</ul>
+<blockquote>
+<p>本文约3.7k字，阅读大约15分钟。</p>
+<p><a href="https://www.androidos.net.cn/android/8.0.0_r4/xref" target="_blank" rel="noopener">Android源码</a>基于8.0。</p>
+</blockquote>
+<h2 id="揭开Binder面纱"><a href="#揭开Binder面纱" class="headerlink" title="揭开Binder面纱"></a>揭开Binder面纱</h2><p>Binder跟键盘、显示器一样属于一种外设（没有实体的外设）。由于外设种类繁多，操作系统如Linux抽象出<strong>文件视图</strong>来方便用户使用外设。即对用户来说，通过<strong>读写外设文件</strong>，让<strong>操作系统将指令发送给外设控制器</strong>，来实现对外设的操作。</p>
+<p><img src="https://gitee.com/imholiday/u-pic-image/raw/master/uPic/2020-11-21-16-52-27-binder%E6%B5%85%E6%9E%902-3.png" alt=""></p>
+<p>在Linux中，各种外设文件放在<code>/dev</code>目录下：</p>
+<p><img src="https://gitee.com/imholiday/u-pic-image/raw/master/uPic/2020-11-21-15-45-45-binder%E6%B5%85%E6%9E%902-1.png" alt=""></p>
+<p>不过这些文件并不是像Windows上的那些外设驱动程序，而是提供给用户去访问外设的一个端口（就跟文件访问一样），如：</p>
+<ul>
+<li>/dev/console：系统控制台</li>
+<li>/dev/mem：物理内存的全镜像。可以用来直接存取物理内存。</li>
+<li>/dev/kmem：内核看到的虚拟内存的全镜像。可以用来访问内核中的内容。</li>
+<li>/dev/tty0：虚拟终端</li>
+<li>…</li>
+</ul>
+<p>Linux抽象出<strong>文件视图</strong>，为用户提供统一接口，一段简单的操作外设的程序如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//打开 /dev 下的外设文件</span></span><br><span class="line"><span class="keyword">int</span> fd = <span class="built_in">open</span>(“/dev/xxx”);</span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">10</span>; i++) &#123;</span><br><span class="line">    <span class="comment">//进行读写操作</span></span><br><span class="line">    <span class="built_in">write</span>(fd,i,<span class="keyword">sizeof</span>(<span class="keyword">int</span>));</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//关闭文件</span></span><br><span class="line"><span class="built_in">close</span>(fd);</span><br></pre></td></tr></table></figure>
+
+<p>用户读写外设文件，Linux会<strong>通过外设文件找到外设控制器的地址、内容格式</strong>等信息，向他<strong>发送合适的指令</strong>来操作外设。</p>
+<p>现在我们通过<code>adb shell</code>进入Android设备，看下他的<code>/dev</code>目录长啥样：</p>
+<p><img src="https://gitee.com/imholiday/u-pic-image/raw/master/uPic/2020-11-21-16-02-50-binder%E6%B5%85%E6%9E%902-2.png" alt=""></p>
+<p>可以看到有binder，标黄部分的3个分别是<code>binder</code>、<code>hwbinder</code>、<code>vndbinder</code>，我们只关注<code>binder</code>就行了。</p>
+<p>从「<a href="https://mp.weixin.qq.com/s/UZjrIVWAiTcRJhnlUNLY3A" target="_blank" rel="noopener">一图摸清Android应用进程的启动</a>」一文可知，在应用程序启动binder线程池时，<a href="https://www.androidos.net.cn/android/8.0.0_r4/xref/frameworks/native/libs/binder/ProcessState.cpp" target="_blank" rel="noopener">ProcessState.cpp</a>有这么一段代码，</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//ProcessState.cpp</span></span><br><span class="line"></span><br><span class="line"><span class="function">sp&lt;ProcessState&gt; <span class="title">ProcessState::self</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="comment">//传入 binder 外设文件路径</span></span><br><span class="line">    gProcess = <span class="keyword">new</span> ProcessState(<span class="string">"/dev/binder"</span>);</span><br><span class="line">    <span class="keyword">return</span> gProcess;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//ProcessState构造函数</span></span><br><span class="line">ProcessState::ProcessState(<span class="keyword">const</span> <span class="keyword">char</span> *driver)</span><br><span class="line">    <span class="comment">//路径赋给 mDriverName</span></span><br><span class="line">    : mDriverName(String8(driver))</span><br><span class="line">        <span class="comment">//1. 打开 binder 驱动</span></span><br><span class="line">        , mDriverFD(open_driver(driver))</span><br><span class="line">        ,<span class="comment">//...</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">//2. 映射内存</span></span><br><span class="line">    mmap(<span class="number">0</span>, BINDER_VM_SIZE, PROT_READ, MAP_PRIVATE | MAP_NORESERVE, mDriverFD, <span class="number">0</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>我们看下打开binder驱动的<code>open_driver</code>函数，</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//ProcessState.cpp</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">open_driver</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *driver)</span></span>&#123;</span><br><span class="line">    <span class="comment">//打开外设文件 /dev/binder</span></span><br><span class="line">    <span class="keyword">int</span> fd = <span class="built_in">open</span>(driver, O_RDWR | O_CLOEXEC);</span><br><span class="line">    <span class="keyword">int</span> vers = <span class="number">0</span>;</span><br><span class="line">    <span class="comment">//获取 binder 版本进行检查</span></span><br><span class="line">    <span class="keyword">status_t</span> result = ioctl(fd, BINDER_VERSION, &amp;vers);</span><br><span class="line">    <span class="keyword">size_t</span> maxThreads = DEFAULT_MAX_BINDER_THREADS;</span><br><span class="line">    <span class="comment">//设置 binder 最大线程数为 15</span></span><br><span class="line">    result = ioctl(fd, BINDER_SET_MAX_THREADS, &amp;maxThreads);</span><br><span class="line">    <span class="comment">//返回 int 类型的 fd 给 mDriverFD</span></span><br><span class="line">    <span class="keyword">return</span> fd;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>看起来是不是跟Linux操作外设的那段程序很像，只不过这里的读写操作由<code>write</code>换成了<code>ioctl</code>，</p>
+<blockquote>
+<p>在计算机中，<strong>ioctl</strong>(input/output control)是一个专用于设备输入输出操作的系统调用,该调用传入一个跟设备有关的请求码，系统调用的功能完全取决于请求码。举个例子，CD-ROM驱动程序可以弹出光驱，它就提供了一个对应的<strong>Ioctl</strong>请求码。设备无关的请求码则提供了内核调用权限。ioctl这名字第一次出现在Unix第七版中，他在很多类<a href="https://baike.baidu.com/item/unix" target="_blank" rel="noopener">unix</a>系统（比如<a href="https://baike.baidu.com/item/Linux" target="_blank" rel="noopener">Linux</a>、Mac OSX等）都有提供，不过不同系统的请求码对应的设备有所不同。</p>
+<p>– 引用自<a href="https://baike.baidu.com/item/ioctl/6392403" target="_blank" rel="noopener">百科 ioctl</a></p>
+</blockquote>
+<p>可见<code>ioctl</code>是一个可以<strong>控制设备I/O通道的系统调用</strong>，通过它用户空间可以跟设备驱动沟通。</p>
+<p>至于为什么要有<code>ioctl</code>，主要是为<strong>非标准设备</strong>考虑的（如binder就是一种非标准外设），详见<a href="https://baike.baidu.com/item/ioctl/6392403#2" target="_blank" rel="noopener">百科 ioctl 背景</a>。</p>
+<p><code>ioctl</code>函数如下：</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">int ioctl(int fd, ind cmd, …)；</span><br></pre></td></tr></table></figure>
+
+<p>第一个参数<code>fd</code>是文件描述符，如binder外设文件；</p>
+<p>第二个参数<code>cmd</code>则是控制命令，如指令<code>BINDER_SET_MAX_THREADS</code>是“设置线程数”，最后的省略号则是各指令所需的参数，如<code>maxThreads</code>表示最大线程数为 15。</p>
+<p>指令<code>BINDER_SET_MAX_THREADS</code>的定义如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> BINDER_SET_MAX_THREADS _IOW(<span class="meta-string">'b'</span>, 5, __u32)</span></span><br></pre></td></tr></table></figure>
+
+<p><code>_IOW</code>是一个宏，Linux内核提供了一些宏来方便用户定义指令（传入各种参数进行包装）：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// nr为序号，datatype 为数据类型,如 int</span></span><br><span class="line">_IO(type, nr ) <span class="comment">//没有参数的命令</span></span><br><span class="line">_IOR(type, nr, datatype) <span class="comment">//从驱动中读数据</span></span><br><span class="line">_IOW(type, nr, datatype) <span class="comment">//写数据到驱动</span></span><br><span class="line">_IOWR(type,nr, datatype) <span class="comment">//双向传送</span></span><br></pre></td></tr></table></figure>
+
+<p>名字很好理解，就是 io read write的缩写。</p>
+<p>对binder的了解暂且到这，只需知道他是一个<strong>外设，以文件形式通过<code>ioctl</code>来操作</strong>就行了。</p>
+<h2 id="Binder的管理"><a href="#Binder的管理" class="headerlink" title="Binder的管理"></a>Binder的管理</h2><p>从「<a href="https://mp.weixin.qq.com/s/0xwYJeLKkUN0HnTpW0HtNw" target="_blank" rel="noopener">一图摸清Android系统服务</a>」一文可知，init进程会启动运行在独立进程的<code>ServiceManager</code>服务来统一管理系统服务的注册和获取。</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gjtxvoyo79j315a0qcaee.jpg" alt=""></p>
+<p>在<code>ServiceManager</code>的入口函数即<a href="https://www.androidos.net.cn/android/8.0.0_r4/xref/frameworks/native/cmds/servicemanager/service_manager.c" target="_blank" rel="noopener">service_manager.c</a>的main函数中，</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//frameworks/native/cmds/servicemanager/service_manager.c</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span>** argv)</span></span>&#123;</span><br><span class="line">    <span class="keyword">char</span> *driver = <span class="string">"/dev/binder"</span>;</span><br><span class="line">    <span class="comment">//1. 打开 binder 驱动</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">binder_state</span> *<span class="title">bs</span> = <span class="title">binder_open</span>(<span class="title">driver</span>, 128*1024);</span></span><br><span class="line">    <span class="comment">//2. 让自己成为整个系统唯一的上下文管理器，</span></span><br><span class="line">    <span class="comment">//   这样其他进程就能找到 ServiceManager 来注册服务了</span></span><br><span class="line">    binder_become_context_manager(bs);</span><br><span class="line">    <span class="comment">//3. 进入binder循环，等待系统服务的注册和查找请求</span></span><br><span class="line">    binder_loop(bs, svcmgr_handler);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>下面分析这3个步骤。</p>
+<h3 id="1-打开binder驱动"><a href="#1-打开binder驱动" class="headerlink" title="1 打开binder驱动"></a>1 打开binder驱动</h3><p>128 * 1024即128kb是mapsize，表示把binder驱动文件的<code>128kb</code>映射到<strong>内存空间</strong>，而在「<a href="https://mp.weixin.qq.com/s/UZjrIVWAiTcRJhnlUNLY3A" target="_blank" rel="noopener">一图摸清Android应用进程的启动</a>」一文可知应用进程使用的mapsize大小为<code>BINDER_VM_SIZE</code>即<code>1MB-8kb</code>，可见两者的大小是不同的，</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//ProcessState.cpp</span></span><br><span class="line"><span class="comment">//一次Binder通信最大可以传输的大小是 1MB-4KB*2</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> BINDER_VM_SIZE ((1 * 1024 * 1024) - sysconf(_SC_PAGE_SIZE) * 2)</span></span><br><span class="line"><span class="comment">//映射内存</span></span><br><span class="line">mmap(..., BINDER_VM_SIZE, ...);</span><br></pre></td></tr></table></figure>
+
+<p>回到<code>ServiceManager</code>，看binder_open()的内部实现<a href="https://www.androidos.net.cn/android/8.0.0_r4/xref/frameworks/native/cmds/servicemanager/binder.c" target="_blank" rel="noopener">binder.c</a>：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//frameworks/native/cmds/servicemanager/binder.c</span></span><br><span class="line"></span><br><span class="line"><span class="function">struct binder_state *<span class="title">binder_open</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span>* driver, <span class="keyword">size_t</span> mapsize)</span></span>&#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">binder_state</span> *<span class="title">bs</span>;</span></span><br><span class="line">    <span class="comment">//分配空间</span></span><br><span class="line">    bs = <span class="built_in">malloc</span>(<span class="keyword">sizeof</span>(*bs));</span><br><span class="line">    <span class="comment">//打开 binder 驱动，得到int类型的文件描述符 fd</span></span><br><span class="line">    bs-&gt;fd = <span class="built_in">open</span>(driver, O_RDWR | O_CLOEXEC);</span><br><span class="line">    <span class="comment">//记录传入的 128kb</span></span><br><span class="line">    bs-&gt;mapsize = mapsize;</span><br><span class="line">    <span class="comment">//映射内存，记录内存映射区的指针</span></span><br><span class="line">    bs-&gt;mapped = mmap(<span class="literal">NULL</span>, mapsize, PROT_READ, MAP_PRIVATE, bs-&gt;fd, <span class="number">0</span>);</span><br><span class="line">    <span class="keyword">return</span> bs;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>mmap可以将一个文件或者其它对象映射进内存，函数原型：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span>* <span class="title">mmap</span><span class="params">(<span class="keyword">void</span>* start,<span class="keyword">size_t</span> length,<span class="keyword">int</span> prot,<span class="keyword">int</span> flags,<span class="keyword">int</span> fd,<span class="keyword">off_t</span> offset)</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p>各参数如下：</p>
+<ul>
+<li>start：映射区的开始地址，传 NULL 表示由系统决定映射区的起始地址</li>
+<li>length：映射区的长度，传 128kb</li>
+<li>prot：期望的内存保护标志，传 PROT_READ 只读</li>
+<li>flags：指定映射对象的类型，映射选项和映射页是否可以共享。传 MAP_PRIVATE 建立一个写入时拷贝的私有映射，内存区域的写入不会影响到原文件</li>
+<li>fd：有效的文件描述符，一般是由open()函数返回</li>
+<li>offset：被映射对象内容的起点，传 0</li>
+<li>return：成功执行时，mmap()返回被映射区的指针</li>
+</ul>
+<p>mmap会根据入参将binder驱动文件的一部分映射到<strong>内存空间</strong>，然后返回该内存空间的指针。</p>
+<p>最后binder_open()返回的bs结构体如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//frameworks/native/cmds/servicemanager/binder.c</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">binder_state</span>&#123;</span></span><br><span class="line">    <span class="comment">// binder 驱动文件描述符</span></span><br><span class="line">    <span class="keyword">int</span> fd;</span><br><span class="line">    <span class="comment">//由 mmap 得到的内存映射区的指针</span></span><br><span class="line">    <span class="keyword">void</span> *mapped;</span><br><span class="line">    <span class="comment">// 128kb</span></span><br><span class="line">    <span class="keyword">size_t</span> mapsize;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-成为系统唯一的上下文"><a href="#2-成为系统唯一的上下文" class="headerlink" title="2 成为系统唯一的上下文"></a>2 成为系统唯一的上下文</h3><p><code>ServiceManager</code>让自己成为整个系统唯一的上下文管理器，这样其他进程就能找到<code>ServiceManager</code>来注册服务了，</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//frameworks/native/cmds/servicemanager/binder.c</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">binder_become_context_manager</span><span class="params">(struct binder_state *bs)</span></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> ioctl(bs-&gt;fd, BINDER_SET_CONTEXT_MGR, <span class="number">0</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>可见就是前边提到的<code>ioctl</code>调用，向binder驱动发送一个指令“我<code>ServiceManager</code>已成为全局上下文管理器”。</p>
+<p>binder驱动层代码暂不跟进，我们只需知道：</p>
+<blockquote>
+<p>一般情况下，应用层的每个binder实体都会在binder驱动层对应一个binder_node节点，然而<code>ServiceManager</code>的binder_context_mgr_node比较特殊，它没有对应的应用层binder实体。在整个系统里，它是如此特殊，以至于系统规定，任何应用都必须使用句柄<code>0</code>来跨进程地访问它。</p>
+<p>– 引用自 <a href="https://my.oschina.net/youranhongcha/blog/149578" target="_blank" rel="noopener">博客 - 红茶一杯话Binder</a></p>
+</blockquote>
+<h3 id="3-进入binder循环"><a href="#3-进入binder循环" class="headerlink" title="3 进入binder循环"></a>3 进入binder循环</h3><p>进入binder循环，等待系统服务的注册和查找请求，</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//frameworks/native/cmds/servicemanager/binder.c</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">binder_loop</span><span class="params">(struct binder_state *bs, binder_handler func)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">int</span> res;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">binder_write_read</span> <span class="title">bwr</span>;</span></span><br><span class="line">    <span class="comment">//readbuf 用于跟 binder 驱动互传数据</span></span><br><span class="line">    <span class="keyword">uint32_t</span> readbuf[<span class="number">32</span>];</span><br><span class="line">    bwr.write_size = <span class="number">0</span>;</span><br><span class="line">    bwr.write_consumed = <span class="number">0</span>;</span><br><span class="line">    bwr.write_buffer = <span class="number">0</span>;</span><br><span class="line">	<span class="comment">//指令：binder 开始循环</span></span><br><span class="line">    readbuf[<span class="number">0</span>] = BC_ENTER_LOOPER;</span><br><span class="line">    <span class="comment">//向 binder 发送该指令</span></span><br><span class="line">    <span class="comment">//内部会执行 ioctl(bs-&gt;fd, BINDER_WRITE_READ, &amp;bwr);</span></span><br><span class="line">    binder_write(bs, readbuf, <span class="keyword">sizeof</span>(<span class="keyword">uint32_t</span>));</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (;;) &#123; <span class="comment">//进入循环</span></span><br><span class="line">        bwr.read_size = <span class="keyword">sizeof</span>(readbuf);</span><br><span class="line">        bwr.read_consumed = <span class="number">0</span>;</span><br><span class="line">        bwr.read_buffer = (<span class="keyword">uintptr_t</span>) readbuf;</span><br><span class="line">		<span class="comment">//向 binder 发送 读写指令</span></span><br><span class="line">        res = ioctl(bs-&gt;fd, BINDER_WRITE_READ, &amp;bwr);</span><br><span class="line">        <span class="comment">//解析从 binder 读来的数据，交给传入的函数 svcmgr_handler 处理</span></span><br><span class="line">        res = binder_parse(bs, <span class="number">0</span>, (<span class="keyword">uintptr_t</span>) readbuf, bwr.read_consumed, func);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>其中<code>binder_parse</code>解析逻辑如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//frameworks/native/cmds/servicemanager/binder.c</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">binder_parse</span><span class="params">(struct binder_state *bs, struct binder_io *bio,</span></span></span><br><span class="line"><span class="function"><span class="params">                 <span class="keyword">uintptr_t</span> ptr, <span class="keyword">size_t</span> <span class="built_in">size</span>, binder_handler func)</span></span>&#123;</span><br><span class="line">    <span class="keyword">int</span> r = <span class="number">1</span>;</span><br><span class="line">    <span class="comment">//计算能读完最后一条指令的偏移</span></span><br><span class="line">    <span class="keyword">uintptr_t</span> <span class="built_in">end</span> = ptr + (<span class="keyword">uintptr_t</span>) <span class="built_in">size</span>;</span><br><span class="line">    <span class="keyword">while</span> (ptr &lt; <span class="built_in">end</span>) &#123;</span><br><span class="line">        <span class="comment">//不断从 readbuf 读取 binder 回传的指令</span></span><br><span class="line">        <span class="keyword">uint32_t</span> cmd = *(<span class="keyword">uint32_t</span> *) ptr;</span><br><span class="line">        <span class="comment">//每读完一条，进行偏移</span></span><br><span class="line">        ptr += <span class="keyword">sizeof</span>(<span class="keyword">uint32_t</span>);</span><br><span class="line">        <span class="keyword">switch</span>(cmd) &#123; <span class="comment">//处理各种指令</span></span><br><span class="line">            <span class="keyword">case</span> BR_TRANSACTION_COMPLETE:</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            <span class="keyword">case</span> BR_TRANSACTION: </span><br><span class="line">                <span class="comment">//转交给传入的 svcmgr_handler 函数处理</span></span><br><span class="line">                res = func(bs, txn, &amp;msg, &amp;reply);</span><br><span class="line">                <span class="comment">//...</span></span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            <span class="keyword">case</span> BR_REPLY: </span><br><span class="line">                <span class="comment">//...</span></span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">                <span class="comment">//...</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> r;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后看到传入的处理函数<code>svcmgr_handler</code>，</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//frameworks/native/cmds/servicemanager/service_manager.c</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">svcmgr_handler</span><span class="params">(struct binder_state *bs,</span></span></span><br><span class="line"><span class="function"><span class="params">                   struct binder_transaction_data *txn,</span></span></span><br><span class="line"><span class="function"><span class="params">                   struct binder_io *msg,</span></span></span><br><span class="line"><span class="function"><span class="params">                   struct binder_io *reply)</span></span>&#123;</span><br><span class="line">    <span class="comment">//...省略数据包装和解析的逻辑</span></span><br><span class="line">    <span class="keyword">switch</span>(txn-&gt;code) &#123;</span><br><span class="line">        <span class="keyword">case</span> SVC_MGR_GET_SERVICE:</span><br><span class="line">        <span class="keyword">case</span> SVC_MGR_CHECK_SERVICE:</span><br><span class="line">            <span class="comment">//查找系统服务</span></span><br><span class="line">            handle = do_find_service(...);</span><br><span class="line">            bio_put_ref(reply, handle);</span><br><span class="line">        <span class="keyword">case</span> SVC_MGR_ADD_SERVICE:</span><br><span class="line">            <span class="comment">//添加系统服务</span></span><br><span class="line">            do_add_service(...);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>svcmgr_handler</code>函数会根据不同的语义码code来执行相应逻辑，如查找系统服务的<code>do_find_service</code>、添加系统服务的<code>do_add_service</code>。</p>
+<p>至此，可以看出<code>ServiceManager</code>的binder启动流程：</p>
+<p><img src="https://gitee.com/imholiday/u-pic-image/raw/master/uPic/2020-11-22-14-12-47-binder%E6%B5%85%E6%9E%902-5.png" alt=""></p>
+<h3 id="4-系统服务的注册和获取"><a href="#4-系统服务的注册和获取" class="headerlink" title="4 系统服务的注册和获取"></a>4 系统服务的注册和获取</h3><p>下面简要分析一下系统服务的注册和获取，在「<a href="https://mp.weixin.qq.com/s/0xwYJeLKkUN0HnTpW0HtNw" target="_blank" rel="noopener">一图摸清Android系统服务</a>」一文已对上层逻辑进行介绍，这里直接看<code>do_add_service</code>和<code>do_find_service</code>两个方法。</p>
+<p>1.添加系统服务<code>do_add_service</code>。</p>
+<p><strong>struct</strong> svcinfo *svclist 以链表的形式记录了所有的系统服务，其结构体如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//frameworks/native/cmds/servicemanager/service_manager.c</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">svcinfo</span>&#123;</span></span><br><span class="line">    <span class="comment">//下一个服务</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">svcinfo</span> *<span class="title">next</span>;</span></span><br><span class="line">    <span class="comment">//服务的 binder 句柄值</span></span><br><span class="line">    <span class="keyword">uint32_t</span> handle;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">binder_death</span> <span class="title">death</span>;</span></span><br><span class="line">    <span class="keyword">int</span> allow_isolated;</span><br><span class="line">    <span class="keyword">size_t</span> len;</span><br><span class="line">    <span class="comment">//服务注册时取的名字</span></span><br><span class="line">    <span class="keyword">uint16_t</span> name[<span class="number">0</span>];</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>然后看到<code>do_add_service</code>，</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//frameworks/native/cmds/servicemanager/service_manager.c</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">svcinfo</span> *<span class="title">svclist</span>;</span> <span class="comment">//链表</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">do_add_service</span><span class="params">(struct binder_state *bs,</span></span></span><br><span class="line"><span class="function"><span class="params">                   <span class="keyword">const</span> <span class="keyword">uint16_t</span> *s, <span class="keyword">size_t</span> len,</span></span></span><br><span class="line"><span class="function"><span class="params">                   <span class="keyword">uint32_t</span> handle, <span class="keyword">uid_t</span> uid, <span class="keyword">int</span> allow_isolated,</span></span></span><br><span class="line"><span class="function"><span class="params">                   <span class="keyword">pid_t</span> spid)</span></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (!svc_can_register(s, len, spid, uid)) &#123;</span><br><span class="line">        <span class="comment">//判断是否可以注册系统服务</span></span><br><span class="line">        <span class="comment">//只有 root 进程、SystemServer 进程、有在 allowed[] 数组中声明的进程可以</span></span><br><span class="line">        <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//分配空间给新的节点</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">svcinfo</span> *<span class="title">si</span> = <span class="title">malloc</span>(<span class="title">sizeof</span>(*<span class="title">si</span>) + (<span class="title">len</span> + 1) * <span class="title">sizeof</span>(<span class="title">uint16_t</span>));</span></span><br><span class="line">    <span class="comment">//记录服务的 binder 句柄值</span></span><br><span class="line">    si-&gt;handle = handle;</span><br><span class="line">    si-&gt;len = len;</span><br><span class="line">    <span class="comment">//记录服务注册时取的名字</span></span><br><span class="line">    <span class="built_in">memcpy</span>(si-&gt;name, s, (len + <span class="number">1</span>) * <span class="keyword">sizeof</span>(<span class="keyword">uint16_t</span>));</span><br><span class="line">    <span class="comment">//追加一个结束符</span></span><br><span class="line">    si-&gt;name[len] = <span class="string">'\0'</span>;</span><br><span class="line">    <span class="comment">//...还有各种赋值</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">//新节点的 next 指向链表</span></span><br><span class="line">    si-&gt;next = svclist;</span><br><span class="line">    <span class="comment">//链表的头插法</span></span><br><span class="line">    svclist = si;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如下，</p>
+<p><img src="https://gitee.com/imholiday/u-pic-image/raw/master/uPic/2020-11-21-23-56-12-binder%E6%B5%85%E6%9E%902-4.png" alt=""></p>
+<p>至于系统服务int类型的binder句柄值handle怎么来的，是由binder驱动层为我们分配，然后包装成特定的数据结构回传给我们的。</p>
+<p>可见<code>ServiceManager</code>用<code>链表svclist</code>管理各系统服务的binder句柄，结构体是<code>svcinfo</code>；</p>
+<p>而对应到binder驱动层，则是用<code>链表binder_procs</code>管理的，结构体是<code>binder_proc</code>，在<a href="https://github.com/aosp-mirror/kernel_common/blob/1e253d0563d2ce971450f55fc64b80df1de09834/drivers/android/binder.c#L481">/drivers/android/binder.c</a>中，</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//drivers/android/binder.c</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//链表头结点</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="title">HLIST_HEAD</span><span class="params">(binder_procs)</span></span>;</span><br><span class="line"><span class="comment">//结构体</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">binder_proc</span> &#123;</span></span><br><span class="line">    <span class="comment">//链表普通节点，由他的 next 和 pprev 串起链表</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">hlist_node</span> <span class="title">proc_node</span>;</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">//4棵红黑树，rb = red black</span></span><br><span class="line">    <span class="comment">//记录执行传输动作的线程信息 binder_thread</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">rb_root</span> <span class="title">threads</span>;</span></span><br><span class="line">    <span class="comment">//记录 binder 实体 binder_node</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">rb_root</span> <span class="title">nodes</span>;</span></span><br><span class="line">    <span class="comment">//记录 binder 代理 binder_ref</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">rb_root</span> <span class="title">refs_by_desc</span>;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">rb_root</span> <span class="title">refs_by_node</span>;</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>这里用了HLIST_HEAD和hlist_node来串起链表，binder驱动层的代码暂不展开，感兴趣可以阅读「<a href="https://my.oschina.net/youranhongcha/blog/152233" target="_blank" rel="noopener">红茶一杯话Binder传输机制篇</a>」。</p>
+<p>2.查找系统服务<code>do_find_service</code>。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//frameworks/native/cmds/servicemanager/service_manager.c</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">uint32_t</span> <span class="title">do_find_service</span><span class="params">(<span class="keyword">const</span> <span class="keyword">uint16_t</span> *s, <span class="keyword">size_t</span> len, <span class="keyword">uid_t</span> uid, <span class="keyword">pid_t</span> spid)</span></span>&#123;</span><br><span class="line">    <span class="comment">//遍历链表找到节点</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">svcinfo</span> *<span class="title">si</span> = <span class="title">find_svc</span>(<span class="title">s</span>, <span class="title">len</span>);</span></span><br><span class="line">    <span class="comment">//返回 binder 句柄值</span></span><br><span class="line">    <span class="keyword">return</span> si-&gt;handle;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">struct svcinfo *<span class="title">find_svc</span><span class="params">(<span class="keyword">const</span> <span class="keyword">uint16_t</span> *s16, <span class="keyword">size_t</span> len)</span></span>&#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">svcinfo</span> *<span class="title">si</span>;</span></span><br><span class="line">    <span class="comment">//遍历链表找到节点</span></span><br><span class="line">    <span class="keyword">for</span> (si = svclist; si; si = si-&gt;next) &#123;</span><br><span class="line">        <span class="keyword">if</span> ((len == si-&gt;len) &amp;&amp;</span><br><span class="line">            !<span class="built_in">memcmp</span>(s16, si-&gt;name, len * <span class="keyword">sizeof</span>(<span class="keyword">uint16_t</span>))) &#123;</span><br><span class="line">            <span class="keyword">return</span> si;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>综上，查找系统服务的<code>do_find_service</code>和添加系统服务的<code>do_add_service</code>如下图：</p>
+<p><img src="https://gitee.com/imholiday/u-pic-image/raw/master/uPic/2020-11-22-15-00-08-binder%E6%B5%85%E6%9E%902-6.png" alt=""></p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p><code>ServiceManager</code>作为管理系统服务的进程，经过<strong>打开binder驱动、注册成为系统唯一的上下文、进入binder循环</strong>3个核心步骤，便开始支持系统服务的注册和获取。系统服务的注册和获取过程基于binder机制实现IPC通信，binder的本质就是一个<strong>外设，以文件形式通过<code>ioctl</code>系统调用来操作</strong>。</p>
+<p>留下2个疑问继续探讨：</p>
+<ol>
+<li>binder句柄的<code>远程转本地</code></li>
+<li>one way异步模式和他的串行调用（async_todo）、同步模式的并行调用</li>
+</ol>
+<p><strong>系列文章：</strong></p>
+<ul>
+<li><a href="https://mp.weixin.qq.com/s/xsoc9omtu-gGAFG1pCsCsQ" target="_blank" rel="noopener">图解 | Android系统的启动</a></li>
+<li><a href="https://mp.weixin.qq.com/s/0xwYJeLKkUN0HnTpW0HtNw" target="_blank" rel="noopener">图解 | 一图摸清Android系统服务</a></li>
+<li><a href="https://mp.weixin.qq.com/s/UZjrIVWAiTcRJhnlUNLY3A" target="_blank" rel="noopener">图解 | 一图摸清Android应用进程的启动</a></li>
+<li><a href="https://mp.weixin.qq.com/s/o3aUq6HKQ8Xx-vEs733okw" target="_blank" rel="noopener">图解 | Binder浅析（一）</a></li>
+</ul>
+<h2 id="补充"><a href="#补充" class="headerlink" title="补充"></a>补充</h2><ul>
+<li><p>系统服务由<code>ServiceManager</code>进程管理，但用户自定义的Service组件，bindService时的<code>onServiceConnected</code>回调拿到的IBinder句柄，是由<code>SystemServer</code>进程的<code>AMS</code>管理的，后面再开篇分析了。</p>
+<p>这两个进程容易搞混，再贴出来巩固一下…</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gjtxvoyo79j315a0qcaee.jpg" alt=""></p>
+</li>
+</ul>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li>书籍 - Android系统源代码情景分析</li>
+<li><a href="https://www.bilibili.com/video/BV1d4411v7u7?p=26" target="_blank" rel="noopener">视频 - 哈工大操作系统IO与显示器</a></li>
+<li><a href="https://baike.baidu.com/item/ioctl/6392403" target="_blank" rel="noopener">百科 - ioctl</a></li>
+<li><a href="https://my.oschina.net/youranhongcha/blog/149578" target="_blank" rel="noopener">博客 - 红茶一杯话Binder</a></li>
+</ul>
+<hr>
+<p><a href="https://tva1.sinaimg.cn/large/007S8ZIlly1ghzod486q7j30b40b4wen.jpg" target="_blank" rel="noopener">更多性感文章，关注原创技术公众号：哈利迪ei</a></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/%E5%9B%BE%E8%A7%A3/" rel="tag"># 图解</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/11/01/%E5%9B%BE%E8%A7%A3-Binder%E6%B5%85%E6%9E%90%EF%BC%88%E4%B8%80%EF%BC%89/" rel="next" title="图解 | Binder浅析（一）">
+                <i class="fa fa-chevron-left"></i> 图解 | Binder浅析（一）
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">哈利迪</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+
+              <div class="site-state-item site-state-posts">
+                <a href="/archives">
+                  <span class="site-state-item-count">36</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+
+
+
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">3</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#揭开Binder面纱"><span class="nav-number">1.</span> <span class="nav-text">揭开Binder面纱</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Binder的管理"><span class="nav-number">2.</span> <span class="nav-text">Binder的管理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-打开binder驱动"><span class="nav-number">2.1.</span> <span class="nav-text">1 打开binder驱动</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-成为系统唯一的上下文"><span class="nav-number">2.2.</span> <span class="nav-text">2 成为系统唯一的上下文</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-进入binder循环"><span class="nav-number">2.3.</span> <span class="nav-text">3 进入binder循环</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-系统服务的注册和获取"><span class="nav-number">2.4.</span> <span class="nav-text">4 系统服务的注册和获取</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">3.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#补充"><span class="nav-number">4.</span> <span class="nav-text">补充</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料"><span class="nav-number">5.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">哈利迪</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
